@@ -1,0 +1,18 @@
+# This is a sample config for test runs
+
+baseurl: https://beta.startupos.dev/api/v2
+report:
+  id: 541
+modules:
+  code:
+    provider: corsis
+    git:
+      start: 2022-11-16
+    dry: false
+  cloud:
+    provider: aws
+    start: 2022-11-16
+    end: 2023-05-16
+repos:
+  - git@github.com:PicklePicsInc/PicklePics.git
+localrepos:
