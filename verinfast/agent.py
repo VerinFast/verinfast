@@ -31,17 +31,28 @@ import yaml
 import requests
 import shutil
 import re
+#import multimetric This does nothing
+#print(dir(multimetric))
 
 def main():
     config = setup()
     scan(config)
 
 ##### Helpers #####
+newline = "\n" # TODO - Set to system appropriate newline character. This doesn't work with multimetric
+
+# Excludes files in .git directories. Takes path of full path with filename
+def allowfile(path):
+    gitpattern = re.compile("^(.*\.git.*)$")
+    if not gitpattern.match(path):
+        return True
+    else:
+        return False
+
 def get_size(start_path = '.'):
     total_size = 0
-    gitpattern = re.compile("^(.*\.git.*)$")
     for dirpath, dirnames, filenames in os.walk(start_path):
-        if not gitpattern.match(dirpath):
+        if allowfile(dirpath):
             for f in filenames:
                 fp = os.path.join(dirpath, f)
                 # skip if it is symbolic link
@@ -49,7 +60,18 @@ def get_size(start_path = '.'):
                     total_size += os.path.getsize(fp)
     return total_size
 
-###### SETUP ######
+def getloc(file):
+    try:
+        count = 0
+        with open(file) as fp:
+            for line in fp:
+                if line.strip():
+                    count += 1
+        return count
+    except:
+        return 0
+
+###### Setup ######
 def setup():
     # Read the config file
     with open('config.yaml') as f:
@@ -67,13 +89,6 @@ def setup():
 
     print("Git is installed.")
 
-    # TODO this should be an import and be handled by the package install
-    # Check if multimetric is installed, if not install it
-    if not shutil.which("multimetric"):
-        subprocess.check_call(["pip", "install", "git+https://github.com/aylusltd/multimetric.git"])
-        print("Multimetric is installed.")
-    else:
-        print("Multimetric already installed.")
     return config
 
 ###### Scan ######
@@ -106,11 +121,9 @@ def scan(config):
 
         print(f"Analyzing repository {repo_url} with Multimetric...")
 
-        output_file = os.path.join(output_dir, repo_name + ".stats.json")
-        error_file = os.path.join(output_dir, repo_name + ".stats.err")
-
+        # Sizes for writing to output file
         # Intialize file list with "." as total size
-        files = {
+        sizes = {
             "files":{
                 ".":{
                     "size" : get_size(temp_dir),
@@ -120,23 +133,33 @@ def scan(config):
                 }
             }
         }
-        print(files["files"])
-        for path, subdirs, filelist in os.walk(temp_dir):
-            for name in filelist:
-                fp = os.path.join(path, name)
-                file = {
-                    "size" : os.path.getsize(fp),
-                    "loc" : 0,
-                    "ext" : os.path.splitext(name)[1],
-                    "directory" : False
-                }
-                files["files"][fp] = file
-        print(files)
-        exit()
-        # TODO Crawl repo for file list and pass in list of files
-        with open(output_file, 'w') as f:
-            with open(error_file, 'w') as e:
-                subprocess.check_call(["multimetric", "."], stdout=f, stderr=e)
+        #filelist for multimetric
+        filelist = ""
+
+        for path, subdirs, list in os.walk(temp_dir):
+            if allowfile(path):
+                for name in list:
+                    fp = os.path.join(path, name)
+                    file = {
+                        "size" : os.path.getsize(fp),
+                        "loc" : getloc(fp),
+                        "ext" : os.path.splitext(name)[1],
+                        "directory" : False
+                    }
+                    sizes["files"][fp] = file
+                    filelist += fp + newline
+
+        sizes_output_file = os.path.join(output_dir, repo_name + ".sizes.json")
+        with open(sizes_output_file, 'w') as f:
+            f.write(str(sizes))
+
+        stats_output_file = os.path.join(output_dir, repo_name + ".stats.json")
+        stats_error_file = os.path.join(output_dir, repo_name + ".stats.err")
+
+        # THIS DOESN'T WORK. Something to do with how to pass filelist to multimetric
+        with open(stats_output_file, 'w') as f:
+            with open(stats_error_file, 'w') as e:
+                subprocess.check_call(["multimetric" , filelist], stdout=f, stderr=e, encoding='utf-8')
 
         # with open(output_file, 'rb') as f:
         #     response = requests.post(config['baseurl'] + TODO_API_ROUTE, files={'file': f})
