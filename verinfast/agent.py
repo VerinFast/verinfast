@@ -31,7 +31,8 @@ import yaml
 import requests
 import shutil
 import re
-#import multimetric This does nothing
+from multimetric.fp import file_process
+#import multimetric #This does nothing
 #print(dir(multimetric))
 
 def main():
@@ -134,7 +135,7 @@ def scan(config):
             }
         }
         #filelist for multimetric
-        filelist = ""
+        filelist = []
 
         for path, subdirs, list in os.walk(temp_dir):
             if allowfile(path):
@@ -147,19 +148,25 @@ def scan(config):
                         "directory" : False
                     }
                     sizes["files"][fp] = file
-                    filelist += fp + newline
+                    filelist.append(fp)
 
         sizes_output_file = os.path.join(output_dir, repo_name + ".sizes.json")
         with open(sizes_output_file, 'w') as f:
             f.write(str(sizes))
+            #f.write(filelist)
 
         stats_output_file = os.path.join(output_dir, repo_name + ".stats.json")
         stats_error_file = os.path.join(output_dir, repo_name + ".stats.err")
 
-        # THIS DOESN'T WORK. Something to do with how to pass filelist to multimetric
+        # print(filelist)
+        # exit(255)
+
+        # Calling multimetric with subproccess works, but we might want to call
+        # Multimetric directly, ala lines 91-110 from multimetric main
+
         with open(stats_output_file, 'w') as f:
             with open(stats_error_file, 'w') as e:
-                subprocess.check_call(["multimetric" , filelist], stdout=f, stderr=e, encoding='utf-8')
+                subprocess.check_call(["multimetric"] + filelist, stdout=f, stderr=e, encoding='utf-8')
 
         # with open(output_file, 'rb') as f:
         #     response = requests.post(config['baseurl'] + TODO_API_ROUTE, files={'file': f})
