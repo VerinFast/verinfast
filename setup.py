@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="sosagent",
+    name="verinfast",
     version="0.1",
     license="Proprietary",
     packages=find_packages(),
@@ -12,7 +12,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'sosagent = sosagent.agent:main',
+            'verinfast = verinfast.agent:main',
         ],
     },
 )

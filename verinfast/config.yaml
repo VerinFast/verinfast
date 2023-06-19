@@ -1,6 +1,7 @@
 # This is a sample config for test runs
 
 baseurl: https://beta.startupos.dev/api/v2
+should_upload: false
 report:
   id: 541
 modules:
@@ -14,5 +15,5 @@ modules:
     start: 2022-11-16
     end: 2023-05-16
 repos:
-  - git@github.com:PicklePicsInc/PicklePics.git
+  - git@github.com:StartupOS/small-test-repo.git
 localrepos:
