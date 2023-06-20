@@ -247,50 +247,44 @@ def scan(config):
         #     branch
         # ]
 
-        command1 = f'''git log \
+        command = f'''git log \
             --since="{config["modules"]["code"]["git"]["start"]}" \
             --numstat \
             --format='%H' \
             {branch} --
         '''
 
-        command2 = '''
-            perl -lawne '
-                if (defined $F[1]) {
-                    print qq#{"insertions": "$F[0]", "deletions": "$F[1]", "path": "$F[2]"},#
-                } elsif (defined $F[0]) {
-                    print qq#],\n"$F[0]": [#
-                };
-                END{print qq#],#}' | \
-            tail -n +2 | \
-            perl -wpe 'BEGIN{print "{"}; END{print "}"}' | \
-            tr '\n' ' ' | \
-            perl -wpe 's#(]|}),\s*(]|})#$1$2#g'
-        '''
-
-        # command = command1 + ' | ' + command2
-        # debugLog(command, "command")
         try:
-            results=subprocess.run(command1, shell=True, stdout=subprocess.PIPE)
+            results=subprocess.run(command, shell=True, stdout=subprocess.PIPE)
             log = results.stdout.decode()
         except subprocess.CalledProcessError:
             raise Exception("Error getting log from git.")
-        except e:
-            raise Exception(f"Error getting log from git. {e}")
 
         debugLog(log, "log")
 
         resultArr = log.split("\n")
-        objStr = "{"
+        logsObj = {}
+        prevHash = ''
+        filesArr = []
+
         for line in resultArr:
             lineArr = line.split("\t")
             if len(lineArr) > 1:
-                objStr += f'{{"insertions": "{lineArr[0]}", "deletions": "{lineArr[1]}", "path": "{lineArr[2]}"}},'
+                filesArr.append({
+                    "insertions": lineArr[0], 
+                    "deletions": lineArr[1],
+                    "path": lineArr[2]
+                })
             else:
                 if len(lineArr) == 1 and lineArr[0] != '':
-                    objStr += f'],\n"{lineArr[0]}": ['
-        objStr += "}"
-        debugLog(objStr, "objStr")
+                    # Hit next file
+                    if prevHash != '':
+                        # Not first one
+                        logsObj[prevHash] = filesArr
+                        filesArr = []
+                    prevHash = lineArr[0]
+
+        debugLog(logsObj, "logsObj")
 
         #debugLog(jc.parser_mod_list(), "jc list")
 
