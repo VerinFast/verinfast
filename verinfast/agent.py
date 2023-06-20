@@ -278,7 +278,19 @@ def scan(config):
         findings_error_file = os.path.join(output_dir, repo_name + ".findings.err")
         # with open(findings_output_file, 'w') as f:
         #     with open(findings_error_file, 'w') as e:
-                #subprocess.check_call(["semgrep", "scan --config auto --json"] + filelist, stdout=f, stderr=e, encoding='utf-8')
+        
+        with open(findings_error_file, 'a') as e:
+            semgrepErrors = subprocess.check_output([
+                "semgrep",
+                "scan",
+                "--config",
+                "auto",
+                "--json",
+                "-o",
+                findings_output_file,
+            ], stderr=e,)
+        # with open(findings_error_file, 'a') as e:
+        #     e.write(semgrepErrors.decode('utf-8'))
         upload(findings_output_file, config, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/findings")
 
         os.chdir("..")
