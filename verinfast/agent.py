@@ -34,6 +34,7 @@ import shutil
 import re
 #from multimetric.fp import file_process # If we want to run multimetric directly
 import semgrep
+import jc
 
 shouldUpload = False
 config = FileNotFoundError
@@ -234,22 +235,58 @@ def scan(config):
             f.write(']\n')
 
         # Git Insertions and Deletions
-        command = [
-            'git',
-            'log',
-            #f'--since="{modules_code_git_start}"',
-            f'--since="{config["modules"]["code"]["git"]["start"]}"',
-            '--numstat',
-            "--format=%H",
-            branch
-        ]
+        # command = [
+        #     'git',
+        #     'log',
+        #     #f'--since="{modules_code_git_start}"',
+        #     f'--since="{config["modules"]["code"]["git"]["start"]}"',
+        #     '--stat',
+        #     #'--format=fuller',
+        #     #"--format=%H",
+        #     branch
+        # ]
+
+        command = f'''git log \
+            --since="{config["modules"]["code"]["git"]["start"]}" \
+            --numstat \
+            --format='%H' \
+            {branch} -- |\
+            perl -lawne  ' \
+                if (defined $F[1]) {{ \
+                    print qq#{"insertions": "$F[0]", "deletions": "$F[1]", "path": "$F[2]"},# \
+                }} elsif (defined $F[0]) {{ \
+                    print qq#],\\n"$F[0]": [# \
+                }}; 
+                END{{print qq#],#}}'
+        '''
+
+            
+            # tail -n +2 | \
+            # perl -wpe 'BEGIN{{print "{{"}}; END{{print "}}"}}' | \
+            # tr '\\n' ' ' | \
+            # perl -wpe 's#(]|}}),\s*(]|}})#$1$2#g' | \
+            # perl -wpe 's#,\s*?}}$#}}#'
+        results=subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+
         debugLog(command, "command")
+        debugLog(results, "results")
         try:
             log = subprocess.check_output(command)
         except subprocess.CalledProcessError:
             raise Exception("Error getting log from git.")
         log = log.decode('utf-8')
-        debugLog(log, "Git Log")
+        debugLog(log, "log")
+
+        #debugLog(jc.parser_mod_list(), "jc list")
+
+        result = jc.parse('git_log', log)
+        debugLog(result, "result")
+        #logArr = log.split("\n\n")
+        # for line in logArr:
+        #     print(line)
+        #     print("Next Line")
+        # logArr = log.splitlines();
+
 
         print(f"Gathering file sizes for {repo_url}...")
         # Sizes for writing to output file
