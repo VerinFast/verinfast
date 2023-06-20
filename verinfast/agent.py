@@ -130,7 +130,6 @@ def upload(file, route, repo=''):
 #### Helpers #####
 def escapeChars(text):
     debugLog(text, "text")
-    #fixedText = re.sub(r's/([\"\{\}])/g',"\\\1", text)
     fixedText = re.sub(r'([\"\{\}])', r'\\\1', text)
     debugLog(fixedText, "fixedText")
     return(fixedText)
@@ -139,29 +138,19 @@ def trimLineBreaks(text):
     return(text.replace("\n", "").replace("\r",""))
 
 def formatGitHash(hash):
-    # sha=$(git log -n1 --pretty=format:%h $1 | escape_chars) \"sha\":\"$sha\",
-    debugLog(f"git log -n1 --pretty=format:%B {hash}")
     message = subprocess.check_output(["git", "log", "-n1", "--pretty=format:%B", hash]).decode('utf-8')
     author = subprocess.check_output(["git", "log", "-n1", "--pretty=format:'%aN <%aE>'", hash]).decode('utf-8')
     commit = subprocess.check_output(["git", "log", "-n1", "--pretty=format:%H", hash]).decode('utf-8')
     date = subprocess.check_output(["git", "log", "-n1", "--pretty=format:%aD", hash]).decode('utf-8')
     debugLog(message, "message")
-    # message = escapeChars(trimLineBreaks(message))
-    #message = trimLineBreaks(message)
-    # message=$(git log -n1 --pretty=format:%B $1 | trim_line_breaks | escape_chars ) 
-    # author=$(git log -n1 --pretty=format:'%aN <%aE>' $1 | escape_chars)
-    # commit=$(git log -n1 --pretty=format:%H $1)
-    # date=$(git log -n1 --pretty=format:%aD $1 | escape_chars)
-    # echo "{\"message\":\"${message//$'\n'/}\",\"author\":\"$author\",\"commit\":\"$commit\",\"date\":\"$date\"}"
-    returnVal = json.dumps({
-        "message": message,
+    returnVal = {
+        "message": trimLineBreaks(message),
         "author": author,
         "commit": commit,
-        "date": date
-    })
+        "date": escapeChars(date)
+    }
     debugLog(returnVal, "returnVal")
     return returnVal
-
 
 ###### Scan ######
 def scan(config):
@@ -201,52 +190,6 @@ def scan(config):
 
         # Git Stats
         print(f"Gathering source code statistics for {repo_url}...")
-        git_output_file = os.path.join(output_dir, repo_name + ".git-log.json")
-        git_error_file = os.path.join(output_dir, repo_name + ".git-log.err")
-
-        command = ['git', 'rev-list', 'main']
-        try:
-            hashlist = subprocess.check_output(command)
-        except subprocess.CalledProcessError:
-            raise Exception("Error getting revision list from git.")
-
-        # Decode the output from bytes to a string
-        hashlist = hashlist.decode('utf-8')
-        hashlist = hashlist.split('\n')
-        debugLog(hashlist, "hashlist")
-
-        # Git Commits
-        first_hash = True
-        with open(git_output_file, 'a') as f:
-            f.write('[\n')
-        for hash in hashlist:
-            if hash != '': # Split above adds a blank has to end, skip it
-                # Put a comma before results, except first
-                if not first_hash:
-                    with open(git_output_file, 'a') as f:
-                        f.write(',\n')
-                else:
-                    first_hash = False
-                debugLog(hash, "hash")
-                formattedHash = str(formatGitHash(hash))
-                debugLog(formattedHash, "formattedHash")
-                with open(git_output_file, 'a') as f:
-                    f.write(formattedHash)
-        with open(git_output_file, 'a') as f:
-            f.write(']\n')
-
-        # Git Insertions and Deletions
-        # command = [
-        #     'git',
-        #     'log',
-        #     #f'--since="{modules_code_git_start}"',
-        #     f'--since="{config["modules"]["code"]["git"]["start"]}"',
-        #     '--stat',
-        #     #'--format=fuller',
-        #     #"--format=%H",
-        #     branch
-        # ]
-
         command = f'''git log \
             --since="{config["modules"]["code"]["git"]["start"]}" \
             --numstat \
@@ -260,13 +203,10 @@ def scan(config):
         except subprocess.CalledProcessError:
             raise Exception("Error getting log from git.")
 
-        debugLog(log, "log")
-
         resultArr = log.split("\n")
-        logsObj = {}
         prevHash = ''
         filesArr = []
-
+        finalArr = []
         for line in resultArr:
             lineArr = line.split("\t")
             if len(lineArr) > 1:
@@ -280,22 +220,18 @@ def scan(config):
                     # Hit next file
                     if prevHash != '':
                         # Not first one
-                        logsObj[prevHash] = filesArr
+                        hashObj = formatGitHash(prevHash)
+                        hashObj['path'] = filesArr
+                        finalArr.append(hashObj)
                         filesArr = []
                     prevHash = lineArr[0]
 
-        debugLog(logsObj, "logsObj")
+        debugLog(finalArr, "finalArr")
 
-        #debugLog(jc.parser_mod_list(), "jc list")
-
-        #result = jc.parse('git_log', log)
-        #debugLog(result, "result")
-        #logArr = log.split("\n\n")
-        # for line in logArr:
-        #     print(line)
-        #     print("Next Line")
-        # logArr = log.splitlines();
-
+        git_output_file = os.path.join(output_dir, repo_name + ".git.log.json")
+        with open(git_output_file, 'w') as f:
+            f.write(json.dumps(finalArr))
+        upload(git_output_file, config, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/git")
 
         print(f"Gathering file sizes for {repo_url}...")
         # Sizes for writing to output file
