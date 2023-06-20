@@ -23,6 +23,7 @@
 #
 ##################################################################################
 
+import json
 import subprocess
 import importlib
 import sys
@@ -31,15 +32,20 @@ import yaml
 import requests
 import shutil
 import re
-from multimetric.fp import file_process
-#import multimetric #This does nothing
-#print(dir(multimetric))
+#from multimetric.fp import file_process # If we want to run multimetric directly
+import semgrep
 
 shouldUpload = False
 config = FileNotFoundError
 reportId = 0
 corsisId = 0
 baseUrl = ''
+
+debug=True
+
+def debugLog(msg, tag='Debug Log:'):
+    if debug:
+        print(f"{tag} {msg}")
 
 def main():
     config = setup()
@@ -63,7 +69,7 @@ newline = "\n" # TODO - Set to system appropriate newline character. This doesn'
 # Excludes files in .git directories. Takes path of full path with filename
 def allowfile(path):
     gitpattern = re.compile("^(.*\.git.*)$")
-    if not gitpattern.match(path) and os.path.isfile(path):
+    if not gitpattern.match(path) and os.path.isfile(path) and not os.path.islink(path):
         return True
     else:
         return False
@@ -71,12 +77,10 @@ def allowfile(path):
 def get_size(start_path = '.'):
     total_size = 0
     for dirpath, dirnames, filenames in os.walk(start_path):
-        if allowfile(dirpath):
-            for f in filenames:
-                fp = os.path.join(dirpath, f)
-                # skip if it is symbolic link
-                if not os.path.islink(fp):
-                    total_size += os.path.getsize(fp)
+        for f in filenames:
+            fp = os.path.join(dirpath, f)
+            if allowfile(fp):
+                total_size += os.path.getsize(fp)
     return total_size
 
 def getloc(file):
@@ -120,6 +124,42 @@ def upload(file, route, repo=''):
         else:
             print(f"Failed to upload {file} for {repo} to the {route}.")
 
+#### Helpers #####
+def escapeChars(text):
+    debugLog(text, "text")
+    #fixedText = re.sub(r's/([\"\{\}])/g',"\\\1", text)
+    fixedText = re.sub(r'([\"\{\}])', r'\\\1', text)
+    debugLog(fixedText, "fixedText")
+    return(fixedText)
+
+def trimLineBreaks(text):
+    return(text.replace("\n", "").replace("\r",""))
+
+def formatGitHash(hash):
+    # sha=$(git log -n1 --pretty=format:%h $1 | escape_chars) \"sha\":\"$sha\",
+    debugLog(f"git log -n1 --pretty=format:%B {hash}")
+    message = subprocess.check_output(["git", "log", "-n1", "--pretty=format:%B", hash]).decode('utf-8')
+    author = subprocess.check_output(["git", "log", "-n1", "--pretty=format:'%aN <%aE>'", hash]).decode('utf-8')
+    commit = subprocess.check_output(["git", "log", "-n1", "--pretty=format:%H", hash]).decode('utf-8')
+    date = subprocess.check_output(["git", "log", "-n1", "--pretty=format:%aD", hash]).decode('utf-8')
+    debugLog(message, "message")
+    # message = escapeChars(trimLineBreaks(message))
+    #message = trimLineBreaks(message)
+    # message=$(git log -n1 --pretty=format:%B $1 | trim_line_breaks | escape_chars ) 
+    # author=$(git log -n1 --pretty=format:'%aN <%aE>' $1 | escape_chars)
+    # commit=$(git log -n1 --pretty=format:%H $1)
+    # date=$(git log -n1 --pretty=format:%aD $1 | escape_chars)
+    # echo "{\"message\":\"${message//$'\n'/}\",\"author\":\"$author\",\"commit\":\"$commit\",\"date\":\"$date\"}"
+    returnVal = json.dumps({
+        "message": message,
+        "author": author,
+        "commit": commit,
+        "date": date
+    })
+    debugLog(returnVal, "returnVal")
+    return returnVal
+
+
 ###### Scan ######
 def scan(config):
     output_dir = os.path.join(os.getcwd(), "results")
@@ -143,13 +183,52 @@ def scan(config):
 
         os.chdir(temp_dir)
 
+        # TODO Get a list of branches and use most recent if no main or master
+
         try:
             subprocess.check_call(["git", "checkout", "main"])
         except subprocess.CalledProcessError:
-            subprocess.check_call(["git", "checkout", "master"])
+            try:
+                subprocess.check_call(["git", "checkout", "master"])
+            except subprocess.CalledProcessError:
+                raise Exception("Error checking out branch from git.")
+
+        # Git Stats
+        print(f"Gathering source code statistics for {repo_url}...")
+        git_output_file = os.path.join(output_dir, repo_name + ".git-log.json")
+        git_error_file = os.path.join(output_dir, repo_name + ".git-log.err")
+
+        command = ['git', 'rev-list', 'main']
+        try:
+            hashlist = subprocess.check_output(command)
+        except subprocess.CalledProcessError:
+            raise Exception("Error getting revision list from git.")
+
+        # Decode the output from bytes to a string
+        hashlist = hashlist.decode('utf-8')
+        hashlist = hashlist.split('\n')
+        debugLog(hashlist, "hashlist")
+
+        first_hash = True
+        with open(git_output_file, 'a') as f:
+            f.write('[\n')
+        for hash in hashlist:
+            if hash != '': # Split above adds a blank has to end, skip it
+                # Put a comma before results, except first
+                if not first_hash:
+                    with open(git_output_file, 'a') as f:
+                        f.write(',\n')
+                else:
+                    first_hash = False
+                debugLog(hash, "hash")
+                formattedHash = str(formatGitHash(hash))
+                debugLog(formattedHash, "formattedHash")
+                with open(git_output_file, 'a') as f:
+                    f.write(formattedHash)
+        with open(git_output_file, 'a') as f:
+            f.write(']\n')
 
         print(f"Gathering file sizes for {repo_url}...")
-
         # Sizes for writing to output file
         # Intialize file list with "." as total size
         sizes = {
@@ -166,32 +245,41 @@ def scan(config):
         filelist = []
 
         for path, subdirs, list in os.walk(temp_dir):
-            if allowfile(path):
-                for name in list:
-                    fp = os.path.join(path, name)
+            for name in list:
+                fp = os.path.join(path, name)
+                rp = fp.replace(temp_dir, '.') # Just save relative path
+                if allowfile(fp):
                     file = {
                         "size" : os.path.getsize(fp),
                         "loc" : getloc(fp),
                         "ext" : os.path.splitext(name)[1],
                         "directory" : False
                     }
-                    sizes["files"][path] = file
+                    sizes["files"][rp] = file
                     filelist.append(fp)
 
         sizes_output_file = os.path.join(output_dir, repo_name + ".sizes.json")
         with open(sizes_output_file, 'w') as f:
             f.write(str(sizes))
 
+        print(f"Analyzing repository {repo_url} with Multimetric...")
         stats_output_file = os.path.join(output_dir, repo_name + ".stats.json")
         stats_error_file = os.path.join(output_dir, repo_name + ".stats.err")
 
         # Calling multimetric with subproccess works, but we might want to call
         # Multimetric directly, ala lines 91-110 from multimetric main
-        print(f"Analyzing repository {repo_url} with Multimetric...")
         with open(stats_output_file, 'w') as f:
             with open(stats_error_file, 'w') as e:
                 subprocess.check_call(["multimetric"] + filelist, stdout=f, stderr=e, encoding='utf-8')
         upload(stats_output_file, config, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/stats")
+
+        print(f"Scanning repository {repo_url}...")
+        findings_output_file = os.path.join(output_dir, repo_name + ".findings.json")
+        findings_error_file = os.path.join(output_dir, repo_name + ".findings.err")
+        # with open(findings_output_file, 'w') as f:
+        #     with open(findings_error_file, 'w') as e:
+                #subprocess.check_call(["semgrep", "scan --config auto --json"] + filelist, stdout=f, stderr=e, encoding='utf-8')
+        upload(findings_output_file, config, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/findings")
 
         os.chdir("..")
         #shutil.rmtree(temp_dir)

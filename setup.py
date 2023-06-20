@@ -8,7 +8,8 @@ setup(
     install_requires=[
         'multimetric',
         'PyYAML',
-        'requests'
+        'requests',
+        'semgrep'
     ],
     entry_points={
         'console_scripts': [
