@@ -40,6 +40,7 @@ config = FileNotFoundError
 reportId = 0
 corsisId = 0
 baseUrl = ''
+modules_code_git_start = ''
 
 debug=True
 
@@ -55,6 +56,7 @@ def main():
     shouldUpload = config['should_upload']
     reportId = config['report']['id']
     baseUrl = config['baseurl']
+    modules_code_git_start = config['baseurl'] #config['modules']['code']['git']['start']
 
     if shouldUpload:
         headers = {'content-type': 'application/json', 'Accept-Charset': 'UTF-8'}
@@ -184,12 +186,14 @@ def scan(config):
         os.chdir(temp_dir)
 
         # TODO Get a list of branches and use most recent if no main or master
-
+        branch=""
         try:
             subprocess.check_call(["git", "checkout", "main"])
+            branch="main"
         except subprocess.CalledProcessError:
             try:
                 subprocess.check_call(["git", "checkout", "master"])
+                branch="master"
             except subprocess.CalledProcessError:
                 raise Exception("Error checking out branch from git.")
 
@@ -209,6 +213,7 @@ def scan(config):
         hashlist = hashlist.split('\n')
         debugLog(hashlist, "hashlist")
 
+        # Git Commits
         first_hash = True
         with open(git_output_file, 'a') as f:
             f.write('[\n')
@@ -227,6 +232,24 @@ def scan(config):
                     f.write(formattedHash)
         with open(git_output_file, 'a') as f:
             f.write(']\n')
+
+        # Git Insertions and Deletions
+        command = [
+            'git',
+            'log',
+            #f'--since="{modules_code_git_start}"',
+            f'--since="{config["modules"]["code"]["git"]["start"]}"',
+            '--numstat',
+            "--format=%H",
+            branch
+        ]
+        debugLog(command, "command")
+        try:
+            log = subprocess.check_output(command)
+        except subprocess.CalledProcessError:
+            raise Exception("Error getting log from git.")
+        log = log.decode('utf-8')
+        debugLog(log, "Git Log")
 
         print(f"Gathering file sizes for {repo_url}...")
         # Sizes for writing to output file
