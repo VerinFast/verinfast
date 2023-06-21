@@ -150,7 +150,7 @@ def trimLineBreaks(text):
 
 def formatGitHash(hash):
     message = subprocess.check_output(["git", "log", "-n1", "--pretty=format:%B", hash]).decode('utf-8')
-    author = subprocess.check_output(["git", "log", "-n1", "--pretty=format:'%aN <%aE>'", hash]).decode('utf-8')
+    author = subprocess.check_output(["git", "log", "-n1", "--pretty=format:%aN <%aE>", hash]).decode('utf-8')
     commit = subprocess.check_output(["git", "log", "-n1", "--pretty=format:%H", hash]).decode('utf-8')
     date = subprocess.check_output(["git", "log", "-n1", "--pretty=format:%aD", hash]).decode('utf-8')
     returnVal = {
@@ -272,7 +272,7 @@ def scan(config):
 
         sizes_output_file = os.path.join(output_dir, repo_name + ".sizes.json")
         with open(sizes_output_file, 'w') as f:
-            f.write(str(sizes))
+            f.write(json.dumps(sizes))
 
         debugLog(repo_url, "Analyzing repository with Multimetric", True)
         stats_output_file = os.path.join(output_dir, repo_name + ".stats.json")
