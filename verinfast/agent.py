@@ -186,7 +186,6 @@ def formatGitHash(hash):
     return returnVal
 
 def parseRepo(path, repo_name):
-
     os.chdir(path)
 
     # Get Correct Branch
@@ -273,9 +272,9 @@ def parseRepo(path, repo_name):
     #filelist for multimetric
     filelist = []
 
-    for path, subdirs, list in os.walk("."):
+    for filepath, subdirs, list in os.walk("."):
         for name in list:
-            fp = os.path.join(path, name)
+            fp = os.path.join(filepath, name)
             if allowfile(fp):
                 file = {
                     "size" : os.path.getsize(fp),
@@ -292,7 +291,8 @@ def parseRepo(path, repo_name):
     upload(sizes_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/sizes", repo_name)
 
     # Run Multimetric
-    debugLog(path, "Analyzing repository with Multimetric", True)
+    debugLog(repo_name, "Analyzing repository with Multimetric", True)
+
     stats_output_file = os.path.join(output_dir, repo_name + ".stats.json")
     stats_error_file = os.path.join(output_dir, repo_name + ".stats.err")
 
@@ -303,6 +303,7 @@ def parseRepo(path, repo_name):
             subprocess.check_call(["multimetric"] + filelist, stdout=f, stderr=e, encoding='utf-8')
     upload(stats_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/stats", repo_name)
 
+    # Run SEMGrep
     debugLog(repo_name, "Scanning repository", True)
     findings_output_file = os.path.join(output_dir, repo_name + ".findings.json")
     findings_error_file = os.path.join(output_dir, repo_name + ".findings.err")
@@ -322,32 +323,41 @@ def parseRepo(path, repo_name):
 def scanRepos(config):
 
     # Loop over all remote repositories from config file
-    for repo_url in config['repos']:
+    repos = config['repos']
+    if repos:
+        for repo_url in repos:
 
-        match = re.search("#*\/(.*)", repo_url)
-        repo_name = match.group(1)
-        debugLog(repo_name, "Processing", True)
-        temp_dir = os.path.join(os.getcwd(), "temp_repo")
-        os.makedirs(temp_dir, exist_ok=True)
-        try:
-            subprocess.check_call(["git", "clone", repo_url, temp_dir])
-        except subprocess.CalledProcessError:
-            debugLog(repo_url, "Failed to clone", True)
-            continue
+            match = re.search("#*\/(.*)", repo_url)
+            repo_name = match.group(1)
+            debugLog(repo_name, "Processing", True)
+            curr_dir = os.getcwd()
+            temp_dir = os.path.join(curr_dir, "temp_repo")
+            os.makedirs(temp_dir, exist_ok=True)
+            try:
+                subprocess.check_call(["git", "clone", repo_url, temp_dir])
+            except subprocess.CalledProcessError:
+                debugLog(repo_url, "Failed to clone", True)
+                continue
 
-        debugLog(repo_url, "Successfully cloned", True)
+            debugLog(repo_url, "Successfully cloned", True)
 
-        parseRepo(temp_dir, repo_name)
+            parseRepo(temp_dir, repo_name)
 
-        os.chdir("..")
+            os.chdir(curr_dir)
 
-        shutil.rmtree(temp_dir)
+            shutil.rmtree(temp_dir)
+    else:
+        debugLog('', "No remote repos", True)
 
     # Loop over all local repositories from config file
-    for repo_path in config['localrepos']:
-        match = re.search("#*\/(.*)", repo_path)
-        repo_name = match.group(1)
-        parseRepo(repo_path, repo_name)
+    localrepos = config['localrepos']
+    if localrepos:
+        for repo_path in localrepos:
+            match = re.search("#*\/(.*)", repo_path)
+            repo_name = match.group(1)
+            parseRepo(repo_path, repo_name)
+    else:
+        debugLog('', "No local repos", True)
 
     debugLog('', "All done", True)
 
