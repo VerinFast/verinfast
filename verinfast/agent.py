@@ -57,17 +57,26 @@ def debugLog(msg, tag='Debug Log:', display=False):
             print(output)
 
 def main():
+    global shouldUpload
+    global reportId
+    global baseUrl
+    global corsisId
+    global modules_code_git_start
+    global config
+
     config = setup()
     debugLog(config, "Config", True)
 
     shouldUpload = config['should_upload']
+    debugLog(shouldUpload, "Should upload", True)
     reportId = config['report']['id']
     baseUrl = config['baseurl']
     modules_code_git_start = config['baseurl'] #config['modules']['code']['git']['start']
 
     if shouldUpload:
         headers = {'content-type': 'application/json', 'Accept-Charset': 'UTF-8'}
-        corsisId = requests.get(f"{baseUrl}/report/{reportId}/CorsisCode", headers=headers)
+        corsisId = requests.get(f"{baseUrl}/report/{reportId}/CorsisCode", headers=headers).content.decode('utf-8')
+        debugLog(corsisId, "Report Run Id", True)
     else :
         print("ID only fetched for upload")
     scan(config)
@@ -132,13 +141,21 @@ def setup():
 
 ##### Upload #####
 def upload(file, route, repo=''):
+    global shouldUpload
+    global baseUrl
+
     if shouldUpload:
         with open(file, 'rb') as f:
-            response = requests.post(baseUrl + route, files={'file': f})
+            debugLog(f"{baseUrl}{route}", f"Uploading to")
+            headers = {
+                'Content-Type': 'application/json', 
+                'accept': 'application/json'
+            }
+            response = requests.post(baseUrl + route, data=f, headers=headers)
         if response.status_code == 200:
-            print(f"Successfully uploaded {file} for {repo} to the {route}.")
+            debugLog('', f"Successfully uploaded {file} for {repo} to {baseUrl}{route}.", True)
         else:
-            print(f"Failed to upload {file} for {repo} to the {route}.")
+            debugLog(response.status_code, f"Failed to upload {file} for {repo} to {baseUrl}{route}", True)
 
 #### Helpers #####
 def escapeChars(text):
@@ -238,7 +255,7 @@ def scan(config):
         git_output_file = os.path.join(output_dir, repo_name + ".git.log.json")
         with open(git_output_file, 'w') as f:
             f.write(json.dumps(finalArr))
-        upload(git_output_file, config, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/git")
+        upload(git_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/git", repo_name)
 
         debugLog(repo_url, "Gathering file sizes for", True)
         # Sizes for writing to output file
@@ -273,6 +290,8 @@ def scan(config):
         sizes_output_file = os.path.join(output_dir, repo_name + ".sizes.json")
         with open(sizes_output_file, 'w') as f:
             f.write(json.dumps(sizes))
+        upload(sizes_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/sizes", repo_name)
+
 
         debugLog(repo_url, "Analyzing repository with Multimetric", True)
         stats_output_file = os.path.join(output_dir, repo_name + ".stats.json")
@@ -283,7 +302,7 @@ def scan(config):
         with open(stats_output_file, 'w') as f:
             with open(stats_error_file, 'w') as e:
                 subprocess.check_call(["multimetric"] + filelist, stdout=f, stderr=e, encoding='utf-8')
-        upload(stats_output_file, config, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/stats")
+        upload(stats_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/stats", repo_name)
 
         debugLog(repo_url, "Scanning repository", True)
         findings_output_file = os.path.join(output_dir, repo_name + ".findings.json")
@@ -298,7 +317,7 @@ def scan(config):
                 "-o",
                 findings_output_file,
             ], stderr=e,)
-        upload(findings_output_file, config, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/findings")
+        upload(findings_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/findings", repo_name)
 
         os.chdir("..")
 
