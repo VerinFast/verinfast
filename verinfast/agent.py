@@ -24,6 +24,7 @@
 ##################################################################################
 
 import json
+import platform
 import subprocess
 import os
 import yaml
@@ -41,6 +42,13 @@ modules_code_git_start = ''
 
 # Flag for more verbose output
 debug=False
+
+uname = platform.uname()
+system = uname.system
+node = uname.node
+release = uname.release
+version = uname.version
+machine = uname.machine
 
 output_dir = os.path.join(os.getcwd(), "results")
 os.makedirs(output_dir, exist_ok=True)
@@ -260,14 +268,23 @@ def scan(config):
         debugLog(repo_url, "Gathering file sizes for", True)
         # Sizes for writing to output file
         # Intialize file list with "." as total size
+        repo_size = get_size(temp_dir)
+        git_size = get_size("./.git")
+        real_size= repo_size - git_size
+
         sizes = {
             "files":{
                 ".":{
-                    "size" : get_size(temp_dir),
+                    "size" : repo_size,
                     "loc" : 0,
                     "ext" : None,
                     "directory" : True
                 }
+            },
+            "metadata":{
+                "env": machine,
+                "real_size": real_size,
+                "uname": system
             }
         }
         #filelist for multimetric
