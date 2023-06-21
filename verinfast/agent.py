@@ -86,7 +86,7 @@ def main():
         print("ID only fetched for upload")
     
     if config['modules']['code']:
-        scan(config)
+        scanRepos(config)
 
 ##### Helpers #####
 newline = "\n" # TODO - Set to system appropriate newline character. This doesn't work with multimetric
@@ -185,10 +185,143 @@ def formatGitHash(hash):
     }
     return returnVal
 
-###### Scan ######
-def scan(config):
+def parseRepo(path, repo_name):
 
-    # Loop over all repositories from config file
+    os.chdir(path)
+
+    # Get Correct Branch
+    # TODO Get a list of branches and use most recent if no main or master
+    branch=""
+    try:
+        subprocess.check_call(["git", "checkout", "main"])
+        branch="main"
+    except subprocess.CalledProcessError:
+        try:
+            subprocess.check_call(["git", "checkout", "master"])
+            branch="master"
+        except subprocess.CalledProcessError:
+            raise Exception("Error checking out branch from git.")
+    branch=branch.strip()
+
+    # Git Stats
+    debugLog(repo_name, "Gathering source code statistics for", True)
+    command = f'''git log \
+        --since="{config["modules"]["code"]["git"]["start"]}" \
+        --numstat \
+        --format='%H' \
+        {branch} --
+    '''
+    try:
+        results=subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+        log = results.stdout.decode()
+    except subprocess.CalledProcessError:
+        raise Exception("Error getting log from git.")
+
+    resultArr = log.split("\n")
+    prevHash = ''
+    filesArr = []
+    finalArr = []
+    for line in resultArr:
+        lineArr = line.split("\t")
+        if len(lineArr) > 1:
+            filesArr.append({
+                "insertions": lineArr[0], 
+                "deletions": lineArr[1],
+                "path": lineArr[2]
+            })
+        else:
+            if len(lineArr) == 1 and lineArr[0] != '':
+                # Hit next file
+                if prevHash != '':
+                    # Not first one
+                    hashObj = formatGitHash(prevHash)
+                    hashObj['paths'] = filesArr
+                    finalArr.append(hashObj)
+                    filesArr = []
+                prevHash = lineArr[0]
+
+    debugLog(finalArr, f"{repo_name} Git Stats")
+
+    git_output_file = os.path.join(output_dir, repo_name + ".git.log.json")
+    with open(git_output_file, 'w') as f:
+        f.write(json.dumps(finalArr))
+    upload(git_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/git", repo_name)
+
+    # File Sizes and Info
+    debugLog(repo_name, "Gathering file sizes for", True)
+    # Sizes for writing to output file
+    # Intialize file list with "." as total size
+    repo_size = get_size(".")
+    git_size = get_size("./.git")
+    real_size= repo_size - git_size
+
+    sizes = {
+        "files":{
+            ".":{
+                "size" : repo_size,
+                "loc" : 0,
+                "ext" : None,
+                "directory" : True
+            }
+        },
+        "metadata":{
+            "env": machine,
+            "real_size": real_size,
+            "uname": system
+        }
+    }
+    #filelist for multimetric
+    filelist = []
+
+    for path, subdirs, list in os.walk("."):
+        for name in list:
+            fp = os.path.join(path, name)
+            if allowfile(fp):
+                file = {
+                    "size" : os.path.getsize(fp),
+                    "loc" : getloc(fp),
+                    "ext" : os.path.splitext(name)[1],
+                    "directory" : False
+                }
+                sizes["files"][fp] = file
+                filelist.append(fp)
+
+    sizes_output_file = os.path.join(output_dir, repo_name + ".sizes.json")
+    with open(sizes_output_file, 'w') as f:
+        f.write(json.dumps(sizes))
+    upload(sizes_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/sizes", repo_name)
+
+    # Run Multimetric
+    debugLog(path, "Analyzing repository with Multimetric", True)
+    stats_output_file = os.path.join(output_dir, repo_name + ".stats.json")
+    stats_error_file = os.path.join(output_dir, repo_name + ".stats.err")
+
+    # Calling multimetric with subproccess works, but we might want to call
+    # Multimetric directly, ala lines 91-110 from multimetric main
+    with open(stats_output_file, 'w') as f:
+        with open(stats_error_file, 'w') as e:
+            subprocess.check_call(["multimetric"] + filelist, stdout=f, stderr=e, encoding='utf-8')
+    upload(stats_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/stats", repo_name)
+
+    debugLog(repo_name, "Scanning repository", True)
+    findings_output_file = os.path.join(output_dir, repo_name + ".findings.json")
+    findings_error_file = os.path.join(output_dir, repo_name + ".findings.err")
+    with open(findings_error_file, 'a') as e:
+        subprocess.check_output([
+            "semgrep",
+            "scan",
+            "--config",
+            "auto",
+            "--json",
+            "-o",
+            findings_output_file,
+        ], stderr=e,)
+    upload(findings_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/findings", repo_name)
+
+###### Scan Repos ######
+def scanRepos(config):
+
+    # Loop over all remote repositories from config file
     for repo_url in config['repos']:
 
         match = re.search("#*\/(.*)", repo_url)
@@ -204,141 +337,17 @@ def scan(config):
 
         debugLog(repo_url, "Successfully cloned", True)
 
-        os.chdir(temp_dir)
-
-        # TODO Get a list of branches and use most recent if no main or master
-        branch=""
-        try:
-            subprocess.check_call(["git", "checkout", "main"])
-            branch="main"
-        except subprocess.CalledProcessError:
-            try:
-                subprocess.check_call(["git", "checkout", "master"])
-                branch="master"
-            except subprocess.CalledProcessError:
-                raise Exception("Error checking out branch from git.")
-        branch=branch.strip()
-
-        # Git Stats
-        debugLog(repo_url, "Gathering source code statistics for", True)
-        command = f'''git log \
-            --since="{config["modules"]["code"]["git"]["start"]}" \
-            --numstat \
-            --format='%H' \
-            {branch} --
-        '''
-
-        try:
-            results=subprocess.run(command, shell=True, stdout=subprocess.PIPE)
-            log = results.stdout.decode()
-        except subprocess.CalledProcessError:
-            raise Exception("Error getting log from git.")
-
-        resultArr = log.split("\n")
-        prevHash = ''
-        filesArr = []
-        finalArr = []
-        for line in resultArr:
-            lineArr = line.split("\t")
-            if len(lineArr) > 1:
-                filesArr.append({
-                    "insertions": lineArr[0], 
-                    "deletions": lineArr[1],
-                    "path": lineArr[2]
-                })
-            else:
-                if len(lineArr) == 1 and lineArr[0] != '':
-                    # Hit next file
-                    if prevHash != '':
-                        # Not first one
-                        hashObj = formatGitHash(prevHash)
-                        hashObj['paths'] = filesArr
-                        finalArr.append(hashObj)
-                        filesArr = []
-                    prevHash = lineArr[0]
-
-        debugLog(finalArr, f"{repo_name} Git Stats")
-
-        git_output_file = os.path.join(output_dir, repo_name + ".git.log.json")
-        with open(git_output_file, 'w') as f:
-            f.write(json.dumps(finalArr))
-        upload(git_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/git", repo_name)
-
-        debugLog(repo_url, "Gathering file sizes for", True)
-        # Sizes for writing to output file
-        # Intialize file list with "." as total size
-        repo_size = get_size(temp_dir)
-        git_size = get_size("./.git")
-        real_size= repo_size - git_size
-
-        sizes = {
-            "files":{
-                ".":{
-                    "size" : repo_size,
-                    "loc" : 0,
-                    "ext" : None,
-                    "directory" : True
-                }
-            },
-            "metadata":{
-                "env": machine,
-                "real_size": real_size,
-                "uname": system
-            }
-        }
-        #filelist for multimetric
-        filelist = []
-
-        for path, subdirs, list in os.walk(temp_dir):
-            for name in list:
-                fp = os.path.join(path, name)
-                rp = fp.replace(temp_dir, '.') # Just save relative path
-                if allowfile(fp):
-                    file = {
-                        "size" : os.path.getsize(fp),
-                        "loc" : getloc(fp),
-                        "ext" : os.path.splitext(name)[1],
-                        "directory" : False
-                    }
-                    sizes["files"][rp] = file
-                    filelist.append(fp)
-
-        sizes_output_file = os.path.join(output_dir, repo_name + ".sizes.json")
-        with open(sizes_output_file, 'w') as f:
-            f.write(json.dumps(sizes))
-        upload(sizes_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/sizes", repo_name)
-
-
-        debugLog(repo_url, "Analyzing repository with Multimetric", True)
-        stats_output_file = os.path.join(output_dir, repo_name + ".stats.json")
-        stats_error_file = os.path.join(output_dir, repo_name + ".stats.err")
-
-        # Calling multimetric with subproccess works, but we might want to call
-        # Multimetric directly, ala lines 91-110 from multimetric main
-        with open(stats_output_file, 'w') as f:
-            with open(stats_error_file, 'w') as e:
-                subprocess.check_call(["multimetric"] + filelist, stdout=f, stderr=e, encoding='utf-8')
-        upload(stats_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/stats", repo_name)
-
-        debugLog(repo_url, "Scanning repository", True)
-        findings_output_file = os.path.join(output_dir, repo_name + ".findings.json")
-        findings_error_file = os.path.join(output_dir, repo_name + ".findings.err")
-        with open(findings_error_file, 'a') as e:
-            subprocess.check_output([
-                "semgrep",
-                "scan",
-                "--config",
-                "auto",
-                "--json",
-                "-o",
-                findings_output_file,
-            ], stderr=e,)
-        upload(findings_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/findings", repo_name)
+        parseRepo(temp_dir, repo_name)
 
         os.chdir("..")
 
-        if not debug:
-            shutil.rmtree(temp_dir)
+        shutil.rmtree(temp_dir)
+
+    # Loop over all local repositories from config file
+    for repo_path in config['localrepos']:
+        match = re.search("#*\/(.*)", repo_path)
+        repo_name = match.group(1)
+        parseRepo(repo_path, repo_name)
 
     debugLog('', "All done", True)
 
