@@ -7,7 +7,7 @@
 #  Requirements:
 #  - Python3 - Test with "python3 --version"
 #  - Pip - Test with "pip -V"
-#  - SSH access to code repositories
+#  - SSH access to code repositories - Test with "git status"
 #  - Command line tool access to cloud hosting providers
 #  - Admin privileges on the computer used to run the agent.
 #
@@ -25,16 +25,12 @@
 
 import json
 import subprocess
-import importlib
-import sys
 import os
 import yaml
 import requests
 import shutil
 import re
 #from multimetric.fp import file_process # If we want to run multimetric directly
-import semgrep
-import jc
 
 shouldUpload = False
 config = FileNotFoundError
@@ -43,16 +39,26 @@ corsisId = 0
 baseUrl = ''
 modules_code_git_start = ''
 
-debug=True
+# Flag for more verbose output
+debug=False
 
-def debugLog(msg, tag='Debug Log:'):
+output_dir = os.path.join(os.getcwd(), "results")
+os.makedirs(output_dir, exist_ok=True)
+
+def debugLog(msg, tag='Debug Log:', display=False):
+    output = f"\n{tag}:\n{msg}"
     if debug:
-        print(f"{tag} {msg}")
+        print(output)
+    else:
+        logFile = output_dir + "log.txt"
+        with open(logFile, 'a') as f:
+            f.write(output)
+        if display:
+            print(output)
 
 def main():
     config = setup()
-    print("Config:")
-    print(config)
+    debugLog(config, "Config", True)
 
     shouldUpload = config['should_upload']
     reportId = config['report']['id']
@@ -98,22 +104,29 @@ def getloc(file):
         return 0
 
 ###### Setup ######
+def checkDependency(command, name):
+    if not shutil.which(command):
+        debugLog(f"{name} is required but it's not installed.", f"{name} status", False)
+        raise Exception(f"{name} is required but it's not installed.")
+    else:
+        debugLog(f"{name} is installed.", f"{name} status", True)
+
 def setup():
     # Read the config file
     with open('config.yaml') as f:
         config = yaml.safe_load(f)
 
     # Check if Python3 is installed. This would catch if run with Python 2
-    if not shutil.which("python3"):
-        raise Exception("Python3 is required but it's not installed.")
-
-    print("Python3 is installed.")
+    checkDependency("python3", "Python3")
 
     # Check if Git is installed
-    if not shutil.which("git"):
-        raise Exception("Git is required but it's not installed.")
+    checkDependency("git", "Git")
 
-    print("Git is installed.")
+    # Check if Multimetric is installed
+    checkDependency("multimetric", "Multimetric")
+
+    # Check if SEMGrep is installed
+    checkDependency("semgrep", "SEMGrep")
 
     return config
 
@@ -129,9 +142,7 @@ def upload(file, route, repo=''):
 
 #### Helpers #####
 def escapeChars(text):
-    debugLog(text, "text")
     fixedText = re.sub(r'([\"\{\}])', r'\\\1', text)
-    debugLog(fixedText, "fixedText")
     return(fixedText)
 
 def trimLineBreaks(text):
@@ -142,36 +153,32 @@ def formatGitHash(hash):
     author = subprocess.check_output(["git", "log", "-n1", "--pretty=format:'%aN <%aE>'", hash]).decode('utf-8')
     commit = subprocess.check_output(["git", "log", "-n1", "--pretty=format:%H", hash]).decode('utf-8')
     date = subprocess.check_output(["git", "log", "-n1", "--pretty=format:%aD", hash]).decode('utf-8')
-    debugLog(message, "message")
     returnVal = {
         "message": trimLineBreaks(message),
         "author": author,
         "commit": commit,
         "date": escapeChars(date)
     }
-    debugLog(returnVal, "returnVal")
     return returnVal
 
 ###### Scan ######
 def scan(config):
-    output_dir = os.path.join(os.getcwd(), "results")
-    os.makedirs(output_dir, exist_ok=True)
 
     # Loop over all repositories from config file
     for repo_url in config['repos']:
 
         match = re.search("#*\/(.*)", repo_url)
         repo_name = match.group(1)
-        print(f"Processing {repo_name}")
+        debugLog(repo_name, "Processing", True)
         temp_dir = os.path.join(os.getcwd(), "temp_repo")
         os.makedirs(temp_dir, exist_ok=True)
         try:
             subprocess.check_call(["git", "clone", repo_url, temp_dir])
         except subprocess.CalledProcessError:
-            print(f"Failed to clone {repo_url}")
+            debugLog(repo_url, "Failed to clone", True)
             continue
 
-        print(f"Successfully cloned {repo_url}")
+        debugLog(repo_url, "Successfully cloned", True)
 
         os.chdir(temp_dir)
 
@@ -189,7 +196,7 @@ def scan(config):
         branch=branch.strip()
 
         # Git Stats
-        print(f"Gathering source code statistics for {repo_url}...")
+        debugLog(repo_url, "Gathering source code statistics for", True)
         command = f'''git log \
             --since="{config["modules"]["code"]["git"]["start"]}" \
             --numstat \
@@ -221,19 +228,19 @@ def scan(config):
                     if prevHash != '':
                         # Not first one
                         hashObj = formatGitHash(prevHash)
-                        hashObj['path'] = filesArr
+                        hashObj['paths'] = filesArr
                         finalArr.append(hashObj)
                         filesArr = []
                     prevHash = lineArr[0]
 
-        debugLog(finalArr, "finalArr")
+        debugLog(finalArr, f"{repo_name} Git Stats")
 
         git_output_file = os.path.join(output_dir, repo_name + ".git.log.json")
         with open(git_output_file, 'w') as f:
             f.write(json.dumps(finalArr))
         upload(git_output_file, config, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/git")
 
-        print(f"Gathering file sizes for {repo_url}...")
+        debugLog(repo_url, "Gathering file sizes for", True)
         # Sizes for writing to output file
         # Intialize file list with "." as total size
         sizes = {
@@ -267,7 +274,7 @@ def scan(config):
         with open(sizes_output_file, 'w') as f:
             f.write(str(sizes))
 
-        print(f"Analyzing repository {repo_url} with Multimetric...")
+        debugLog(repo_url, "Analyzing repository with Multimetric", True)
         stats_output_file = os.path.join(output_dir, repo_name + ".stats.json")
         stats_error_file = os.path.join(output_dir, repo_name + ".stats.err")
 
@@ -278,7 +285,7 @@ def scan(config):
                 subprocess.check_call(["multimetric"] + filelist, stdout=f, stderr=e, encoding='utf-8')
         upload(stats_output_file, config, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/stats")
 
-        print(f"Scanning repository {repo_url}...")
+        debugLog(repo_url, "Scanning repository", True)
         findings_output_file = os.path.join(output_dir, repo_name + ".findings.json")
         findings_error_file = os.path.join(output_dir, repo_name + ".findings.err")
         with open(findings_error_file, 'a') as e:
@@ -294,9 +301,11 @@ def scan(config):
         upload(findings_output_file, config, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/findings")
 
         os.chdir("..")
-        #shutil.rmtree(temp_dir)
 
-    print("All done.")
+        if not debug:
+            shutil.rmtree(temp_dir)
+
+    debugLog('', "All done", True)
 
 # For test runs from commandline. Comment out before packaging.
 main()
