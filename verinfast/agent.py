@@ -38,7 +38,6 @@ config = FileNotFoundError
 reportId = 0
 corsisId = 0
 baseUrl = ''
-modules_code_git_start = ''
 
 # Flag for more verbose output
 debug=False
@@ -69,7 +68,6 @@ def main():
     global reportId
     global baseUrl
     global corsisId
-    global modules_code_git_start
     global config
 
     config = setup()
@@ -79,7 +77,6 @@ def main():
     debugLog(shouldUpload, "Should upload", True)
     reportId = config['report']['id']
     baseUrl = config['baseurl']
-    modules_code_git_start = config['baseurl'] #config['modules']['code']['git']['start']
 
     if shouldUpload:
         headers = {'content-type': 'application/json', 'Accept-Charset': 'UTF-8'}
@@ -87,7 +84,9 @@ def main():
         debugLog(corsisId, "Report Run Id", True)
     else :
         print("ID only fetched for upload")
-    scan(config)
+    
+    if config['modules']['code']:
+        scan(config)
 
 ##### Helpers #####
 newline = "\n" # TODO - Set to system appropriate newline character. This doesn't work with multimetric
