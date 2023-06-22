@@ -105,7 +105,7 @@ def allowfile(path):
     normpath = os.path.normpath(path)
     dirlist = normpath.split(os.sep)
     if ("node_modules" not in dirlist and
-        "git" not in dirlist and
+        ".git" not in dirlist and
         os.path.isfile(path) and 
         not os.path.islink(path)):
         return True
@@ -387,4 +387,3 @@ def scanCloud(config):
 
 # For test runs from commandline. Comment out before packaging.
 main()
-
