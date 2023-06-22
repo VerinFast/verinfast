@@ -160,5 +160,6 @@ cython_debug/
 #.idea/
 
 # Downloaded and results files
-./results
-./temp_repo
+verinfast/results
+verinfast/resultslog.txt
+verinfast/temp_repo

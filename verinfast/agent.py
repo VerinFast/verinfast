@@ -27,6 +27,7 @@ import json
 import platform
 import subprocess
 import os
+import time
 import yaml
 import requests
 import shutil
@@ -40,7 +41,7 @@ corsisId = 0
 baseUrl = ''
 
 # Flag for more verbose output
-debug=False
+debug=True
 
 uname = platform.uname()
 system = uname.system
@@ -54,14 +55,15 @@ os.makedirs(output_dir, exist_ok=True)
 
 def debugLog(msg, tag='Debug Log:', display=False):
     output = f"\n{tag}:\n{msg}"
+    logFile = output_dir + "log.txt"
+    with open(logFile, 'a') as f:
+        f.write(output)
     if debug:
+        output += "\n" + time.strftime("%H:%M:%S", time.localtime())
+    if display or debug:
         print(output)
-    else:
-        logFile = output_dir + "log.txt"
-        with open(logFile, 'a') as f:
-            f.write(output)
-        if display:
-            print(output)
+
+debugLog(time.strftime("%H:%M:%S", time.localtime()), "Started")
 
 def main():
     global shouldUpload
@@ -70,8 +72,12 @@ def main():
     global corsisId
     global config
 
-    config = setup()
+    # Read the config file
+    with open('config.yaml') as f:
+        config = yaml.safe_load(f)
     debugLog(config, "Config", True)
+
+    dependencies()
 
     shouldUpload = config['should_upload']
     debugLog(shouldUpload, "Should upload", True)
@@ -88,26 +94,35 @@ def main():
     if config['modules']['code']:
         scanRepos(config)
 
+    if config['modules']['cloud']:
+        scanCloud(config)
+
 ##### Helpers #####
-newline = "\n" # TODO - Set to system appropriate newline character. This doesn't work with multimetric
+#newline = "\n" # TODO - Set to system appropriate newline character. This doesn't work with multimetric
 
 # Excludes files in .git directories. Takes path of full path with filename
 def allowfile(path):
-    gitpattern = re.compile("^(.*\.git.*)$")
-    if not gitpattern.match(path) and os.path.isfile(path) and not os.path.islink(path):
+    normpath = os.path.normpath(path)
+    dirlist = normpath.split(os.sep)
+    if ("node_modules" not in dirlist and
+        "git" not in dirlist and
+        os.path.isfile(path) and 
+        not os.path.islink(path)):
         return True
     else:
         return False
 
-def get_size(start_path = '.'):
+# Get recursive size of a directory
+def get_raw_size(start_path = '.'):
     total_size = 0
     for dirpath, dirnames, filenames in os.walk(start_path):
         for f in filenames:
             fp = os.path.join(dirpath, f)
-            if allowfile(fp):
-                total_size += os.path.getsize(fp)
+            if(os.path.isfile(fp) and not os.path.islink(fp)):
+                total_size += os.path.getsize(fp) #os.stat(fp).st_size
     return total_size
 
+# Simple algorithm for lines of code in a file
 def getloc(file):
     try:
         count = 0
@@ -118,6 +133,10 @@ def getloc(file):
         return count
     except:
         return 0
+# Truncate large strings for display
+def truncate(text, length=100):
+    testStr = str(text) # Supports passing in Lists and other types
+    return((testStr[:length] + '..') if len(testStr) > length else testStr)
 
 ###### Setup ######
 def checkDependency(command, name):
@@ -127,11 +146,7 @@ def checkDependency(command, name):
     else:
         debugLog(f"{name} is installed.", f"{name} status", True)
 
-def setup():
-    # Read the config file
-    with open('config.yaml') as f:
-        config = yaml.safe_load(f)
-
+def dependencies():
     # Check if Python3 is installed. This would catch if run with Python 2
     checkDependency("python3", "Python3")
 
@@ -143,8 +158,6 @@ def setup():
 
     # Check if SEMGrep is installed
     checkDependency("semgrep", "SEMGrep")
-
-    return config
 
 ##### Upload #####
 def upload(file, route, repo=''):
@@ -164,15 +177,15 @@ def upload(file, route, repo=''):
         else:
             debugLog(response.status_code, f"Failed to upload {file} for {repo} to {baseUrl}{route}", True)
 
-#### Helpers #####
-def escapeChars(text):
+#### Helpers2 #####
+def escapeChars(text:str):
     fixedText = re.sub(r'([\"\{\}])', r'\\\1', text)
     return(fixedText)
 
-def trimLineBreaks(text):
+def trimLineBreaks(text:str):
     return(text.replace("\n", "").replace("\r",""))
 
-def formatGitHash(hash):
+def formatGitHash(hash:str):
     message = subprocess.check_output(["git", "log", "-n1", "--pretty=format:%B", hash]).decode('utf-8')
     author = subprocess.check_output(["git", "log", "-n1", "--pretty=format:%aN <%aE>", hash]).decode('utf-8')
     commit = subprocess.check_output(["git", "log", "-n1", "--pretty=format:%H", hash]).decode('utf-8')
@@ -185,7 +198,7 @@ def formatGitHash(hash):
     }
     return returnVal
 
-def parseRepo(path, repo_name):
+def parseRepo(path:str, repo_name:str):
     os.chdir(path)
 
     # Get Correct Branch
@@ -239,21 +252,24 @@ def parseRepo(path, repo_name):
                     filesArr = []
                 prevHash = lineArr[0]
 
-    debugLog(finalArr, f"{repo_name} Git Stats")
+    debugLog(truncate(finalArr), f"{repo_name} Git Stats")
 
     git_output_file = os.path.join(output_dir, repo_name + ".git.log.json")
     with open(git_output_file, 'w') as f:
-        f.write(json.dumps(finalArr))
+        f.write(json.dumps(finalArr, indent=4))
     upload(git_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/git", repo_name)
 
     # File Sizes and Info
     debugLog(repo_name, "Gathering file sizes for", True)
     # Sizes for writing to output file
     # Intialize file list with "." as total size
-    repo_size = get_size(".")
-    git_size = get_size("./.git")
-    real_size= repo_size - git_size
+    repo_size = get_raw_size(".")
+    git_size = get_raw_size("./.git")
 
+    # get sizes
+    real_size= repo_size - git_size
+    debugLog(repo_size, "Repo Size")
+    debugLog(git_size, "Git Size")
     sizes = {
         "files":{
             ".":{
@@ -275,11 +291,13 @@ def parseRepo(path, repo_name):
     for filepath, subdirs, list in os.walk("."):
         for name in list:
             fp = os.path.join(filepath, name)
+            extRe = re.search("^[^\.]*\.(.*)", name)
+            ext = extRe.group(1) if extRe else ''
             if allowfile(fp):
                 file = {
                     "size" : os.path.getsize(fp),
                     "loc" : getloc(fp),
-                    "ext" : os.path.splitext(name)[1],
+                    "ext" : ext, #os.path.splitext(name)[1],
                     "directory" : False
                 }
                 sizes["files"][fp] = file
@@ -287,7 +305,7 @@ def parseRepo(path, repo_name):
 
     sizes_output_file = os.path.join(output_dir, repo_name + ".sizes.json")
     with open(sizes_output_file, 'w') as f:
-        f.write(json.dumps(sizes))
+        f.write(json.dumps(sizes, indent=4))
     upload(sizes_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/sizes", repo_name)
 
     # Run Multimetric
@@ -300,6 +318,8 @@ def parseRepo(path, repo_name):
     # Multimetric directly, ala lines 91-110 from multimetric main
     with open(stats_output_file, 'w') as f:
         with open(stats_error_file, 'w') as e:
+            #### HERE not working with local repo
+            print(truncate(filelist))
             subprocess.check_call(["multimetric"] + filelist, stdout=f, stderr=e, encoding='utf-8')
     upload(stats_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/stats", repo_name)
 
@@ -326,8 +346,7 @@ def scanRepos(config):
     repos = config['repos']
     if repos:
         for repo_url in repos:
-
-            match = re.search("#*\/(.*)", repo_url)
+            match = re.search(".*\/(.*)", repo_url)
             repo_name = match.group(1)
             debugLog(repo_name, "Processing", True)
             curr_dir = os.getcwd()
@@ -350,16 +369,21 @@ def scanRepos(config):
         debugLog('', "No remote repos", True)
 
     # Loop over all local repositories from config file
-    localrepos = config['localrepos']
+    localrepos = config['local_repos']
     if localrepos:
         for repo_path in localrepos:
-            match = re.search("#*\/(.*)", repo_path)
+            match = re.search(".*\/(.*)", repo_path)
             repo_name = match.group(1)
             parseRepo(repo_path, repo_name)
     else:
         debugLog('', "No local repos", True)
 
     debugLog('', "All done", True)
+    debugLog(time.strftime("%H:%M:%S", time.localtime()), "Finished")
+
+###### Scan Cloud ######
+def scanCloud(config):
+    print("Do cloud scan")
 
 # For test runs from commandline. Comment out before packaging.
 main()
