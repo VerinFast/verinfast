@@ -32,7 +32,7 @@ import yaml
 import requests
 import shutil
 import re
-#from multimetric.fp import file_process # If we want to run multimetric directly
+#from modernmetric .fp import file_process # If we want to run modernmetric  directly
 
 shouldUpload = False
 config = FileNotFoundError
@@ -98,7 +98,7 @@ def main():
         scanCloud(config)
 
 ##### Helpers #####
-#newline = "\n" # TODO - Set to system appropriate newline character. This doesn't work with multimetric
+#newline = "\n" # TODO - Set to system appropriate newline character. This doesn't work with modernmetric 
 
 # Excludes files in .git directories. Takes path of full path with filename
 def allowfile(path):
@@ -153,8 +153,8 @@ def dependencies():
     # Check if Git is installed
     checkDependency("git", "Git")
 
-    # Check if Multimetric is installed
-    checkDependency("multimetric", "Multimetric")
+    # Check if Modernmetric  is installed
+    checkDependency("modernmetric ", "ModernMetric ")
 
     # Check if SEMGrep is installed
     checkDependency("semgrep", "SEMGrep")
@@ -285,7 +285,7 @@ def parseRepo(path:str, repo_name:str):
             "uname": system
         }
     }
-    #filelist for multimetric
+    #filelist for modernmetric
     filelist = []
 
     for filepath, subdirs, list in os.walk("."):
@@ -308,19 +308,17 @@ def parseRepo(path:str, repo_name:str):
         f.write(json.dumps(sizes, indent=4))
     upload(sizes_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/sizes", repo_name)
 
-    # Run Multimetric
-    debugLog(repo_name, "Analyzing repository with Multimetric", True)
+    # Run Modernmetric
+    debugLog(repo_name, "Analyzing repository with Modernmetric ", True)
 
     stats_output_file = os.path.join(output_dir, repo_name + ".stats.json")
     stats_error_file = os.path.join(output_dir, repo_name + ".stats.err")
 
-    # Calling multimetric with subproccess works, but we might want to call
-    # Multimetric directly, ala lines 91-110 from multimetric main
+    # Calling modernmetric with subproccess works, but we might want to call
+    # Modernmetric directly, ala lines 91-110 from modernmetric  main
     with open(stats_output_file, 'w') as f:
         with open(stats_error_file, 'w') as e:
-            #### HERE not working with local repo
-            print(truncate(filelist))
-            subprocess.check_call(["multimetric"] + filelist, stdout=f, stderr=e, encoding='utf-8')
+            subprocess.check_call(["modernmetric "] + filelist, stdout=f, stderr=e, encoding='utf-8')
     upload(stats_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/stats", repo_name)
 
     # Run SEMGrep
@@ -352,10 +350,14 @@ def scanRepos(config):
             curr_dir = os.getcwd()
             temp_dir = os.path.join(curr_dir, "temp_repo")
             os.makedirs(temp_dir, exist_ok=True)
+            debugLog(msg=repo_url, tag="Repo URL")
+            debugLog(msg=temp_dir, tag="Temp Directory")
             try:
-                subprocess.check_call(["git", "clone", repo_url, temp_dir])
+                #subprocess.check_call(["git", "clone", repo_url, temp_dir])
+                subprocess.check_output(["git", "clone", repo_url, temp_dir])
             except subprocess.CalledProcessError:
                 debugLog(repo_url, "Failed to clone", True)
+                exit(1)
                 continue
 
             debugLog(repo_url, "Successfully cloned", True)
