@@ -32,6 +32,8 @@ import yaml
 import requests
 import shutil
 import re
+
+from aws.aws import runAws
 #from modernmetric.fp import file_process # If we want to run modernmetric directly
 
 shouldUpload = False
@@ -84,18 +86,17 @@ def main():
     reportId = config['report']['id']
     baseUrl = config['baseurl']
 
-    if shouldUpload:
-        headers = {'content-type': 'application/json', 'Accept-Charset': 'UTF-8'}
-        corsisId = requests.get(f"{baseUrl}/report/{reportId}/CorsisCode", headers=headers).content.decode('utf-8')
-        debugLog(corsisId, "Report Run Id", True)
-    else :
-        print("ID only fetched for upload")
-    
-    if config['modules']['code']:
-        scanRepos(config)
-
-    if config['modules']['cloud']:
-        scanCloud(config)
+    if "modules" in config:
+        if "code" in config["modules"]:
+            if shouldUpload:
+                headers = {'content-type': 'application/json', 'Accept-Charset': 'UTF-8'}
+                corsisId = requests.get(f"{baseUrl}/report/{reportId}/CorsisCode", headers=headers).content.decode('utf-8')
+                debugLog(corsisId, "Report Run Id", True)
+            else :
+                print("ID only fetched for upload")
+            scanRepos(config)
+        if "cloud" in config['modules']:
+            scanCloud(config['modules']['cloud'])
 
 ##### Helpers #####
 #newline = "\n" # TODO - Set to system appropriate newline character. This doesn't work with modernmetric
@@ -160,7 +161,7 @@ def dependencies():
     checkDependency("semgrep", "SEMGrep")
 
 ##### Upload #####
-def upload(file, route, repo=''):
+def upload(file, route, source=''):
     global shouldUpload
     global baseUrl
 
@@ -173,9 +174,9 @@ def upload(file, route, repo=''):
             }
             response = requests.post(baseUrl + route, data=f, headers=headers)
         if response.status_code == 200:
-            debugLog('', f"Successfully uploaded {file} for {repo} to {baseUrl}{route}.", True)
+            debugLog('', f"Successfully uploaded {file} for {source} to {baseUrl}{route}.", True)
         else:
-            debugLog(response.status_code, f"Failed to upload {file} for {repo} to {baseUrl}{route}", True)
+            debugLog(response.status_code, f"Failed to upload {file} for {source} to {baseUrl}{route}", True)
 
 #### Helpers2 #####
 def escapeChars(text:str):
@@ -384,8 +385,15 @@ def scanRepos(config):
     debugLog(time.strftime("%H:%M:%S", time.localtime()), "Finished")
 
 ###### Scan Cloud ######
-def scanCloud(config):
-    print("Do cloud scan")
+def scanCloud(cloud_config):
+    print("Doing cloud scan")
+    # TODO Here support multiple providers
+
+    if(cloud_config["provider"] == "aws"):
+        aws_file = runAws(targeted_account=cloud_config["account"], start=cloud_config["start"], end=cloud_config["end"], path_to_output=output_dir)
+    debugLog(msg=aws_file, tag="AWS Results")
+    upload(file=aws_file, route=f"/report/{config['report']['id']}/Costs", source="AWS")
+
 
 # For test runs from commandline. Comment out before packaging.
 main()
