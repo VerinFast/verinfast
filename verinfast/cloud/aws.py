@@ -1,7 +1,8 @@
 import json
 import os
 import subprocess
-import sys
+
+from utils.utils import debugLog
 
 def runAws (targeted_account, start, end, path_to_output):
 
@@ -57,5 +58,5 @@ def runAws (targeted_account, start, end, path_to_output):
             with open(aws_output_file, 'w') as outfile:
                 outfile.write(json.dumps(upload, indent=4))
             return aws_output_file
-    print(profiles)
-    print(available_accounts)
+    debugLog(msg=profiles, tag="AWS Profiles")
+    debugLog(msg=available_accounts, tag="AWS Available Accounts")

@@ -17,7 +17,15 @@
 #    "verinfast"
 #
 #  Troubleshooting:
+#  Python
 #  - Run "python3 -m pip install --upgrade pip setuptools wheel"
+#  Git
+#  - Run "which git", "git --version"
+#   AWS
+#  - Run "which aws", "aws --version"
+#  Azure
+#  - Run "az git", "az --version"
+#  - Run "az account subscription list" to check subscription Id
 #
 #  Copyright 2023 Startos Inc.
 #
@@ -33,7 +41,9 @@ import requests
 import shutil
 import re
 
-from aws.aws import runAws
+from utils.utils import debugLog
+from cloud.aws import runAws
+from cloud.az_parse import runAzure
 #from modernmetric.fp import file_process # If we want to run modernmetric directly
 
 shouldUpload = False
@@ -41,9 +51,6 @@ config = FileNotFoundError
 reportId = 0
 corsisId = 0
 baseUrl = ''
-
-# Flag for more verbose output
-debug=True
 
 uname = platform.uname()
 system = uname.system
@@ -55,17 +62,7 @@ machine = uname.machine
 output_dir = os.path.join(os.getcwd(), "results")
 os.makedirs(output_dir, exist_ok=True)
 
-def debugLog(msg, tag='Debug Log:', display=False):
-    output = f"\n{tag}:\n{msg}"
-    logFile = output_dir + "log.txt"
-    with open(logFile, 'a') as f:
-        f.write(output)
-    if debug:
-        output += "\n" + time.strftime("%H:%M:%S", time.localtime())
-    if display or debug:
-        print(output)
-
-debugLog(time.strftime("%H:%M:%S", time.localtime()), "Started")
+debugLog(msg='', tag="Started")
 
 def main():
     global shouldUpload
@@ -77,17 +74,27 @@ def main():
     # Read the config file
     with open('config.yaml') as f:
         config = yaml.safe_load(f)
-    debugLog(config, "Config", True)
+    debugLog(msg=config,tag="Config", display=True)
 
-    dependencies()
+    global_dependencies()
 
     shouldUpload = config['should_upload']
-    debugLog(shouldUpload, "Should upload", True)
+    debugLog(msg=shouldUpload, tag="Should upload", display=True)
     reportId = config['report']['id']
     baseUrl = config['baseurl']
 
     if "modules" in config:
         if "code" in config["modules"]:
+
+            # Check if Git is installed
+            checkDependency("git", "Git")
+
+            # Check if Modernmetric is installed
+            checkDependency("modernmetric", "ModernMetric")
+
+            # Check if SEMGrep is installed
+            checkDependency("semgrep", "SEMGrep")
+
             if shouldUpload:
                 headers = {'content-type': 'application/json', 'Accept-Charset': 'UTF-8'}
                 corsisId = requests.get(f"{baseUrl}/report/{reportId}/CorsisCode", headers=headers).content.decode('utf-8')
@@ -96,7 +103,9 @@ def main():
                 print("ID only fetched for upload")
             scanRepos(config)
         if "cloud" in config['modules']:
-            scanCloud(config['modules']['cloud'])
+            scanCloud(config)
+
+    debugLog(msg='', tag="Finished")
 
 ##### Helpers #####
 #newline = "\n" # TODO - Set to system appropriate newline character. This doesn't work with modernmetric
@@ -147,18 +156,9 @@ def checkDependency(command, name):
     else:
         debugLog(f"{name} is installed.", f"{name} status", True)
 
-def dependencies():
+def global_dependencies():
     # Check if Python3 is installed. This would catch if run with Python 2
     checkDependency("python3", "Python3")
-
-    # Check if Git is installed
-    checkDependency("git", "Git")
-
-    # Check if Modernmetric is installed
-    checkDependency("modernmetric", "ModernMetric")
-
-    # Check if SEMGrep is installed
-    checkDependency("semgrep", "SEMGrep")
 
 ##### Upload #####
 def upload(file, route, source=''):
@@ -381,18 +381,35 @@ def scanRepos(config):
     else:
         debugLog('', "No local repos", True)
 
-    debugLog('', "All done", True)
-    debugLog(time.strftime("%H:%M:%S", time.localtime()), "Finished")
+    debugLog(time.strftime("%H:%M:%S", time.localtime()), "Finished repo scans")
 
 ###### Scan Cloud ######
-def scanCloud(cloud_config):
+def scanCloud(config):
     print("Doing cloud scan")
     # TODO Here support multiple providers
 
-    if(cloud_config["provider"] == "aws"):
-        aws_file = runAws(targeted_account=cloud_config["account"], start=cloud_config["start"], end=cloud_config["end"], path_to_output=output_dir)
-    debugLog(msg=aws_file, tag="AWS Results")
-    upload(file=aws_file, route=f"/report/{config['report']['id']}/Costs", source="AWS")
+    cloud_config = config['modules']['cloud']
+    print(cloud_config)
+
+    if None == cloud_config:
+        return
+
+    for provider in cloud_config:
+        if(provider["provider"] == "aws"):
+            # Check if AWS-CLI is installed
+            checkDependency("aws", "AWS Command-line tool")
+
+            aws_file = runAws(targeted_account=provider["account"], start=provider["start"], end=provider["end"], path_to_output=output_dir)
+            debugLog(msg=aws_file, tag="AWS Results")
+            upload(file=aws_file, route=f"/report/{config['report']['id']}/Costs", source="AWS")
+        
+        if(provider["provider"] == "azure"):
+            # Check if AWS-CLI is installed
+            checkDependency("az", "Azure Command-line tool")
+
+            azure_file = runAzure(subscription_id=provider["account"], start=provider["start"], end=provider["end"], path_to_output=output_dir)
+            debugLog(msg=azure_file, tag="Azure Results")
+            upload(file=azure_file, route=f"/report/{config['report']['id']}/Costs", source="Azure")
 
 
 # For test runs from commandline. Comment out before packaging.
