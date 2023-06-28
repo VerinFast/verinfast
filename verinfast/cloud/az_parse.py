@@ -55,7 +55,7 @@ def runAzure(subscription_id, start, end, path_to_output):
     response = conn.getresponse()
     print("Parsing response")
     data=json.loads(response.read().decode())
-    if data["error"]:
+    if 'error' in data:
         debugLog(msg=json.dumps(data["error"]), tag="Azure error")
         return
     
