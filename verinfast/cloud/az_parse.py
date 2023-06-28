@@ -1,5 +1,6 @@
 import http.client
 import json
+import os
 import re
 import ssl
 import subprocess
@@ -81,6 +82,8 @@ def runAzure(subscription_id, start, end, path_to_output):
         },
         "data":new_vals
     }
-    with open(f"{path_to_output}/az-cost-{subscription_id}.json", "w") as outfile:
+    
+    az_output_file = os.path.join(path_to_output, f'az-cost-{subscription_id}.json')
+    with open(az_output_file, "w") as outfile:
         outfile.write(json.dumps(upload, indent=4))
-
+    return az_output_file
