@@ -12,7 +12,7 @@
 #  - Admin privileges on the computer used to run the agent.
 #
 #  To run the Agent:
-#  - Install this package with "python3 setup.py install"
+#  - Install this package with "python3 setup.py install --user"
 #  - In a directory with a "config.yaml" file run
 #    "verinfast"
 #
@@ -26,6 +26,13 @@
 #  Azure
 #  - Run "az git", "az --version"
 #  - Run "az account subscription list" to check subscription Id
+#  Semgrep
+#  - Run "which semgrep", "semgrep --version"
+#  Pip
+#  - Run "which pip"
+#  - If no Pip, run:
+#     curl -o get-pip.py https://bootstrap.pypa.io/get-pip.py
+#     python get-pip.py  OR python3 get-pip.py
 #
 #  Copyright 2023 Startos Inc.
 #

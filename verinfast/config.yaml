@@ -6,6 +6,11 @@ should_upload: true
 report:
   id: 541
 modules:
+  code:
+    provider: corsis
+    git:
+      start: 2022-11-23
+    dry: false
   cloud: 
   - provider: azure
     account: d6f7992c-2a21-4a9c-b46b-e70d2c90070d
