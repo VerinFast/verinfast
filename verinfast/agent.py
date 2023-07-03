@@ -21,6 +21,7 @@
 #  - Run "python3 -m pip install --upgrade pip setuptools wheel"
 #  Git
 #  - Run "which git", "git --version"
+#  - Run " ssh -vT git@github.com" to test access to GitHub
 #   AWS
 #  - Run "which aws", "aws --version"
 #  Azure
@@ -33,6 +34,7 @@
 #  - If no Pip, run:
 #     curl -o get-pip.py https://bootstrap.pypa.io/get-pip.py
 #     python get-pip.py  OR python3 get-pip.py
+#  Run "sudo apt update"
 #
 #  Copyright 2023 Startos Inc.
 #
