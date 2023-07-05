@@ -74,4 +74,3 @@ def get_instances(accountId:int, path_to_output:str="./"):
 
 # Test Code
 # i = get_instances(436708548746)
-# print(i)

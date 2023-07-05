@@ -51,4 +51,6 @@ def get_instances(sub_id:str, path_to_output:str="./"):
     with open(gcp_output_file, 'w') as outfile:
         outfile.write(json.dumps(upload, indent=4))
     return gcp_output_file
-get_instances(sub_id="startupos-328814")
+
+# Test code
+# get_instances(sub_id="startupos-328814")

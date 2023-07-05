@@ -53,6 +53,10 @@ import re
 from utils.utils import debugLog
 from cloud.aws import runAws
 from cloud.az_parse import runAzure
+from cloud.aws.instances import get_instances as get_aws_instances
+from cloud.azure.instances import get_instances as get_az_instances
+from cloud.gcp.instances import get_instances as get_gcp_instances
+
 #from modernmetric.fp import file_process # If we want to run modernmetric directly
 
 shouldUpload = False
@@ -408,18 +412,25 @@ def scanCloud(config):
             # Check if AWS-CLI is installed
             checkDependency("aws", "AWS Command-line tool")
 
-            aws_file = runAws(targeted_account=provider["account"], start=provider["start"], end=provider["end"], path_to_output=output_dir)
-            debugLog(msg=aws_file, tag="AWS Results")
-            upload(file=aws_file, route=f"/report/{config['report']['id']}/Costs", source="AWS")
-        
+            aws_cost_file = runAws(targeted_account=provider["account"], start=provider["start"], end=provider["end"], path_to_output=output_dir)
+            debugLog(msg=aws_cost_file, tag="AWS Costs")
+            upload(file=aws_cost_file, route=f"/report/{config['report']['id']}/Costs", source="AWS")
+            aws_instance_file = get_aws_instances(accountId=provider["acconut"], path_to_output=output_dir)
+            debugLog(msg=aws_instance_file, tag="AWS Instances")
+
         if(provider["provider"] == "azure"):
             # Check if AWS-CLI is installed
             checkDependency("az", "Azure Command-line tool")
 
-            azure_file = runAzure(subscription_id=provider["account"], start=provider["start"], end=provider["end"], path_to_output=output_dir)
-            debugLog(msg=azure_file, tag="Azure Results")
-            upload(file=azure_file, route=f"/report/{config['report']['id']}/Costs", source="Azure")
+            azure_cost_file = runAzure(subscription_id=provider["account"], start=provider["start"], end=provider["end"], path_to_output=output_dir)
+            debugLog(msg=azure_cost_file, tag="Azure Costs")
+            upload(file=azure_cost_file, route=f"/report/{config['report']['id']}/Costs", source="Azure")
+            azure_instance_file = get_az_instances(sub_id=provider["account"], path_to_output=output_dir)
+            debugLog(msg=azure_instance_file, tag="Azure instances")
 
+        if provider["provider"] == "gcp":
+            gcp_instance_file = get_gcp_instances(sub_id=provider["account"], path_to_output=output_dir)
+            debugLog(msg=gcp_instance_file, tag="GCP instances")
 
 # For test runs from commandline. Comment out before packaging.
 main()
