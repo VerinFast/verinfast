@@ -5,7 +5,6 @@ import subprocess
 from utils.utils import debugLog
 
 def runAws (targeted_account, start, end, path_to_output):
-
     results=subprocess.run('aws configure list-profiles', shell=True, stdout=subprocess.PIPE)
     text=results.stdout.decode()
     profiles=[]

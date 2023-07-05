@@ -17,7 +17,7 @@ modules:
     start: "2023-05-01"
     end: "2023-06-01"
   - provider: aws
-    account: 655761076522
+    account: 436708548746
     start: "2023-05-01"
     end: "2023-06-01"
 repos:
