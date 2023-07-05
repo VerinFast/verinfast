@@ -72,6 +72,6 @@ def get_instances(accountId:int, path_to_output:str="./"):
         outfile.write(json.dumps(upload, indent=4))
     return aws_output_file
 
-i = get_instances(436708548746)
-
-print(i)
+# Test Code
+# i = get_instances(436708548746)
+# print(i)
