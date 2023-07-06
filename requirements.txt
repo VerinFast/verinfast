@@ -9,3 +9,4 @@ azure-mgmt-network
 google-cloud-compute
 google-cloud-storage
 google-cloud-monitoring
+pandas
