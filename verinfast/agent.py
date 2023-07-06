@@ -56,6 +56,7 @@ from cloud.az_parse import runAzure
 #from modernmetric.fp import file_process # If we want to run modernmetric directly
 
 shouldUpload = False
+dry = False
 config = FileNotFoundError
 reportId = 0
 corsisId = 0
@@ -75,6 +76,7 @@ debugLog(msg='', tag="Started")
 
 def main():
     global shouldUpload
+    global dry
     global reportId
     global baseUrl
     global corsisId
@@ -94,6 +96,8 @@ def main():
 
     if "modules" in config:
         if "code" in config["modules"]:
+
+            dry = config['modules']['code']['dry']
 
             # Check if Git is installed
             checkDependency("git", "Git")
@@ -120,14 +124,14 @@ def main():
 #newline = "\n" # TODO - Set to system appropriate newline character. This doesn't work with modernmetric
 
 # Excludes files in .git directories. Takes path of full path with filename
-def allowfile(path):
+def allowfile(path, allowDir=False):
     normpath = os.path.normpath(path)
     dirlist = normpath.split(os.sep)
     if ("node_modules" not in dirlist and
         ".git" not in dirlist and
-        os.path.isfile(path) and 
-        not os.path.islink(path)):
-        return True
+        not os.path.islink(path) and
+        (os.path.isfile(path) or allowDir)):
+            return True
     else:
         return False
 
@@ -156,6 +160,12 @@ def getloc(file):
 def truncate(text, length=100):
     testStr = str(text) # Supports passing in Lists and other types
     return((testStr[:length] + '..') if len(testStr) > length else testStr)
+
+# Chunk a list
+def chunks(lst, n):
+    """Yield successive n-sized chunks from lst."""
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
 
 ###### Setup ######
 def checkDependency(command, name):
@@ -297,13 +307,15 @@ def parseRepo(path:str, repo_name:str):
     }
     #filelist for modernmetric
     filelist = []
+    dirlist = []
 
     for filepath, subdirs, list in os.walk("."):
+        #print(subdirs)
         for name in list:
             fp = os.path.join(filepath, name)
             extRe = re.search("^[^\.]*\.(.*)", name)
             ext = extRe.group(1) if extRe else ''
-            if allowfile(fp):
+            if allowfile(path=fp):
                 file = {
                     "size" : os.path.getsize(fp),
                     "loc" : getloc(fp),
@@ -312,6 +324,11 @@ def parseRepo(path:str, repo_name:str):
                 }
                 sizes["files"][fp] = file
                 filelist.append(fp)
+        if len(subdirs) > 0:
+            for dir in subdirs:
+                dp = os.path.join(filepath, dir)
+                if allowfile(path=dp, allowDir=True):
+                    dirlist.append(dp)
 
     sizes_output_file = os.path.join(output_dir, repo_name + ".sizes.json")
     with open(sizes_output_file, 'w') as f:
@@ -326,9 +343,12 @@ def parseRepo(path:str, repo_name:str):
 
     # Calling modernmetric with subproccess works, but we might want to call
     # Modernmetric directly, ala lines 91-110 from modernmetric main
+    # TODO support long lists of files. dirlist doesn't work
+    debugLog(msg=truncate(text=dirlist), tag='Directory List')
     with open(stats_output_file, 'w') as f:
         with open(stats_error_file, 'w') as e:
             subprocess.check_call(["modernmetric"] + filelist, stdout=f, stderr=e, encoding='utf-8')
+            #subprocess.check_call(["modernmetric"] + dirlist, stdout=f, stderr=e, encoding='utf-8')
     upload(stats_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/stats", repo_name)
 
     # Run SEMGrep
@@ -351,54 +371,60 @@ def parseRepo(path:str, repo_name:str):
 def scanRepos(config):
 
     # Loop over all remote repositories from config file
-    repos = config['repos']
-    if repos:
-        for repo_url in repos:
-            match = re.search(".*\/(.*)", repo_url)
-            repo_name = match.group(1)
-            debugLog(repo_name, "Processing", True)
-            curr_dir = os.getcwd()
-            temp_dir = os.path.join(curr_dir, "temp_repo")
-            os.makedirs(temp_dir, exist_ok=True)
-            debugLog(msg=repo_url, tag="Repo URL")
-            debugLog(msg=temp_dir, tag="Temp Directory")
-            try:
-                #subprocess.check_call(["git", "clone", repo_url, temp_dir])
-                subprocess.check_output(["git", "clone", repo_url, temp_dir])
-            except subprocess.CalledProcessError:
-                debugLog(repo_url, "Failed to clone", True)
-                exit(1)
-                continue
+    if 'repos' in config:
+        repos = config['repos']
+        if repos:
+            for repo_url in repos:
+                match = re.search(".*\/(.*)", repo_url)
+                repo_name = match.group(1)
+                debugLog(repo_name, "Processing", True)
+                curr_dir = os.getcwd()
+                temp_dir = os.path.join(curr_dir, "temp_repo")
+                if not dry:
+                    os.makedirs(temp_dir, exist_ok=True)
+                debugLog(msg=repo_url, tag="Repo URL")
+                debugLog(msg=temp_dir, tag="Temp Directory")
+                if not dry:
+                    try:
+                        #subprocess.check_call(["git", "clone", repo_url, temp_dir])
+                        subprocess.check_output(["git", "clone", repo_url, temp_dir])
+                    except subprocess.CalledProcessError:
+                        debugLog(repo_url, "Failed to clone", True)
+                        exit(1)
+                        continue
 
-            debugLog(repo_url, "Successfully cloned", True)
+                    debugLog(repo_url, "Successfully cloned", True)
 
-            parseRepo(temp_dir, repo_name)
+                parseRepo(temp_dir, repo_name)
 
-            os.chdir(curr_dir)
+                os.chdir(curr_dir)
 
-            shutil.rmtree(temp_dir)
+                shutil.rmtree(temp_dir)
+        else:
+            debugLog('', "No remote repos", True)
     else:
         debugLog('', "No remote repos", True)
 
     # Loop over all local repositories from config file
-    localrepos = config['local_repos']
-    if localrepos:
-        for repo_path in localrepos:
-            match = re.search(".*\/(.*)", repo_path)
-            repo_name = match.group(1)
-            parseRepo(repo_path, repo_name)
+    if 'local_repos' in config:
+        localrepos = config['local_repos']
+        if localrepos:
+            for repo_path in localrepos:
+                match = re.search(".*\/(.*)", repo_path)
+                repo_name = match.group(1)
+                parseRepo(repo_path, repo_name)
+        else:
+            debugLog('', "No local repos", True)
     else:
         debugLog('', "No local repos", True)
 
-    debugLog(time.strftime("%H:%M:%S", time.localtime()), "Finished repo scans")
+        debugLog(time.strftime("%H:%M:%S", time.localtime()), "Finished repo scans")
 
 ###### Scan Cloud ######
 def scanCloud(config):
-    print("Doing cloud scan")
-    # TODO Here support multiple providers
-
+    debugLog(msg='',tag="Doing cloud scan",display=True)
     cloud_config = config['modules']['cloud']
-    print(cloud_config)
+    debugLog(msg=cloud_config, tag='Cloud Config')
 
     if None == cloud_config:
         return
