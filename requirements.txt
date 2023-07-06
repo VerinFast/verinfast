@@ -1,4 +1,4 @@
-modernmetric
+modernmetric>=1.0.1
 PyYAML
 requests
 semgrep
