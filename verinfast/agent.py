@@ -417,6 +417,7 @@ def scanCloud(config):
             upload(file=aws_cost_file, route=f"/report/{config['report']['id']}/Costs", source="AWS")
             aws_instance_file = get_aws_instances(accountId=provider["acconut"], path_to_output=output_dir)
             debugLog(msg=aws_instance_file, tag="AWS Instances")
+            upload(file=aws_instance_file, route=f"/report/{config['report']['id']}/instances", source="AWS")
 
         if(provider["provider"] == "azure"):
             # Check if AWS-CLI is installed
@@ -427,10 +428,12 @@ def scanCloud(config):
             upload(file=azure_cost_file, route=f"/report/{config['report']['id']}/Costs", source="Azure")
             azure_instance_file = get_az_instances(sub_id=provider["account"], path_to_output=output_dir)
             debugLog(msg=azure_instance_file, tag="Azure instances")
+            upload(file=azure_instance_file, route=f"/report/{config['report']['id']}/instances", source="Azure")
 
         if provider["provider"] == "gcp":
             gcp_instance_file = get_gcp_instances(sub_id=provider["account"], path_to_output=output_dir)
             debugLog(msg=gcp_instance_file, tag="GCP instances")
+            upload(file=gcp_instance_file, route=f"/report/{config['report']['id']}/instances", source="GCP")
 
 # For test runs from commandline. Comment out before packaging.
 main()
