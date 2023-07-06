@@ -7,3 +7,5 @@ azure-identity
 azure-mgmt-compute
 azure-mgmt-network
 google-cloud-compute
+google-cloud-storage
+google-cloud-monitoring

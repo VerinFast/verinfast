@@ -51,8 +51,8 @@ import shutil
 import re
 
 from utils.utils import debugLog
-from cloud.aws import runAws
-from cloud.az_parse import runAzure
+from cloud.aws.costs import runAws
+from cloud.azure.costs import runAzure
 from cloud.aws.instances import get_instances as get_aws_instances
 from cloud.azure.instances import get_instances as get_az_instances
 from cloud.gcp.instances import get_instances as get_gcp_instances
