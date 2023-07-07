@@ -2,3 +2,8 @@ modernmetric>=1.0.2
 PyYAML
 requests
 semgrep
+boto3
+azure-identity
+azure-mgmt-compute
+azure-mgmt-network
+google-cloud-compute
