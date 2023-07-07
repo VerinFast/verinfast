@@ -363,8 +363,7 @@ def parseRepo(path:str, repo_name:str):
         # Modernmetric directly, ala lines 91-110 from modernmetric main
         with open(stats_output_file, 'w') as f:
             with open(stats_error_file, 'w') as e:
-                #subprocess.check_call(["modernmetric"] + filelist, stdout=f, stderr=e, encoding='utf-8')
-                subprocess.check_call(["python3","/home/stconrad/multimetric/modernmetric/__main__.py", f"--file={stats_input_file}"], stdout=f, stderr=e, encoding='utf-8')
+                subprocess.check_call(["modernmetric", f"--file={stats_input_file}"], stdout=f, stderr=e, encoding='utf-8')
 
     upload(stats_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/stats", repo_name)
 
