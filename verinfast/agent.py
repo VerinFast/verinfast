@@ -51,7 +51,7 @@ import shutil
 import re
 
 from utils.utils import debugLog
-from cloud.aws import runAws
+from cloud.aws.aws import runAws
 from cloud.az_parse import runAzure
 from cloud.aws.instances import get_instances as get_aws_instances
 from cloud.azure.instances import get_instances as get_az_instances
@@ -415,7 +415,7 @@ def scanCloud(config):
             aws_cost_file = runAws(targeted_account=provider["account"], start=provider["start"], end=provider["end"], path_to_output=output_dir)
             debugLog(msg=aws_cost_file, tag="AWS Costs")
             upload(file=aws_cost_file, route=f"/report/{config['report']['id']}/Costs", source="AWS")
-            aws_instance_file = get_aws_instances(accountId=provider["acconut"], path_to_output=output_dir)
+            aws_instance_file = get_aws_instances(accountId=provider["account"], path_to_output=output_dir)
             debugLog(msg=aws_instance_file, tag="AWS Instances")
             upload(file=aws_instance_file, route=f"/report/{config['report']['id']}/instances", source="AWS")
 

@@ -3,7 +3,7 @@ import os
 
 from google.cloud import compute_v1
 
-from zones import zones
+from cloud.gcp.zones import zones
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="/Users/jason/.config/gcloud/application_default_credentials.json"
 

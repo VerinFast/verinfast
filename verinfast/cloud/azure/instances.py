@@ -10,6 +10,7 @@ def get_instances(sub_id:str, path_to_output:str="./"):
     client = ComputeManagementClient(credential=DefaultAzureCredential(), subscription_id=sub_id)
     networkClient = NetworkManagementClient(credential=DefaultAzureCredential(), subscription_id=sub_id)
     res = client.virtual_machines.list_all()
+    print(my_instances)
     for vm in res:
         s = vm.storage_profile.os_disk.managed_disk.id
         tgt = s.split('resourceGroups/')[1]
@@ -35,12 +36,11 @@ def get_instances(sub_id:str, path_to_output:str="./"):
         architecture = "x86_64"
         if "D2p" in hw or "E2p" in hw:
                 architecture="Arm"
-        print(status.serialize())
         my_instance = {
             "name": name,
             "type": hw,
             "state": status.display_status,
-            "zone": vm.zones[0],
+            "zone": vm.zones[0] if vm.zones else None,
             "region" : location,
             "subnet": subnet,
             "architecture": architecture,
