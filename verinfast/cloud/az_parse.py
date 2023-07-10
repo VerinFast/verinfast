@@ -5,7 +5,8 @@ import re
 import ssl
 import subprocess
 
-from utils.utils import debugLog
+from utils.utils import DebugLog
+debugLog = DebugLog(os.getcwd())
 
 def runAzure(subscription_id, start, end, path_to_output):
     ssl.SSLContext.verify_mode = property(lambda self: ssl.CERT_OPTIONAL, lambda self, newval: None)
@@ -56,7 +57,7 @@ def runAzure(subscription_id, start, end, path_to_output):
     print("Parsing response")
     data=json.loads(response.read().decode())
     if 'error' in data:
-        debugLog(msg=json.dumps(data["error"]), tag="Azure error")
+        debugLog.log(msg=json.dumps(data["error"]), tag="Azure error")
         return
     
     with open(f"{path_to_output}/azure_output_raw.json", "w") as outfile:
