@@ -2,7 +2,8 @@ import json
 import os
 import subprocess
 
-from utils.utils import debugLog
+from utils.utils import DebugLog
+debugLog = DebugLog(os.getcwd())
 
 def runAws (targeted_account, start, end, path_to_output):
     results=subprocess.run('aws configure list-profiles', shell=True, stdout=subprocess.PIPE)
@@ -57,5 +58,5 @@ def runAws (targeted_account, start, end, path_to_output):
             with open(aws_output_file, 'w') as outfile:
                 outfile.write(json.dumps(upload, indent=4))
             return aws_output_file
-    debugLog(msg=profiles, tag="AWS Profiles")
-    debugLog(msg=available_accounts, tag="AWS Available Accounts")
+    debugLog.log(msg=profiles, tag="AWS Profiles")
+    debugLog.log(msg=available_accounts, tag="AWS Available Accounts")

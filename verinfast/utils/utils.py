@@ -1,14 +1,17 @@
 import os
 import time
 
-# Flag for more verbose output
-debug=True
+class DebugLog: 
 
-def debugLog(msg, tag='Debug Log:', display=False):
-    output = f"\n{tag}:\n{msg}"
-    logFile = os.path.join(os.getcwd(), "log.txt")
-    output += "\n" + time.strftime("%H:%M:%S", time.localtime())
-    with open(logFile, 'a') as f:
-        f.write(output)
-    if display or debug:
-        print(output)
+    def __init__(self, path, debug=True):
+        self.path = path
+        self.logFile = os.path.join(path, "log.txt")
+        self.debug = debug
+
+    def log(self, msg, tag, display=False):
+        output = f"\n{tag}:\n{msg}"
+        output += "\n" + time.strftime("%H:%M:%S", time.localtime())
+        with open(self.logFile, 'a') as f:
+            f.write(output)
+        if display or self.debug:
+            print(output)

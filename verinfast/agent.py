@@ -46,11 +46,13 @@ import subprocess
 import os
 import time
 import yaml
-import requests
+import httpx
 import shutil
 import re
 
-from utils.utils import debugLog
+from http.client import HTTPConnection
+
+from utils.utils import DebugLog
 from cloud.aws.aws import runAws
 from cloud.az_parse import runAzure
 from cloud.aws.instances import get_instances as get_aws_instances
@@ -58,6 +60,8 @@ from cloud.azure.instances import get_instances as get_az_instances
 from cloud.gcp.instances import get_instances as get_gcp_instances
 
 #from modernmetric.fp import file_process # If we want to run modernmetric directly
+
+requestx = httpx.Client(http2=True,timeout=None)
 
 shouldUpload = False
 dry = False # Flag to not run scans, just upload files (if shouldUpload==True)
@@ -76,7 +80,9 @@ machine = uname.machine
 output_dir = os.path.join(os.getcwd(), "results")
 os.makedirs(output_dir, exist_ok=True)
 
-debugLog(msg='', tag="Started")
+debugLog = DebugLog(os.getcwd())
+
+debugLog.log(msg='', tag="Started")
 
 def main():
     global shouldUpload
@@ -89,12 +95,12 @@ def main():
     # Read the config file
     with open('config.yaml') as f:
         config = yaml.safe_load(f)
-    debugLog(msg=config,tag="Config", display=True)
+    debugLog.log(msg=config,tag="Config", display=True)
 
     global_dependencies()
 
     shouldUpload = config['should_upload']
-    debugLog(msg=shouldUpload, tag="Should upload", display=True)
+    debugLog.log(msg=shouldUpload, tag="Should upload", display=True)
     reportId = config['report']['id']
     baseUrl = config['baseurl']
 
@@ -113,16 +119,25 @@ def main():
             checkDependency("semgrep", "SEMGrep")
 
             if shouldUpload:
-                headers = {'content-type': 'application/json', 'Accept-Charset': 'UTF-8'}
-                corsisId = requests.get(f"{baseUrl}/report/{reportId}/CorsisCode", headers=headers).content.decode('utf-8')
-                debugLog(corsisId, "Report Run Id", True)
+                headers = {
+                    'content-type': 'application/json',
+                    'Accept-Charset': 'UTF-8',
+                    #'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'
+                }
+                debugLog.log(msg=f"{baseUrl}/report/{reportId}/CorsisCode", tag="Report Run Id Fetch", display=True)
+                response = requestx.get(f"{baseUrl}/report/{reportId}/CorsisCode", headers=headers)
+                corsisId = response.text
+                if corsisId and corsisId != '':
+                    debugLog.log(msg=corsisId, tag="Report Run Id", display=True)
+                else:
+                    raise Exception(f"{corsisId} returned for failed report Id fetch.")
             else :
                 print("ID only fetched for upload")
             scanRepos(config)
         if "cloud" in config['modules']:
             scanCloud(config)
 
-    debugLog(msg='', tag="Finished")
+    debugLog.log(msg='', tag="Finished")
 
 ##### Helpers #####
 #newline = "\n" # TODO - Set to system appropriate newline character. This doesn't work with modernmetric
@@ -174,10 +189,10 @@ def chunks(lst, n):
 ###### Setup ######
 def checkDependency(command, name):
     if not shutil.which(command):
-        debugLog(f"{name} is required but it's not installed.", f"{name} status", False)
+        debugLog.log(msg=f"{name} is required but it's not installed.", tag=f"{name} status", display=False)
         raise Exception(f"{name} is required but it's not installed.")
     else:
-        debugLog(f"{name} is installed.", f"{name} status", True)
+        debugLog.log(msg=f"{name} is installed.", tag=f"{name} status", display=True)
 
 def global_dependencies():
     # Check if Python3 is installed. This would catch if run with Python 2
@@ -190,16 +205,16 @@ def upload(file, route, source=''):
 
     if shouldUpload:
         with open(file, 'rb') as f:
-            debugLog(f"{baseUrl}{route}", f"Uploading to")
+            debugLog.log(msg=f"{baseUrl}{route}", tag=f"Uploading to")
             headers = {
                 'Content-Type': 'application/json', 
                 'accept': 'application/json'
             }
-            response = requests.post(baseUrl + route, data=f, headers=headers)
+            response = requestx.post(baseUrl + route, data=f, headers=headers)
         if response.status_code == 200:
-            debugLog('', f"Successfully uploaded {file} for {source} to {baseUrl}{route}.", True)
+            debugLog.log(msg='', tag=f"Successfully uploaded {file} for {source} to {baseUrl}{route}.", display=True)
         else:
-            debugLog(response.status_code, f"Failed to upload {file} for {source} to {baseUrl}{route}", True)
+            debugLog.log(msg=response.status_code, tag=f"Failed to upload {file} for {source} to {baseUrl}{route}", display=True)
 
 #### Helpers2 #####
 def escapeChars(text:str):
@@ -224,14 +239,14 @@ def formatGitHash(hash:str):
 
 def parseRepo(path:str, repo_name:str):
     if not dry:
-     os.chdir(path)
+        os.chdir(path)
 
     # Get Correct Branch
     # TODO Get a list of branches and use most recent if no main or master
     branch=""
     try:
         if not dry:
-            subprocess.check_call(["git", "checkout", "main"])
+            subprocess.check_call(["git", f"--work-tree={path}", "checkout", "main"])
             branch="main"
     except subprocess.CalledProcessError:
         try:
@@ -243,7 +258,7 @@ def parseRepo(path:str, repo_name:str):
     branch=branch.strip()
 
     # Git Stats
-    debugLog(repo_name, "Gathering source code statistics for", True)
+    debugLog.log(msg=repo_name, tag="Gathering source code statistics for", display=True)
     command = f'''git log \
         --since="{config["modules"]["code"]["git"]["start"]}" \
         --numstat \
@@ -282,7 +297,7 @@ def parseRepo(path:str, repo_name:str):
                         filesArr = []
                     prevHash = lineArr[0]
 
-        debugLog(truncate(finalArr), f"{repo_name} Git Stats")
+        debugLog.log(msg=truncate(finalArr), tag=f"{repo_name} Git Stats")
 
     git_output_file = os.path.join(output_dir, repo_name + ".git.log.json")
 
@@ -294,7 +309,7 @@ def parseRepo(path:str, repo_name:str):
 
     if not dry:
         # File Sizes and Info
-        debugLog(repo_name, "Gathering file sizes for", True)
+        debugLog.log(msg=repo_name, tag="Gathering file sizes for", display=True)
         # Sizes for writing to output file
         # Intialize file list with "." as total size
         repo_size = get_raw_size(".")
@@ -302,8 +317,8 @@ def parseRepo(path:str, repo_name:str):
 
         # get sizes
         real_size= repo_size - git_size
-        debugLog(repo_size, "Repo Size")
-        debugLog(git_size, "Git Size")
+        debugLog.log(msg=repo_size, tag="Repo Size")
+        debugLog.log(msg=git_size, tag="Git Size")
         sizes = {
             "files":{
                 ".":{
@@ -337,11 +352,6 @@ def parseRepo(path:str, repo_name:str):
                     }
                     sizes["files"][fp] = file
                     filelist.append({"name":name,"path":fp})
-            # if len(subdirs) > 0:
-            #     for dir in subdirs:
-            #         dp = os.path.join(filepath, dir)
-            #         if allowfile(path=dp, allowDir=True):
-            #             dirlist.append(dp)
 
     sizes_output_file = os.path.join(output_dir, repo_name + ".sizes.json")
     
@@ -353,7 +363,7 @@ def parseRepo(path:str, repo_name:str):
 
     if not dry:
         # Run Modernmetric
-        debugLog(repo_name, "Analyzing repository with Modernmetric", True)
+        debugLog.log(msg=repo_name, tag="Analyzing repository with Modernmetric", display=True)
 
     stats_input_file = os.path.join(output_dir, repo_name + ".filelist.json")
     stats_output_file = os.path.join(output_dir, repo_name + ".stats.json")
@@ -363,7 +373,7 @@ def parseRepo(path:str, repo_name:str):
         with open(stats_input_file, 'w') as f:
             f.write(json.dumps(filelist, indent=4))
 
-        # Calling modernmetric with subproccess works, but we might want to call
+        # Calling modernmetric with subprocess works, but we might want to call
         # Modernmetric directly, ala lines 91-110 from modernmetric main
         with open(stats_output_file, 'w') as f:
             with open(stats_error_file, 'w') as e:
@@ -375,9 +385,9 @@ def parseRepo(path:str, repo_name:str):
     findings_output_file = os.path.join(output_dir, repo_name + ".findings.json")
     findings_error_file = os.path.join(output_dir, repo_name + ".findings.err")
     if not dry:
-        debugLog(repo_name, "Scanning repository", True)
+        debugLog.log(msg=repo_name, tag="Scanning repository", display=True)
         with open(findings_error_file, 'a') as e:
-            subprocess.check_output([
+            subprocess.check_call([
                 "semgrep",
                 "scan",
                 "--config",
@@ -398,23 +408,23 @@ def scanRepos(config):
             for repo_url in repos:
                 match = re.search(".*\/(.*)", repo_url)
                 repo_name = match.group(1)
-                debugLog(repo_name, "Processing", True)
+                debugLog.log(msg=repo_name, tag="Processing", display=True)
                 curr_dir = os.getcwd()
                 temp_dir = os.path.join(curr_dir, "temp_repo")
                 if not dry:
                     os.makedirs(temp_dir, exist_ok=True)
-                debugLog(msg=repo_url, tag="Repo URL")
-                debugLog(msg=temp_dir, tag="Temp Directory")
+                debugLog.log(msg=repo_url, tag="Repo URL")
+                debugLog.log(msg=temp_dir, tag="Temp Directory")
                 if not dry:
                     try:
                         #subprocess.check_call(["git", "clone", repo_url, temp_dir])
                         subprocess.check_output(["git", "clone", repo_url, temp_dir])
                     except subprocess.CalledProcessError:
-                        debugLog(repo_url, "Failed to clone", True)
+                        debugLog.log(msg=repo_url, tag="Failed to clone", display=True)
                         exit(1)
                         continue
 
-                    debugLog(repo_url, "Successfully cloned", True)
+                    debugLog.log(msg=repo_url, tag="Successfully cloned", display=True)
 
                 parseRepo(temp_dir, repo_name)
 
@@ -422,9 +432,9 @@ def scanRepos(config):
                 if not dry:
                     shutil.rmtree(temp_dir)
         else:
-            debugLog('', "No remote repos", True)
+             debugLog.log(msg='', tag="No remote repos", display=True)
     else:
-        debugLog('', "No remote repos", True)
+        debugLog.log(msg='', tag="No remote repos", display=True)
 
     # Loop over all local repositories from config file
     if 'local_repos' in config:
@@ -435,17 +445,17 @@ def scanRepos(config):
                 repo_name = match.group(1)
                 parseRepo(repo_path, repo_name)
         else:
-            debugLog('', "No local repos", True)
+            debugLog.log(msg='', tag="No local repos", display=True)
     else:
-        debugLog('', "No local repos", True)
+        debugLog.log(msg='', tag="No local repos", display=True)
 
-        debugLog(time.strftime("%H:%M:%S", time.localtime()), "Finished repo scans")
+        debugLog.log(msg='', tag="Finished repo scans")
 
 ###### Scan Cloud ######
 def scanCloud(config):
-    debugLog(msg='',tag="Doing cloud scan",display=True)
+    debugLog.log(msg='',tag="Doing cloud scan",display=True)
     cloud_config = config['modules']['cloud']
-    debugLog(msg=cloud_config, tag='Cloud Config')
+    debugLog.log(msg=cloud_config, tag='Cloud Config')
 
     if None == cloud_config:
         return
@@ -456,10 +466,10 @@ def scanCloud(config):
             checkDependency("aws", "AWS Command-line tool")
 
             aws_cost_file = runAws(targeted_account=provider["account"], start=provider["start"], end=provider["end"], path_to_output=output_dir)
-            debugLog(msg=aws_cost_file, tag="AWS Costs")
+            debugLog.log(msg=aws_cost_file, tag="AWS Costs")
             upload(file=aws_cost_file, route=f"/report/{config['report']['id']}/Costs", source="AWS")
             aws_instance_file = get_aws_instances(accountId=provider["account"], path_to_output=output_dir)
-            debugLog(msg=aws_instance_file, tag="AWS Instances")
+            debugLog.log(msg=aws_instance_file, tag="AWS Instances")
             upload(file=aws_instance_file, route=f"/report/{config['report']['id']}/instances", source="AWS")
 
         if(provider["provider"] == "azure"):
@@ -467,15 +477,15 @@ def scanCloud(config):
             checkDependency("az", "Azure Command-line tool")
 
             azure_cost_file = runAzure(subscription_id=provider["account"], start=provider["start"], end=provider["end"], path_to_output=output_dir)
-            debugLog(msg=azure_cost_file, tag="Azure Costs")
+            debugLog.log(msg=azure_cost_file, tag="Azure Costs")
             upload(file=azure_cost_file, route=f"/report/{config['report']['id']}/Costs", source="Azure")
             azure_instance_file = get_az_instances(sub_id=provider["account"], path_to_output=output_dir)
-            debugLog(msg=azure_instance_file, tag="Azure instances")
+            debugLog.log(msg=azure_instance_file, tag="Azure instances")
             upload(file=azure_instance_file, route=f"/report/{config['report']['id']}/instances", source="Azure")
 
         if provider["provider"] == "gcp":
             gcp_instance_file = get_gcp_instances(sub_id=provider["account"], path_to_output=output_dir)
-            debugLog(msg=gcp_instance_file, tag="GCP instances")
+            debugLog.log(msg=gcp_instance_file, tag="GCP instances")
             upload(file=gcp_instance_file, route=f"/report/{config['report']['id']}/instances", source="GCP")
 
 # For test runs from commandline. Comment out before packaging.

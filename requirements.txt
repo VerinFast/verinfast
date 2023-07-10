@@ -1,6 +1,6 @@
 modernmetric>=1.0.2
 PyYAML
-requests
+httpx
 semgrep
 boto3
 azure-identity
