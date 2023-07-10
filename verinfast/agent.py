@@ -46,9 +46,11 @@ import subprocess
 import os
 import time
 import yaml
-import requests
+import httpx
 import shutil
 import re
+
+from http.client import HTTPConnection
 
 from utils.utils import debugLog
 from cloud.aws.aws import runAws
@@ -58,6 +60,8 @@ from cloud.azure.instances import get_instances as get_az_instances
 from cloud.gcp.instances import get_instances as get_gcp_instances
 
 #from modernmetric.fp import file_process # If we want to run modernmetric directly
+
+requestx = httpx.Client(http2=True,timeout=None)
 
 shouldUpload = False
 dry = False # Flag to not run scans, just upload files (if shouldUpload==True)
@@ -113,9 +117,18 @@ def main():
             checkDependency("semgrep", "SEMGrep")
 
             if shouldUpload:
-                headers = {'content-type': 'application/json', 'Accept-Charset': 'UTF-8'}
-                corsisId = requests.get(f"{baseUrl}/report/{reportId}/CorsisCode", headers=headers).content.decode('utf-8')
-                debugLog(corsisId, "Report Run Id", True)
+                headers = {
+                    'content-type': 'application/json',
+                    'Accept-Charset': 'UTF-8',
+                    #'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'
+                }
+                debugLog(f"{baseUrl}/report/{reportId}/CorsisCode", "Report Run Id Fetch", True)
+                response = requestx.get(f"{baseUrl}/report/{reportId}/CorsisCode", headers=headers)
+                corsisId = response.text
+                if corsisId and corsisId != '':
+                    debugLog(corsisId, "Report Run Id", True)
+                else:
+                    raise Exception(f"{corsisId} returned for failed report Id fetch.")
             else :
                 print("ID only fetched for upload")
             scanRepos(config)
@@ -195,7 +208,7 @@ def upload(file, route, source=''):
                 'Content-Type': 'application/json', 
                 'accept': 'application/json'
             }
-            response = requests.post(baseUrl + route, data=f, headers=headers)
+            response = requestx.post(baseUrl + route, data=f, headers=headers)
         if response.status_code == 200:
             debugLog('', f"Successfully uploaded {file} for {source} to {baseUrl}{route}.", True)
         else:
@@ -363,7 +376,7 @@ def parseRepo(path:str, repo_name:str):
         with open(stats_input_file, 'w') as f:
             f.write(json.dumps(filelist, indent=4))
 
-        # Calling modernmetric with subproccess works, but we might want to call
+        # Calling modernmetric with subprocess works, but we might want to call
         # Modernmetric directly, ala lines 91-110 from modernmetric main
         with open(stats_output_file, 'w') as f:
             with open(stats_error_file, 'w') as e:
@@ -377,7 +390,7 @@ def parseRepo(path:str, repo_name:str):
     if not dry:
         debugLog(repo_name, "Scanning repository", True)
         with open(findings_error_file, 'a') as e:
-            subprocess.check_output([
+            subprocess.check_call([
                 "semgrep",
                 "scan",
                 "--config",
