@@ -3,6 +3,7 @@ PyYAML
 httpx
 semgrep
 boto3
+pygount=1.6.1
 azure-identity
 azure-mgmt-compute
 azure-mgmt-network
