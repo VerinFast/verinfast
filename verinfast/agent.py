@@ -121,7 +121,7 @@ def main():
             # Check if SEMGrep is installed
             checkDependency("semgrep", "SEMGrep")
 
-            # Check if SEMGrep is installed
+            # Check if Pygount is installed
             checkDependency("pygount", "Pygount")
 
             if shouldUpload:
@@ -193,11 +193,12 @@ def chunks(lst, n):
 
 ###### Setup ######
 def checkDependency(command, name):
-    if not shutil.which(command):
+    which = shutil.which(command)
+    if not which:
         debugLog.log(msg=f"{name} is required but it's not installed.", tag=f"{name} status", display=False)
         raise Exception(f"{name} is required but it's not installed.")
     else:
-        debugLog.log(msg=f"{name} is installed.", tag=f"{name} status", display=True)
+        debugLog.log(msg=f"{name} is installed at {which}.", tag=f"{name} status", display=True)
 
 def global_dependencies():
     # Check if Python3 is installed. This would catch if run with Python 2
@@ -446,8 +447,8 @@ def scanRepos(config):
                 parseRepo(temp_dir, repo_name)
 
                 os.chdir(curr_dir)
-                #if not dry:
-                    #shutil.rmtree(temp_dir)
+                if not dry:
+                    shutil.rmtree(temp_dir)
         else:
              debugLog.log(msg='', tag="No remote repos", display=True)
     else:
@@ -490,7 +491,7 @@ def scanCloud(config):
             upload(file=aws_instance_file, route=f"/report/{config['report']['id']}/instances", source="AWS")
 
         if(provider["provider"] == "azure"):
-            # Check if AWS-CLI is installed
+            # Check if Azure CLI is installed
             checkDependency("az", "Azure Command-line tool")
 
             azure_cost_file = runAzure(subscription_id=provider["account"], start=provider["start"], end=provider["end"], path_to_output=output_dir)
@@ -501,6 +502,9 @@ def scanCloud(config):
             upload(file=azure_instance_file, route=f"/report/{config['report']['id']}/instances", source="Azure")
 
         if provider["provider"] == "gcp":
+            # Check if Google Cloud CLI is installed
+            checkDependency("gcloud", "Google Command-line tool")
+
             gcp_instance_file = get_gcp_instances(sub_id=provider["account"], path_to_output=output_dir)
             debugLog.log(msg=gcp_instance_file, tag="GCP instances")
             upload(file=gcp_instance_file, route=f"/report/{config['report']['id']}/instances", source="GCP")
