@@ -64,6 +64,7 @@ from cloud.gcp.instances import get_instances as get_gcp_instances
 requestx = httpx.Client(http2=True,timeout=None)
 
 shouldUpload = False
+shouldManualFileScan = True
 dry = False # Flag to not run scans, just upload files (if shouldUpload==True)
 config = FileNotFoundError
 reportId = 0
@@ -86,6 +87,7 @@ debugLog.log(msg='', tag="Started")
 
 def main():
     global shouldUpload
+    global shouldManualFileScan
     global dry
     global reportId
     global baseUrl
@@ -100,6 +102,7 @@ def main():
     global_dependencies()
 
     shouldUpload = config['should_upload']
+    shouldManualFileScan = config['should_manual_filescan'] if 'should_manual_filescan' in config else shouldManualFileScan
     debugLog.log(msg=shouldUpload, tag="Should upload", display=True)
     reportId = config['report']['id']
     baseUrl = config['baseurl']
@@ -118,11 +121,13 @@ def main():
             # Check if SEMGrep is installed
             checkDependency("semgrep", "SEMGrep")
 
+            # Check if Pygount is installed
+            checkDependency("pygount", "Pygount")
+
             if shouldUpload:
                 headers = {
                     'content-type': 'application/json',
                     'Accept-Charset': 'UTF-8',
-                    #'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'
                 }
                 debugLog.log(msg=f"{baseUrl}/report/{reportId}/CorsisCode", tag="Report Run Id Fetch", display=True)
                 response = requestx.get(f"{baseUrl}/report/{reportId}/CorsisCode", headers=headers)
@@ -188,11 +193,12 @@ def chunks(lst, n):
 
 ###### Setup ######
 def checkDependency(command, name):
-    if not shutil.which(command):
+    which = shutil.which(command)
+    if not which:
         debugLog.log(msg=f"{name} is required but it's not installed.", tag=f"{name} status", display=False)
         raise Exception(f"{name} is required but it's not installed.")
     else:
-        debugLog.log(msg=f"{name} is installed.", tag=f"{name} status", display=True)
+        debugLog.log(msg=f"{name} is installed at {which}.", tag=f"{name} status", display=True)
 
 def global_dependencies():
     # Check if Python3 is installed. This would catch if run with Python 2
@@ -307,8 +313,8 @@ def parseRepo(path:str, repo_name:str):
 
     upload(git_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/git", repo_name)
 
+    # Manual File Sizes and Info
     if not dry:
-        # File Sizes and Info
         debugLog.log(msg=repo_name, tag="Gathering file sizes for", display=True)
         # Sizes for writing to output file
         # Intialize file list with "." as total size
@@ -344,32 +350,44 @@ def parseRepo(path:str, repo_name:str):
                 extRe = re.search("^[^\.]*\.(.*)", name)
                 ext = extRe.group(1) if extRe else ''
                 if allowfile(path=fp):
-                    file = {
-                        "size" : os.path.getsize(fp),
-                        "loc" : getloc(fp),
-                        "ext" : ext, #os.path.splitext(name)[1],
-                        "directory" : False
-                    }
-                    sizes["files"][fp] = file
+                    if shouldManualFileScan:
+                        file = {
+                            "size" : os.path.getsize(fp),
+                            "loc" : getloc(fp),
+                            "ext" : ext, #os.path.splitext(name)[1],
+                            "directory" : False
+                        }
+                        sizes["files"][fp] = file
                     filelist.append({"name":name,"path":fp})
 
     sizes_output_file = os.path.join(output_dir, repo_name + ".sizes.json")
-    
+
     if not dry:
         with open(sizes_output_file, 'w') as f:
             f.write(json.dumps(sizes, indent=4))
-
     upload(sizes_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/sizes", repo_name)
 
+    # Run Pygount
+    pygount_output_file = os.path.join(output_dir, repo_name + ".pygount.json")
     if not dry:
-        # Run Modernmetric
-        debugLog.log(msg=repo_name, tag="Analyzing repository with Modernmetric", display=True)
+        debugLog.log(msg=repo_name, tag="Getting LOC from repository", display=True)
+        subprocess.check_call([
+            "pygount",
+            "-F=.git,node_modules", # Folders to ignore
+            "--format=json",
+            "-o",
+            pygount_output_file,
+            "." # Scan current directory
+        ])
+    upload(pygount_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/pygount", repo_name)
 
+    # Run Modernmetric
     stats_input_file = os.path.join(output_dir, repo_name + ".filelist.json")
     stats_output_file = os.path.join(output_dir, repo_name + ".stats.json")
     stats_error_file = os.path.join(output_dir, repo_name + ".stats.err")
 
     if not dry:
+        debugLog.log(msg=repo_name, tag="Analyzing repository with Modernmetric", display=True)
         with open(stats_input_file, 'w') as f:
             f.write(json.dumps(filelist, indent=4))
 
@@ -473,7 +491,7 @@ def scanCloud(config):
             upload(file=aws_instance_file, route=f"/report/{config['report']['id']}/instances", source="AWS")
 
         if(provider["provider"] == "azure"):
-            # Check if AWS-CLI is installed
+            # Check if Azure CLI is installed
             checkDependency("az", "Azure Command-line tool")
 
             azure_cost_file = runAzure(subscription_id=provider["account"], start=provider["start"], end=provider["end"], path_to_output=output_dir)
@@ -484,6 +502,9 @@ def scanCloud(config):
             upload(file=azure_instance_file, route=f"/report/{config['report']['id']}/instances", source="Azure")
 
         if provider["provider"] == "gcp":
+            # Check if Google Cloud CLI is installed
+            checkDependency("gcloud", "Google Command-line tool")
+
             gcp_instance_file = get_gcp_instances(sub_id=provider["account"], path_to_output=output_dir)
             debugLog.log(msg=gcp_instance_file, tag="GCP instances")
             upload(file=gcp_instance_file, route=f"/report/{config['report']['id']}/instances", source="GCP")
