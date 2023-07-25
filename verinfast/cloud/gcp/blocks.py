@@ -1,10 +1,11 @@
 import json
+import os
 import time
 
 from google.cloud.monitoring_v3 import query, QueryServiceClient, MetricServiceClient, TimeInterval, ListTimeSeriesRequest
 from google.cloud import storage
 
-def getBlocks(sub_id:str):
+def getBlocks(sub_id:str, path_to_output:str="./"):
     # Instantiates a client
     storage_client = storage.Client(project=sub_id)
 
@@ -33,34 +34,43 @@ def getBlocks(sub_id:str):
         }
     )
     my_buckets = []
+    known_buckets = {}
+    all_buckets = storage_client.list_buckets()
+    for bucket in all_buckets:
+        rp = bucket.retention_period
+        known_buckets[bucket.name] = {
+            "name": bucket.name,
+            "size": 0,
+            "retention": rp,
+            "public": False
+        }
+        iam = bucket.get_iam_policy()
+        permissions=[]
+        for b in iam.bindings:
+            p = {"permission": b["role"], "roles": list(b["members"])}
+            permissions.append(p)
+            if "allUsers" in b["members"]:
+                known_buckets[bucket.name]["public"] = True
+        known_buckets[bucket.name]["permissions"] = permissions
+
     for result in results:
         if result.resource and result.resource.labels:
             bn = result.resource.labels["bucket_name"]
             size = result.points[-1].value.double_value 
-            bucket = storage_client.get_bucket(bucket_or_name=bn)
-            rp = bucket.retention_period
-            my_bucket = {
-                "name": bn,
-                "size": size,
-                "retention": rp,
-                "public": False
+            if bn in known_buckets:
+                known_buckets[bn]["size"]=size
+    my_buckets = list(known_buckets.values())
+    upload = {
+                "metadata": {
+                    "provider": "gcp",
+                    "account": str(sub_id)
+                },
+                "data" : my_buckets
             }
-            configuration = bucket.iam_configuration
-            uniformEnabled = configuration['uniformBucketLevelAccess']['enabled']
-            iam = bucket.get_iam_policy()
-            permissions = []
-            blobs = bucket.list_blobs()
-            for bl in blobs:
-                i = bl.get_iam_policy()
-                for bin in i.bindings:
-                    print(bin)
-            for b in iam.bindings:
-                p = {"permission": b["role"], "roles": list(b["members"])}
-                permissions.append(p)
-                if "allUsers" in b["members"]:
-                    my_bucket["public"] = True
-            my_bucket["permissions"] = permissions
-            my_buckets.append(my_bucket)
-    return my_buckets
+    gcp_output_file = os.path.join(path_to_output, f'gcp-storage-{sub_id}.json')
+    with open(gcp_output_file, 'w') as outfile:
+        outfile.write(json.dumps(upload, indent=4))
+    return gcp_output_file
     
-print(json.dumps(getBlocks(sub_id="startupos-328814"), indent=4))
+# Test Code
+# getBlocks(sub_id="startupos-328814")
