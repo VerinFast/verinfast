@@ -404,16 +404,20 @@ def parseRepo(path:str, repo_name:str):
     findings_error_file = os.path.join(output_dir, repo_name + ".findings.err")
     if not dry:
         debugLog.log(msg=repo_name, tag="Scanning repository", display=True)
-        with open(findings_error_file, 'a') as e:
-            subprocess.check_call([
-                "semgrep",
-                "scan",
-                "--config",
-                "auto",
-                "--json",
-                "-o",
-                findings_output_file,
-            ], stderr=e,)
+        try:
+            with open(findings_error_file, 'a') as e:
+                subprocess.check_call([
+                    "semgrep",
+                    "scan",
+                    "--config",
+                    "auto",
+                    "--json",
+                    "-o",
+                    findings_output_file,
+                ], stderr=e,)
+        except subprocess.CalledProcessError as e:
+            output = e.output
+            debugLog.log(msg=output, tag="Scanning repository return", display=True)
     upload(findings_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/findings", repo_name)
 
 ###### Scan Repos ######
