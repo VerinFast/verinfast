@@ -3,7 +3,7 @@ import os
 
 import boto3
 
-import regions as r
+import cloud.aws.regions as r
 
 regions = r.regions
 
