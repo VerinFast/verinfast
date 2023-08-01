@@ -50,14 +50,16 @@ import httpx
 import shutil
 import re
 
-from http.client import HTTPConnection
-
 from utils.utils import DebugLog
-from cloud.aws.aws import runAws
-from cloud.az_parse import runAzure
+
+from cloud.aws.costs import runAws
+from cloud.azure.costs import runAzure
 from cloud.aws.instances import get_instances as get_aws_instances
 from cloud.azure.instances import get_instances as get_az_instances
 from cloud.gcp.instances import get_instances as get_gcp_instances
+from cloud.aws.blocks import getBlocks as get_aws_blocks
+from cloud.azure.blocks import getBlocks as get_az_blocks
+from cloud.gcp.blocks import getBlocks as get_gcp_blocks
 
 #from modernmetric.fp import file_process # If we want to run modernmetric directly
 
@@ -493,6 +495,9 @@ def scanCloud(config):
             aws_instance_file = get_aws_instances(accountId=provider["account"], path_to_output=output_dir)
             debugLog.log(msg=aws_instance_file, tag="AWS Instances")
             upload(file=aws_instance_file, route=f"/report/{config['report']['id']}/instances", source="AWS")
+            aws_block_file = get_aws_blocks(accountId=provider["account"], path_to_output=output_dir)
+            debugLog(msg=aws_block_file, tag="AWS Storage")
+            upload(file=aws_block_file, route=f"/report/{config['report']['id']}/storage", source="AWS")
 
         if(provider["provider"] == "azure"):
             # Check if Azure CLI is installed
@@ -504,6 +509,9 @@ def scanCloud(config):
             azure_instance_file = get_az_instances(sub_id=provider["account"], path_to_output=output_dir)
             debugLog.log(msg=azure_instance_file, tag="Azure instances")
             upload(file=azure_instance_file, route=f"/report/{config['report']['id']}/instances", source="Azure")
+            azure_block_file = get_az_blocks(sub_id=provider["account"], path_to_output=output_dir)
+            debugLog(msg=azure_block_file, tag="Azure Storage")
+            upload(file=azure_block_file, route=f"/report/{config['report']['id']}/storage", source="Azure")
 
         if provider["provider"] == "gcp":
             # Check if Google Cloud CLI is installed
@@ -512,6 +520,9 @@ def scanCloud(config):
             gcp_instance_file = get_gcp_instances(sub_id=provider["account"], path_to_output=output_dir)
             debugLog.log(msg=gcp_instance_file, tag="GCP instances")
             upload(file=gcp_instance_file, route=f"/report/{config['report']['id']}/instances", source="GCP")
+            gcp_block_file = get_gcp_blocks(sub_id=provider["account"], path_to_output=output_dir)
+            debugLog(msg=gcp_block_file, tag="GCP Storage")
+            upload(file=gcp_block_file, route=f"/report/{config['report']['id']}/storage", source="GCP")
 
 # For test runs from commandline. Comment out before packaging.
 main()
