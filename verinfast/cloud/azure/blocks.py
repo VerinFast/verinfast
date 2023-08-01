@@ -39,7 +39,7 @@ def getBlocks(sub_id:str, path_to_output:str="./"):
     my_buckets = list(known_buckets.values())
     upload = {
                 "metadata": {
-                    "provider": "gcp",
+                    "provider": "azure",
                     "account": str(sub_id)
                 },
                 "data" : my_buckets

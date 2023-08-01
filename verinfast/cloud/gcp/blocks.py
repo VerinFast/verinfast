@@ -48,7 +48,7 @@ def getBlocks(sub_id:str, path_to_output:str="./"):
         permissions=[]
         for b in iam.bindings:
             p = {"permission": b["role"], "roles": list(b["members"])}
-            permissions.append(p)
+            permissions.append(json.dumps(p))
             if "allUsers" in b["members"]:
                 known_buckets[bucket.name]["public"] = True
         known_buckets[bucket.name]["permissions"] = permissions
