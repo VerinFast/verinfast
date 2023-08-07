@@ -1,0 +1,1335 @@
+[
+    {
+        "source": "npm",
+        "name": "atd-api",
+        "specifier": "==0.9.0",
+        "license": "ISC",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "ext",
+        "specifier": "==1.7.0",
+        "license": "ISC",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "type",
+        "specifier": "==2.7.2",
+        "license": "ISC",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "v8-to-istanbul",
+        "specifier": "==9.0.1",
+        "license": "ISC",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@jridgewell/trace-mapping",
+        "specifier": "==0.3.17",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "convert-source-map",
+        "specifier": "==1.9.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "range-parser",
+        "specifier": "==1.2.1",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "path-exists",
+        "specifier": "==4.0.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "strip-bom",
+        "specifier": "==4.0.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "v8-compile-cache-lib",
+        "specifier": "==3.0.1",
+        "license": "MIT",
+        "requires": [],
+        "required_by": [],
+        "summary": "Require hook for automatic V8 compile cache persistence"
+    },
+    {
+        "source": "npm",
+        "name": "imurmurhash",
+        "specifier": "==0.1.4",
+        "license": "MIT",
+        "requires": [],
+        "required_by": [],
+        "summary": "An incremental implementation of MurmurHash3"
+    },
+    {
+        "source": "npm",
+        "name": "neo-async",
+        "specifier": "==2.6.2",
+        "license": "MIT",
+        "requires": [],
+        "required_by": [],
+        "summary": "Neo-Async is a drop-in replacement for Async, it almost fully covers its functionality and runs faster "
+    },
+    {
+        "source": "npm",
+        "name": "safe-regex-test",
+        "specifier": "==1.0.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "jest-regex-util",
+        "specifier": "==29.2.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "gensync",
+        "specifier": "==1.0.0-beta.2",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "detect-newline",
+        "specifier": "==3.1.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "plaid",
+        "specifier": "==14.0.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "websocket",
+        "specifier": "==1.0.34",
+        "license": "Apache-2.0",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "next-tick",
+        "specifier": "==1.1.0",
+        "license": "ISC",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "json-parse-even-better-errors",
+        "specifier": "==2.3.1",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "react-is",
+        "specifier": "==18.2.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "es5-ext",
+        "specifier": "==0.10.62",
+        "license": "ISC",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "decamelize",
+        "specifier": "==1.2.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "ts-node",
+        "specifier": "==10.9.1",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "deprecation",
+        "specifier": "==2.3.1",
+        "license": "ISC",
+        "requires": [],
+        "required_by": [],
+        "summary": "Log a deprecation message with stack"
+    },
+    {
+        "source": "npm",
+        "name": "split2",
+        "specifier": "==4.1.0",
+        "license": "ISC",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "is-number-object",
+        "specifier": "==1.0.7",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "mdurl",
+        "specifier": "==1.0.1",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "minimist",
+        "specifier": "==1.2.6",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "leven",
+        "specifier": "==3.1.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "isarray",
+        "specifier": "==2.0.5",
+        "license": "MIT",
+        "requires": [],
+        "required_by": [],
+        "summary": "Array#isArray for older browsers"
+    },
+    {
+        "source": "npm",
+        "name": "available-typed-arrays",
+        "specifier": "==1.0.5",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "arrify",
+        "specifier": "==2.0.1",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "content-disposition",
+        "specifier": "==0.5.4",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "universal-user-agent",
+        "specifier": "==6.0.0",
+        "license": "ISC",
+        "requires": [],
+        "required_by": [],
+        "summary": "Get a user agent string in both browser and node"
+    },
+    {
+        "source": "npm",
+        "name": "@protobufjs/fetch",
+        "specifier": "==1.1.0",
+        "license": "BSD-3-Clause",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@protobufjs/eventemitter",
+        "specifier": "==1.1.0",
+        "license": "BSD-3-Clause",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@protobufjs/codegen",
+        "specifier": "==2.0.4",
+        "license": "BSD-3-Clause",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@protobufjs/utf8",
+        "specifier": "==1.1.0",
+        "license": "BSD-3-Clause",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@protobufjs/path",
+        "specifier": "==1.1.2",
+        "license": "BSD-3-Clause",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@protobufjs/aspromise",
+        "specifier": "==1.1.2",
+        "license": "BSD-3-Clause",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@protobufjs/float",
+        "specifier": "==1.0.2",
+        "license": "BSD-3-Clause",
+        "requires": [],
+        "required_by": [],
+        "summary": "Reads / writes floats / doubles from / to buffers in both modern and ancient browsers."
+    },
+    {
+        "source": "npm",
+        "name": "@protobufjs/pool",
+        "specifier": "==1.1.0",
+        "license": "BSD-3-Clause",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@protobufjs/base64",
+        "specifier": "==1.1.2",
+        "license": "BSD-3-Clause",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@protobufjs/inquire",
+        "specifier": "==1.1.0",
+        "license": "BSD-3-Clause",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "typeorm",
+        "specifier": "==0.3.17",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "yargs-parser",
+        "specifier": "==21.1.1",
+        "license": "ISC",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "mkdirp",
+        "specifier": "==2.1.6",
+        "license": "MIT",
+        "requires": []
+    },
+    {},
+    {
+        "source": "npm",
+        "name": "mkdirp",
+        "specifier": "==2.1.6",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "glob",
+        "specifier": "==8.1.0",
+        "license": "ISC",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "cliui",
+        "specifier": "==8.0.1",
+        "license": "ISC",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "yargs",
+        "specifier": "==17.7.1",
+        "license": "MIT",
+        "requires": []
+    },
+    {},
+    {
+        "source": "npm",
+        "name": "debug",
+        "specifier": "==4.3.4",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "wrap-ansi",
+        "specifier": "==7.0.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "y18n",
+        "specifier": "==5.0.8",
+        "license": "ISC",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "minimatch",
+        "specifier": "==5.1.6",
+        "license": "ISC",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "brace-expansion",
+        "specifier": "==2.0.1",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "ms",
+        "specifier": "==2.1.2",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "strip-json-comments",
+        "specifier": "==3.1.1",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "bufferutil",
+        "specifier": "==4.0.7",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "retry-request",
+        "specifier": "==5.0.2",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "debug",
+        "specifier": "==4.3.4",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "ms",
+        "specifier": "==2.1.2",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "parse-json",
+        "specifier": "==5.2.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "sisteransi",
+        "specifier": "==1.0.5",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "path-is-absolute",
+        "specifier": "==1.0.1",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "cross-spawn",
+        "specifier": "==7.0.3",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "is-boolean-object",
+        "specifier": "==1.1.2",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "is-core-module",
+        "specifier": "==2.11.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "type-fest",
+        "specifier": "==0.21.3",
+        "license": "(MIT OR CC0-1.0)",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "yargs-parser",
+        "specifier": "==18.1.3",
+        "license": "ISC",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "postgres-date",
+        "specifier": "==1.0.7",
+        "license": "MIT",
+        "requires": [],
+        "required_by": [],
+        "summary": "Postgres date column parser"
+    },
+    {
+        "source": "npm",
+        "name": "node-forge",
+        "specifier": "==1.3.1",
+        "license": "(BSD-3-Clause OR GPL-2.0)",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "node-forge-flash",
+        "specifier": "==0.0.0",
+        "license": "(BSD-3-Clause OR GPL-2.0)",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "thenify-all",
+        "specifier": "==1.6.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "archy",
+        "specifier": "==1.0.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "ipaddr.js",
+        "specifier": "==1.9.1",
+        "license": "MIT",
+        "requires": [],
+        "required_by": [],
+        "summary": "A library for manipulating IPv4 and IPv6 addresses in JavaScript."
+    },
+    {
+        "source": "npm",
+        "name": "arg",
+        "specifier": "==4.1.3",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "jest-docblock",
+        "specifier": "==29.2.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "make-dir",
+        "specifier": "==3.1.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "semver",
+        "specifier": "==6.3.1",
+        "license": "ISC",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "acorn-walk",
+        "specifier": "==8.2.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "which-boxed-primitive",
+        "specifier": "==1.0.2",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "parse5",
+        "specifier": "==5.1.1",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "type-is",
+        "specifier": "==1.6.18",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "forwarded",
+        "specifier": "==0.2.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "url-template",
+        "specifier": "==2.0.8",
+        "license": "BSD",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "es-aggregate-error",
+        "specifier": "==1.0.9",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "es-get-iterator",
+        "specifier": "==1.1.3",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "requizzle",
+        "specifier": "==0.2.4",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "is-map",
+        "specifier": "==2.0.2",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "validator",
+        "specifier": "==13.9.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "buffer-from",
+        "specifier": "==1.1.2",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "set-blocking",
+        "specifier": "==2.0.0",
+        "license": "ISC",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "emoji-regex",
+        "specifier": "==8.0.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "safer-buffer",
+        "specifier": "==2.1.2",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "signal-exit",
+        "specifier": "==3.0.7",
+        "license": "ISC",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@azure/msal-node",
+        "specifier": "==1.16.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "uuid",
+        "specifier": "==8.3.2",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@azure/msal-common",
+        "specifier": "==11.0.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "commondir",
+        "specifier": "==1.0.1",
+        "license": "MIT",
+        "requires": [],
+        "required_by": [],
+        "summary": "compute the closest common parent for file paths"
+    },
+    {
+        "source": "npm",
+        "name": "readdirp",
+        "specifier": "==3.6.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "slash",
+        "specifier": "==3.0.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "pstree.remy",
+        "specifier": "==1.1.8",
+        "license": "MIT",
+        "requires": [],
+        "required_by": [],
+        "summary": "Collects the full tree of processes from /proc"
+    },
+    {
+        "source": "npm",
+        "name": "node-gyp-build",
+        "specifier": "==4.6.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "passport-jwt",
+        "specifier": "==4.0.1",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "lodash.camelcase",
+        "specifier": "==4.3.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "acorn-jsx",
+        "specifier": "==5.3.2",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "sha.js",
+        "specifier": "==2.4.11",
+        "license": "(MIT AND BSD-3-Clause)",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "object-keys",
+        "specifier": "==1.1.1",
+        "license": "MIT",
+        "requires": [],
+        "required_by": [],
+        "summary": "An Object.keys replacement, in case Object.keys is not available. From https://github.com/es-shims/es5-shim"
+    },
+    {
+        "source": "npm",
+        "name": "p-map",
+        "specifier": "==3.0.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "any-promise",
+        "specifier": "==1.3.0",
+        "license": "MIT",
+        "requires": [],
+        "required_by": [],
+        "summary": "Resolve any installed ES6 compatible promise"
+    },
+    {
+        "source": "npm",
+        "name": "nub",
+        "specifier": "==0.0.0",
+        "license": "MIT/X11",
+        "requires": [],
+        "required_by": [],
+        "summary": "Uniqueness functions"
+    },
+    {
+        "source": "npm",
+        "name": "is-typedarray",
+        "specifier": "==1.0.0",
+        "license": "MIT",
+        "requires": [],
+        "required_by": [],
+        "summary": "Detect whether or not an object is a Typed Array"
+    },
+    {
+        "source": "npm",
+        "name": "jsesc",
+        "specifier": "==2.5.2",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "sturdy-websocket",
+        "specifier": "==0.2.1",
+        "license": "MIT",
+        "requires": [],
+        "required_by": [],
+        "summary": "Tiny WebSocket wrapper that reconnects and resends failed messages."
+    },
+    {
+        "source": "npm",
+        "name": "merge-descriptors",
+        "specifier": "==1.0.1",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "string_decoder",
+        "specifier": "==1.1.1",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "safe-buffer",
+        "specifier": "==5.1.2",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "jsonfile",
+        "specifier": "==6.1.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "which-module",
+        "specifier": "==2.0.0",
+        "license": "ISC",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "jsonwebtoken",
+        "specifier": "==9.0.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "semver",
+        "specifier": "==7.5.4",
+        "license": "ISC",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "ms",
+        "specifier": "==2.1.3",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "is-callable",
+        "specifier": "==1.2.7",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "package-hash",
+        "specifier": "==4.0.0",
+        "license": "ISC",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "swagger-ui-dist",
+        "specifier": "==4.14.1",
+        "license": "Apache-2.0",
+        "requires": [],
+        "required_by": []
+    },
+    {
+        "source": "npm",
+        "name": "promise.any",
+        "specifier": "==2.0.5",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "walker",
+        "specifier": "==1.0.8",
+        "license": "Apache-2.0",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "picomatch",
+        "specifier": "==2.3.1",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "on-headers",
+        "specifier": "==1.0.2",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "jest-config",
+        "specifier": "==29.3.1",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "jest-validate",
+        "specifier": "==29.3.1",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "camelcase",
+        "specifier": "==6.3.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "proxy-addr",
+        "specifier": "==2.0.7",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "binary-extensions",
+        "specifier": "==2.2.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "handlebars",
+        "specifier": "==4.7.7",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "alchemy-sdk",
+        "specifier": "==2.6.2",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "axios",
+        "specifier": "==0.26.1",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "jest-snapshot",
+        "specifier": "==29.3.1",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "semver",
+        "specifier": "==7.5.4",
+        "license": "ISC",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "clean-stack",
+        "specifier": "==2.2.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "which",
+        "specifier": "==2.0.2",
+        "license": "ISC",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "co",
+        "specifier": "==4.6.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "uuid",
+        "specifier": "==9.0.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "append-transform",
+        "specifier": "==2.0.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@babel/helper-environment-visitor",
+        "specifier": "==7.18.9",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@babel/plugin-syntax-json-strings",
+        "specifier": "==7.8.3",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@babel/types",
+        "specifier": "==7.20.7",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@babel/plugin-syntax-nullish-coalescing-operator",
+        "specifier": "==7.8.3",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@babel/plugin-syntax-optional-chaining",
+        "specifier": "==7.8.3",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@babel/plugin-syntax-bigint",
+        "specifier": "==7.8.3",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@babel/helper-validator-identifier",
+        "specifier": "==7.19.1",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@babel/helper-module-imports",
+        "specifier": "==7.18.6",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@babel/plugin-syntax-class-properties",
+        "specifier": "==7.12.13",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@babel/helper-compilation-targets",
+        "specifier": "==7.20.7",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "semver",
+        "specifier": "==6.3.1",
+        "license": "ISC",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "yallist",
+        "specifier": "==3.1.1",
+        "license": "ISC",
+        "requires": [],
+        "required_by": [],
+        "summary": "Yet Another Linked List"
+    },
+    {
+        "source": "npm",
+        "name": "lru-cache",
+        "specifier": "==5.1.1",
+        "license": "ISC",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@babel/plugin-syntax-optional-catch-binding",
+        "specifier": "==7.8.3",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@babel/helper-function-name",
+        "specifier": "==7.19.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@babel/helpers",
+        "specifier": "==7.20.7",
+        "license": "MIT",
+        "requires": []
+    },
+    {},
+    {
+        "source": "npm",
+        "name": "@babel/plugin-syntax-top-level-await",
+        "specifier": "==7.14.5",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@babel/plugin-syntax-numeric-separator",
+        "specifier": "==7.10.4",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@babel/plugin-syntax-async-generators",
+        "specifier": "==7.8.4",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@babel/helper-string-parser",
+        "specifier": "==7.19.4",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@babel/helper-split-export-declaration",
+        "specifier": "==7.18.6",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@babel/helper-validator-option",
+        "specifier": "==7.18.6",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@babel/code-frame",
+        "specifier": "==7.18.6",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@babel/helper-module-transforms",
+        "specifier": "==7.20.11",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@babel/plugin-syntax-jsx",
+        "specifier": "==7.18.6",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@babel/helper-simple-access",
+        "specifier": "==7.20.2",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@babel/template",
+        "specifier": "==7.20.7",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@babel/plugin-syntax-import-meta",
+        "specifier": "==7.10.4",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@babel/compat-data",
+        "specifier": "==7.20.10",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@babel/parser",
+        "specifier": "==7.21.1",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@babel/traverse",
+        "specifier": "==7.20.12",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "debug",
+        "specifier": "==4.3.4",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "ms",
+        "specifier": "==2.1.2",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@babel/core",
+        "specifier": "==7.20.12",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "semver",
+        "specifier": "==6.3.1",
+        "license": "ISC",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "convert-source-map",
+        "specifier": "==1.9.0",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "debug",
+        "specifier": "==4.3.4",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "ms",
+        "specifier": "==2.1.2",
+        "license": "MIT",
+        "requires": []
+    },
+    {
+        "source": "npm",
+        "name": "@babel/generator",
+        "specifier": "==7.20.7",
+        "license": "MIT",
+        "requires": []
+    }
+]

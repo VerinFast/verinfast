@@ -3,7 +3,7 @@ PyYAML
 httpx
 semgrep
 boto3
-pygount=1.6.1
+pygount>=1.6.1
 azure-identity
 azure-monitor-query
 azure-mgmt-compute
@@ -15,3 +15,4 @@ google-cloud-compute
 google-cloud-storage
 google-cloud-monitoring
 pandas
+johnnydep @ git+https://github.com/StartupOS/johnnydep@main

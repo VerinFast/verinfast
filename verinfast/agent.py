@@ -29,6 +29,9 @@
 #  - Run "az account subscription list" to check subscription Id
 #  Semgrep
 #  - Run "which semgrep", "semgrep --version"
+#  JohnnyDepp
+#  - Run "which johnnydep"
+#  - Run "johnnydep --version"
 #  Pip
 #  - Run "which pip"
 #  - If no Pip, run:
@@ -125,6 +128,9 @@ def main():
 
             # Check if Pygount is installed
             checkDependency("pygount", "Pygount")
+
+            # Check if JohnnyDep is installed
+            checkDependency("johnnydep", "JohnnyDep")
 
             if shouldUpload:
                 headers = {
@@ -421,6 +427,20 @@ def parseRepo(path:str, repo_name:str):
             output = e.output
             debugLog.log(msg=output, tag="Scanning repository return", display=True)
     upload(findings_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/findings", repo_name)
+
+    # Run JohnnyDep
+    dependencies_output_file = os.path.join(output_dir, repo_name + ".dependencies.json")
+    if not dry:
+        debugLog.log(msg=repo_name, tag="Getting dependencies from repository", display=True)
+        # subprocess.check_call([
+        #     "johnnydep",
+        #     "--output-format json",
+        #     "--walk"
+        #     "-o",
+        #     dependencies_output_file, //NOT SURE THIS WILL WORK, might have to pipe
+        #     "." # Scan current directory
+        # ])
+    upload(dependencies_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/dependencies", repo_name)
 
 ###### Scan Repos ######
 def scanRepos(config):
