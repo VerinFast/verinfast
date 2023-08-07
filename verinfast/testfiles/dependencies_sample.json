@@ -349,7 +349,6 @@
         "license": "MIT",
         "requires": []
     },
-    {},
     {
         "source": "npm",
         "name": "mkdirp",
@@ -378,7 +377,6 @@
         "license": "MIT",
         "requires": []
     },
-    {},
     {
         "source": "npm",
         "name": "debug",
@@ -1170,7 +1168,6 @@
         "license": "MIT",
         "requires": []
     },
-    {},
     {
         "source": "npm",
         "name": "@babel/plugin-syntax-top-level-await",

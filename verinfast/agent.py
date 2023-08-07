@@ -86,6 +86,8 @@ machine = uname.machine
 output_dir = os.path.join(os.getcwd(), "results")
 os.makedirs(output_dir, exist_ok=True)
 
+test_dir = os.path.join(os.getcwd(), "testfiles")
+
 debugLog = DebugLog(os.getcwd())
 
 debugLog.log(msg='', tag="Started")
@@ -429,7 +431,8 @@ def parseRepo(path:str, repo_name:str):
     upload(findings_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/findings", repo_name)
 
     # Run JohnnyDep
-    dependencies_output_file = os.path.join(output_dir, repo_name + ".dependencies.json")
+    # dependencies_output_file = os.path.join(output_dir, repo_name + ".dependencies.json")
+    dependencies_output_file = os.path.join(test_dir, "dependencies_sample.json")
     if not dry:
         debugLog.log(msg=repo_name, tag="Getting dependencies from repository", display=True)
         # subprocess.check_call([

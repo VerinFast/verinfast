@@ -2,14 +2,14 @@
 
 #baseurl: https://beta.startupos.dev/api/v2
 baseurl: http://localhost:4000
-should_upload: false
+should_upload: true
 report:
   id: 541
 modules:
   code:
     provider: corsis
     git:
-      start: 2022-11-23
+      start: 2023-03-28
     dry: false # Flag to just reupload files
   cloud: 
   # - provider: azure
