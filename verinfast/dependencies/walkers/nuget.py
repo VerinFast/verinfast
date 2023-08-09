@@ -27,7 +27,7 @@ class NuGetWalker(Walker):
         else:
             return ""
         
-    def parse(self, file):
+    def parse(self, file, expand=False):
         # Reference: <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
         tree = ET.parse(file)
         x_path = "ItemGroup/PackageReference"
