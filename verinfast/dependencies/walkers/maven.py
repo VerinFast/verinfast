@@ -1,4 +1,4 @@
-from verinfast.dependencies.walkers.classes import Walker, Entry
+from dependencies.walkers.classes import Walker, Entry
 from typing import TextIO
 import xml.etree.ElementTree as ET
 
