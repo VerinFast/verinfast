@@ -2,7 +2,7 @@ from typing import TextIO
 import json
 import xml.etree.ElementTree as ET
 
-from verinfast.dependencies.walkers.classes import Walker, Entry
+from dependencies.walkers.classes import Walker, Entry
 
 class NuGetWalker(Walker):
     def initialize(self, command: str=None):

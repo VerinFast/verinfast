@@ -2,10 +2,10 @@ import json
 import os
 from typing import List
 
-from verinfast.dependencies.walkers.maven import mavenWalker
-from verinfast.dependencies.walkers.npm import nodeWalker
-from verinfast.dependencies.walkers.nuget import nugetWalker
-from verinfast.dependencies.walkers.classes import Entry
+from dependencies.walkers.maven import mavenWalker
+from dependencies.walkers.npm import nodeWalker
+from dependencies.walkers.nuget import nugetWalker
+from dependencies.walkers.classes import Entry
 
 # Manifests we support
 # should probably move this to a conf

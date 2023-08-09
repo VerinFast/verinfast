@@ -5,7 +5,7 @@ from typing import List
 
 from curses.ascii import isdigit
 
-from verinfast.dependencies.walkers.classes import Walker, Entry
+from dependencies.walkers.classes import Walker, Entry
 from typing import TextIO
 
 class NodeWalker(Walker):
