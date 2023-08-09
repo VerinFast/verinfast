@@ -424,8 +424,8 @@ def scanRepos(config):
                 parseRepo(temp_dir, repo_name)
 
                 os.chdir(curr_dir)
-                if not dry:
-                    shutil.rmtree(temp_dir)
+                # if not dry:
+                    # shutil.rmtree(temp_dir)
         else:
              debugLog.log(msg='', tag="No remote repos", display=True)
     else:

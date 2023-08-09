@@ -14,16 +14,18 @@ class NodeWalker(Walker):
         for p in Path(root_path).rglob('**/*.*'):
             if p.name in self.manifest_files:
                 self.install_points.append(p)
-        for p in self.install_points:    
+        for p in self.install_points:
             target_dir = Path(p).parent
             os.chdir(target_dir)
             os.system("npm install")
-            self.walk(path=str(target_dir))       
+            print("npm target_dir")
+            print(target_dir)
+            self.walk()
 
-    def parse(self, path:TextIO):
+    def parse(self, file:TextIO, expand=False):
         entry = {}
         try:
-            d=json.load(path)
+            d=json.load(file)
             key=d["name"] + "@" + d["version"]
             entry["source"] = "npm"
             entry["name"] = d["name"]
