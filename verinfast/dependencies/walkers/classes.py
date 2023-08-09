@@ -47,7 +47,7 @@ class Walker():
         if command:
             subprocess.call(args=command)
 
-    def getUrl(self, url:str, headers:dict):
+    def getUrl(self, url:str, headers:dict={}):
         self.requestx.get(url=url, headers=headers)
 
     def walk(self, path:str="./", parse:bool=True, expand:bool=False):
