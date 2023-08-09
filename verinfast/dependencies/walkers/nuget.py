@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 from verinfast.dependencies.walkers.classes import Walker, Entry
 
 class NuGetWalker(Walker):
-    def initialize(self, command: str):
+    def initialize(self, command: str=None):
         discoveryUrl = 'https://api.nuget.org/v3/index.json'
         uselessList = json.loads(self.getUrl(discoveryUrl).content.decode('utf-8'))
         for r in uselessList["resources"]:
@@ -13,7 +13,8 @@ class NuGetWalker(Walker):
                 self.catalogUrl = r["@id"]
             elif r["@type"] == "RegistrationsBaseUrl":
                 self.registrationUrl = r["@id"]
-        return super().initialize(command)
+        if command:
+            return super().initialize(command)
     
     def get_license(self, name:str, version:str)->str:
         resp = json.loads(self.getUrl(f"{self.registrationUrl}{name}/{version}.json").content.decode('utf-8'))

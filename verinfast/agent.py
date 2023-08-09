@@ -21,7 +21,7 @@ from cloud.aws.blocks import getBlocks as get_aws_blocks
 from cloud.azure.blocks import getBlocks as get_az_blocks
 from cloud.gcp.blocks import getBlocks as get_gcp_blocks
 
-from verinfast.dependencies.walk import walk as dependency_walk
+from dependencies.walk import walk as dependency_walk
 
 #from modernmetric.fp import file_process # If we want to run modernmetric directly
 
