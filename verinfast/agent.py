@@ -1,44 +1,4 @@
 #!/usr/bin/env python3
-#
-#  Welcome to the Scanning Agent.
-#
-#  This tool safely and securely analyzes applications for benchmarking.
-#
-#  Requirements:
-#  - Python3 - Test with "python3 --version"
-#  - Pip - Test with "pip -V"
-#  - SSH access to code repositories - Test with "git status"
-#  - Command line tool access to cloud hosting providers
-#  - Admin privileges on the computer used to run the agent.
-#
-#  To run the Agent:
-#  - Install this package with "python3 setup.py install --user"
-#  - In a directory with a "config.yaml" file run
-#    "verinfast"
-#
-#  Troubleshooting:
-#  Python
-#  - Run "python3 -m pip install --upgrade pip setuptools wheel"
-#  Git
-#  - Run "which git", "git --version"
-#  - Run " ssh -vT git@github.com" to test access to GitHub
-#   AWS
-#  - Run "which aws", "aws --version"
-#  Azure
-#  - Run "az git", "az --version"
-#  - Run "az account subscription list" to check subscription Id
-#  Semgrep
-#  - Run "which semgrep", "semgrep --version"
-#  Pip
-#  - Run "which pip"
-#  - If no Pip, run:
-#     curl -o get-pip.py https://bootstrap.pypa.io/get-pip.py
-#     python get-pip.py  OR python3 get-pip.py
-#  Run "sudo apt update"
-#
-#  Copyright 2023 Startos Inc.
-#
-##################################################################################
 
 import json
 import platform
@@ -60,6 +20,8 @@ from cloud.gcp.instances import get_instances as get_gcp_instances
 from cloud.aws.blocks import getBlocks as get_aws_blocks
 from cloud.azure.blocks import getBlocks as get_az_blocks
 from cloud.gcp.blocks import getBlocks as get_gcp_blocks
+
+from verinfast.dependencies.walk import walk as dependency_walk
 
 #from modernmetric.fp import file_process # If we want to run modernmetric directly
 
@@ -421,7 +383,10 @@ def parseRepo(path:str, repo_name:str):
             output = e.output
             debugLog.log(msg=output, tag="Scanning repository return", display=True)
     upload(findings_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/findings", repo_name)
-
+    if "dependencies" in config['modules']['code']:
+        if not dry:
+            dependencies_file = dependency_walk()
+        upload(dependencies_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/dependencies", repo_name)
 ###### Scan Repos ######
 def scanRepos(config):
 
