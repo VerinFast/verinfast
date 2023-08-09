@@ -51,7 +51,9 @@ class NodeWalker(Walker):
                 summary=entry["summary"]
             )
             self.entries.append(e)
-        except:
+        except Exception as error:
+            # handle the exception
+            print("An exception occurred in npm.py:", error)
             pass
 
 nodeWalker = NodeWalker(manifest_type='json', manifest_files=["package.json"])

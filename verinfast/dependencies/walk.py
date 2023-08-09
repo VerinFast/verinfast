@@ -23,7 +23,7 @@ rust_matches = ["Cargo.toml"]
 
 # Finds all manifests we can process in the repo 
 # and stores their path in memory
-def walk(path:str="./", path_to_output:str="./"):
+def walk(path:str="./", output_file="./dependencies.json"):
     entries:List[Entry]=[]
     mavenWalker.walk(path=path)
     entries += mavenWalker.entries
@@ -33,7 +33,6 @@ def walk(path:str="./", path_to_output:str="./"):
     nugetWalker.walk(path=path)
     entries += nugetWalker.entries
 
-    dependency_output_file = os.path.join(path_to_output, f'dependencies.json')
-    with open(dependency_output_file, 'w') as outfile:
+    with open(output_file, 'w') as outfile:
         outfile.write(json.dumps(entries, indent=4))
-    return dependency_output_file
+    return output_file
