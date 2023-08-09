@@ -2,7 +2,7 @@ from typing import TextIO
 import json
 import xml.etree.ElementTree as ET
 
-from johnnydep.walkers.classes import Walker, Entry
+from verinfast.dependencies.walkers.classes import Walker, Entry
 
 class NuGetWalker(Walker):
     def initialize(self, command: str):
@@ -27,6 +27,7 @@ class NuGetWalker(Walker):
             return ""
         
     def parse(self, file):
+        # Reference: <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
         tree = ET.parse(file)
         x_path = "ItemGroup/PackageReference"
         dependencies = tree.findall(x_path)

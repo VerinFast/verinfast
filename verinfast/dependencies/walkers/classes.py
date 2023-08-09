@@ -44,7 +44,8 @@ class Walker():
         self.requestx = httpx.Client(http2=True,timeout=None)
 
     def initialize(self, command:str):
-        subprocess.call(args=command)
+        if command:
+            subprocess.call(args=command)
 
     def getUrl(self, url:str, headers:dict):
         self.requestx.get(url=url, headers=headers)

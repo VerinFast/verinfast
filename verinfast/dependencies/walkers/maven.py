@@ -1,4 +1,4 @@
-from johnnydep.walkers.classes import Walker, Entry
+from verinfast.dependencies.walkers.classes import Walker, Entry
 from typing import TextIO
 import xml.etree.ElementTree as ET
 
@@ -36,11 +36,17 @@ class MavenWalker(Walker):
         # root = tree.getroot()
         dependencies = tree.findall('dependencies/dependency')
         for d in dependencies:
-            n=d["groupId"]+ "/" + d["artifactId"]
+            groupId = d.find("groupId")
+            artifcact = d.find("artifactId")
+            version = d.find("version")
+            g = groupId.text
+            a = artifcact.text
+            v = version.text
+            n = g+ "/" + a
             e = Entry(
                 name=n, 
                 source='maven', 
-                specifier="=="+d["version"]
+                specifier="=="+v
             )
             self.entries.append(e)
 

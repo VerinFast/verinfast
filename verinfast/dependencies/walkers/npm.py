@@ -1,11 +1,25 @@
 import json
+import os
+from pathlib import Path
+from typing import List
 
 from curses.ascii import isdigit
 
-from johnnydep.walkers.classes import Walker, Entry
+from verinfast.dependencies.walkers.classes import Walker, Entry
 from typing import TextIO
 
 class NodeWalker(Walker):
+    def initialize(self, root_path: str="./"):
+        self.install_points:List[Path] = []
+        for p in Path(root_path).rglob('**/*.*'):
+            if p.name in self.manifest_files:
+                self.install_points.append(p)
+        for p in self.install_points:    
+            target_dir = Path(p).parent
+            os.chdir(target_dir)
+            os.system("npm install")
+            self.walk(path=str(target_dir))       
+
     def parse(self, path:TextIO):
         entry = {}
         try:
