@@ -48,7 +48,7 @@ class Walker():
             subprocess.call(args=command)
 
     def getUrl(self, url:str, headers:dict={}):
-        self.requestx.get(url=url, headers=headers)
+        return self.requestx.get(url=url, headers=headers)
 
     def walk(self, path:str="./", parse:bool=True, expand:bool=False):
         for pattern in self.manifest_files:
