@@ -29,6 +29,14 @@ requestx = httpx.Client(http2=True,timeout=None)
 
 shouldUpload = False
 shouldManualFileScan = True
+
+runGit = True
+runSizes = True
+runPygount = True
+runStats = True
+runScan = True
+runDependencies = True
+
 dry = False # Flag to not run scans, just upload files (if shouldUpload==True)
 config = FileNotFoundError
 reportId = 0
@@ -58,6 +66,13 @@ def main():
     global corsisId
     global config
 
+    global runGit
+    global runSizes
+    global runPygount
+    global runStats
+    global runScan
+    global runDependencies
+
     # Read the config file
     with open('config.yaml') as f:
         config = yaml.safe_load(f)
@@ -66,6 +81,14 @@ def main():
     global_dependencies()
 
     shouldUpload = config['should_upload']
+
+    runGit = config['run_git'] if 'run_git' in config else runGit
+    runSizes = config['run_sizes'] if 'run_sizes' in config else runSizes
+    runPygount = config['run_pygount'] if 'run_pygount' in config else runPygount
+    runStats = config['run_stats'] if 'run_stats' in config else runStats
+    runScan = config['run_scan'] if 'run_scan' in config else runScan
+    runDependencies = config['run_dependencies'] if 'run_dependencies' in config else runDependencies
+
     shouldManualFileScan = config['should_manual_filescan'] if 'should_manual_filescan' in config else shouldManualFileScan
     debugLog.log(msg=shouldUpload, tag="Should upload", display=True)
     reportId = config['report']['id']
@@ -228,165 +251,169 @@ def parseRepo(path:str, repo_name:str):
     branch=branch.strip()
 
     # Git Stats
-    debugLog.log(msg=repo_name, tag="Gathering source code statistics for", display=True)
-    command = f'''git log \
-        --since="{config["modules"]["code"]["git"]["start"]}" \
-        --numstat \
-        --format='%H' \
-        {branch} --
-    '''
-    try:
+    if runGit:
+        debugLog.log(msg=repo_name, tag="Gathering source code statistics for", display=True)
+        command = f'''git log \
+            --since="{config["modules"]["code"]["git"]["start"]}" \
+            --numstat \
+            --format='%H' \
+            {branch} --
+        '''
+        try:
+            if not dry:
+                results=subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+                log = results.stdout.decode()
+        except subprocess.CalledProcessError:
+            raise Exception("Error getting log from git.")
+
         if not dry:
-            results=subprocess.run(command, shell=True, stdout=subprocess.PIPE)
-            log = results.stdout.decode()
-    except subprocess.CalledProcessError:
-        raise Exception("Error getting log from git.")
+            resultArr = log.split("\n")
+            prevHash = ''
+            filesArr = []
+            finalArr = []
+        
+            for line in resultArr:
+                lineArr = line.split("\t")
+                if len(lineArr) > 1:
+                    filesArr.append({
+                        "insertions": lineArr[0], 
+                        "deletions": lineArr[1],
+                        "path": lineArr[2]
+                    })
+                else:
+                    if len(lineArr) == 1 and lineArr[0] != '':
+                        # Hit next file
+                        if prevHash != '':
+                            # Not first one
+                            hashObj = formatGitHash(prevHash)
+                            hashObj['paths'] = filesArr
+                            finalArr.append(hashObj)
+                            filesArr = []
+                        prevHash = lineArr[0]
 
-    if not dry:
-        resultArr = log.split("\n")
-        prevHash = ''
-        filesArr = []
-        finalArr = []
-    
-        for line in resultArr:
-            lineArr = line.split("\t")
-            if len(lineArr) > 1:
-                filesArr.append({
-                    "insertions": lineArr[0], 
-                    "deletions": lineArr[1],
-                    "path": lineArr[2]
-                })
-            else:
-                if len(lineArr) == 1 and lineArr[0] != '':
-                    # Hit next file
-                    if prevHash != '':
-                        # Not first one
-                        hashObj = formatGitHash(prevHash)
-                        hashObj['paths'] = filesArr
-                        finalArr.append(hashObj)
-                        filesArr = []
-                    prevHash = lineArr[0]
+            debugLog.log(msg=truncate(finalArr), tag=f"{repo_name} Git Stats")
 
-        debugLog.log(msg=truncate(finalArr), tag=f"{repo_name} Git Stats")
+        git_output_file = os.path.join(output_dir, repo_name + ".git.log.json")
 
-    git_output_file = os.path.join(output_dir, repo_name + ".git.log.json")
+        if not dry:
+            with open(git_output_file, 'w') as f:
+                f.write(json.dumps(finalArr, indent=4))
 
-    if not dry:
-        with open(git_output_file, 'w') as f:
-            f.write(json.dumps(finalArr, indent=4))
+        upload(git_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/git", repo_name)
 
-    upload(git_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/git", repo_name)
+        # Manual File Sizes and Info
+        if not dry:
+            debugLog.log(msg=repo_name, tag="Gathering file sizes for", display=True)
+            # Sizes for writing to output file
+            # Intialize file list with "." as total size
+            repo_size = get_raw_size(".")
+            git_size = get_raw_size("./.git")
 
-    # Manual File Sizes and Info
-    if not dry:
-        debugLog.log(msg=repo_name, tag="Gathering file sizes for", display=True)
-        # Sizes for writing to output file
-        # Intialize file list with "." as total size
-        repo_size = get_raw_size(".")
-        git_size = get_raw_size("./.git")
-
-        # get sizes
-        real_size= repo_size - git_size
-        debugLog.log(msg=repo_size, tag="Repo Size")
-        debugLog.log(msg=git_size, tag="Git Size")
-        sizes = {
-            "files":{
-                ".":{
-                    "size" : repo_size,
-                    "loc" : 0,
-                    "ext" : None,
-                    "directory" : True
+            # get sizes
+            real_size= repo_size - git_size
+            debugLog.log(msg=repo_size, tag="Repo Size")
+            debugLog.log(msg=git_size, tag="Git Size")
+            sizes = {
+                "files":{
+                    ".":{
+                        "size" : repo_size,
+                        "loc" : 0,
+                        "ext" : None,
+                        "directory" : True
+                    }
+                },
+                "metadata":{
+                    "env": machine,
+                    "real_size": real_size,
+                    "uname": system
                 }
-            },
-            "metadata":{
-                "env": machine,
-                "real_size": real_size,
-                "uname": system
             }
-        }
-        #filelist for modernmetric
-        filelist = []
+            #filelist for modernmetric
+            filelist = []
 
-        for filepath, subdirs, list in os.walk("."):
-            #print(subdirs)
-            for name in list:
-                fp = os.path.join(filepath, name)
-                extRe = re.search("^[^\.]*\.(.*)", name)
-                ext = extRe.group(1) if extRe else ''
-                if allowfile(path=fp):
-                    if shouldManualFileScan:
-                        file = {
-                            "size" : os.path.getsize(fp),
-                            "loc" : getloc(fp),
-                            "ext" : ext, #os.path.splitext(name)[1],
-                            "directory" : False
-                        }
-                        sizes["files"][fp] = file
-                    filelist.append({"name":name,"path":fp})
+            for filepath, subdirs, list in os.walk("."):
+                #print(subdirs)
+                for name in list:
+                    fp = os.path.join(filepath, name)
+                    extRe = re.search("^[^\.]*\.(.*)", name)
+                    ext = extRe.group(1) if extRe else ''
+                    if allowfile(path=fp):
+                        if shouldManualFileScan:
+                            file = {
+                                "size" : os.path.getsize(fp),
+                                "loc" : getloc(fp),
+                                "ext" : ext, #os.path.splitext(name)[1],
+                                "directory" : False
+                            }
+                            sizes["files"][fp] = file
+                        filelist.append({"name":name,"path":fp})
 
-    sizes_output_file = os.path.join(output_dir, repo_name + ".sizes.json")
+        sizes_output_file = os.path.join(output_dir, repo_name + ".sizes.json")
 
-    if not dry:
-        with open(sizes_output_file, 'w') as f:
-            f.write(json.dumps(sizes, indent=4))
-    upload(sizes_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/sizes", repo_name)
+        if not dry:
+            with open(sizes_output_file, 'w') as f:
+                f.write(json.dumps(sizes, indent=4))
+        upload(sizes_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/sizes", repo_name)
 
     # Run Pygount
-    pygount_output_file = os.path.join(output_dir, repo_name + ".pygount.json")
-    if not dry:
-        debugLog.log(msg=repo_name, tag="Getting LOC from repository", display=True)
-        subprocess.check_call([
-            "pygount",
-            "-F=.git,node_modules", # Folders to ignore
-            "--format=json",
-            "-o",
-            pygount_output_file,
-            "." # Scan current directory
-        ])
-    upload(pygount_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/pygount", repo_name)
+    if runPygount:
+        pygount_output_file = os.path.join(output_dir, repo_name + ".pygount.json")
+        if not dry:
+            debugLog.log(msg=repo_name, tag="Getting LOC from repository", display=True)
+            subprocess.check_call([
+                "pygount",
+                "-F=.git,node_modules", # Folders to ignore
+                "--format=json",
+                "-o",
+                pygount_output_file,
+                "." # Scan current directory
+            ])
+        upload(pygount_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/pygount", repo_name)
 
     # Run Modernmetric
-    stats_input_file = os.path.join(output_dir, repo_name + ".filelist.json")
-    stats_output_file = os.path.join(output_dir, repo_name + ".stats.json")
-    stats_error_file = os.path.join(output_dir, repo_name + ".stats.err")
+    if runStats:
+        stats_input_file = os.path.join(output_dir, repo_name + ".filelist.json")
+        stats_output_file = os.path.join(output_dir, repo_name + ".stats.json")
+        stats_error_file = os.path.join(output_dir, repo_name + ".stats.err")
 
-    if not dry:
-        debugLog.log(msg=repo_name, tag="Analyzing repository with Modernmetric", display=True)
-        with open(stats_input_file, 'w') as f:
-            f.write(json.dumps(filelist, indent=4))
+        if not dry:
+            debugLog.log(msg=repo_name, tag="Analyzing repository with Modernmetric", display=True)
+            with open(stats_input_file, 'w') as f:
+                f.write(json.dumps(filelist, indent=4))
 
-        # Calling modernmetric with subprocess works, but we might want to call
-        # Modernmetric directly, ala lines 91-110 from modernmetric main
-        # with open(stats_output_file, 'w') as f:
-        #     with open(stats_error_file, 'w') as e:
-        #         subprocess.check_call(["modernmetric", f"--file={stats_input_file}"], stdout=f, stderr=e, encoding='utf-8')
+            # Calling modernmetric with subprocess works, but we might want to call
+            # Modernmetric directly, ala lines 91-110 from modernmetric main
+            with open(stats_output_file, 'w') as f:
+                with open(stats_error_file, 'w') as e:
+                    subprocess.check_call(["modernmetric", f"--file={stats_input_file}"], stdout=f, stderr=e, encoding='utf-8')
 
-    # upload(stats_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/stats", repo_name)
+        upload(stats_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/stats", repo_name)
 
     # Run SEMGrep
-    findings_output_file = os.path.join(output_dir, repo_name + ".findings.json")
-    findings_error_file = os.path.join(output_dir, repo_name + ".findings.err")
-    if not dry:
-        debugLog.log(msg=repo_name, tag="Scanning repository", display=True)
-        try:
-            with open(findings_error_file, 'a') as e:
-                subprocess.check_call([
-                    "semgrep",
-                    "scan",
-                    "--config",
-                    "auto",
-                    "--json",
-                    "-o",
-                    findings_output_file,
-                ], stderr=e,)
-        except subprocess.CalledProcessError as e:
-            output = e.output
-            debugLog.log(msg=output, tag="Scanning repository return", display=True)
-    upload(findings_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/findings", repo_name)
+    if runScan:
+        findings_output_file = os.path.join(output_dir, repo_name + ".findings.json")
+        findings_error_file = os.path.join(output_dir, repo_name + ".findings.err")
+        if not dry:
+            debugLog.log(msg=repo_name, tag="Scanning repository", display=True)
+            try:
+                with open(findings_error_file, 'a') as e:
+                    subprocess.check_call([
+                        "semgrep",
+                        "scan",
+                        "--config",
+                        "auto",
+                        "--json",
+                        "-o",
+                        findings_output_file,
+                    ], stderr=e,)
+            except subprocess.CalledProcessError as e:
+                output = e.output
+                debugLog.log(msg=output, tag="Scanning repository return", display=True)
+        upload(findings_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/findings", repo_name)
 
 ###### Scan Dependencies ######
-    dependencies_output_file = os.path.join(output_dir, repo_name + ".dependencies.json")
-    if "dependencies" in config['modules']['code']:
+    if runDependencies:
+        dependencies_output_file = os.path.join(output_dir, repo_name + ".dependencies.json")
         debugLog.log(msg=repo_name, tag="Scanning dependencies", display=True)
         if not dry:
             dependencies_file = dependency_walk(output_file=dependencies_output_file)

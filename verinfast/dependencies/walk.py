@@ -29,13 +29,13 @@ rust_matches = ["Cargo.toml"]
 # and stores their path in memory
 def walk(path:str="./", output_file="./dependencies.json"):
     entries:List[Entry]=[]
-    # mavenWalker.walk(path=path)
-    # entries += mavenWalker.entries
+    mavenWalker.walk(path=path)
+    entries += mavenWalker.entries
     nodeWalker.initialize(root_path=path)
     entries += nodeWalker.entries
-    # nugetWalker.initialize()
-    # nugetWalker.walk(path=path)
-    # entries += nugetWalker.entries
+    nugetWalker.initialize()
+    nugetWalker.walk(path=path)
+    entries += nugetWalker.entries
 
     with open(output_file, 'w') as outfile:
         dicts = [entry.to_json() for entry in entries]

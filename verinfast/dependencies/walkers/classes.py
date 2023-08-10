@@ -70,24 +70,12 @@ class Walker():
         return self.requestx.get(url=url, headers=headers)
 
     def walk(self, path:str="./", parse:bool=True, expand:bool=False):
-        print("path in walk")
-        print(path)
-        print(Path(path).rglob('**/*.*'))
-        foo = Path(path).rglob('**/*.*')
-        print(dir(foo))
         for p in Path(path).rglob('**/*.*'):
-            print("p.name")
-            print(p.name)
-            print("self.manifest_files")
-            print(self.manifest_files)
             if p.name in self.manifest_files:
                 self.files.append(p)
-                print("Miller time")
-                print(p)
                 if parse:
                     self.parse(file=str(p.absolute()), expand=expand)
-                    print(p)
-        
+
     def parse(self, file:str, expand=False):
         raise Exception("No parser for this Walker")
 
