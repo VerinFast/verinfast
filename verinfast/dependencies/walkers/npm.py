@@ -10,6 +10,7 @@ from typing import TextIO
 
 class NodeWalker(Walker):
     def initialize(self, root_path: str="./"):
+        orig_path = str(Path(root_path).absolute())
         self.install_points:List[Path] = []
         for p in Path(root_path).rglob('**/*.*'):
             if p.name in self.manifest_files:
@@ -18,15 +19,12 @@ class NodeWalker(Walker):
             target_dir = Path(p).parent
             os.chdir(target_dir)
             os.system("npm install")
-            print("npm target_dir")
-            print(target_dir)
             self.walk('node_modules')
+            os.chdir(orig_path)
 
     def parse(self, file:str, expand=False):
         entry = {}
         license={}
-        print('NPM parsing file')
-        print(file)
         try:
             with open(file) as f:
                 d=json.load(f)
@@ -45,9 +43,7 @@ class NodeWalker(Walker):
                 if "dependencies" in d:
                     for key in d["dependencies"].keys():
                         k = key
-                        print(k)
                         value = d["dependencies"][k]
-                        print(value)
                         if isdigit(value[0]):
                             value="=="+value
                         entry["requires"].append(k+value)
