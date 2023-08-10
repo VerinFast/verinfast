@@ -163,3 +163,6 @@ cython_debug/
 verinfast/results
 verinfast/log.txt
 verinfast/temp_repo
+aws-storage-*.json
+azure-storage-*.json
+gcp-storage-*.json

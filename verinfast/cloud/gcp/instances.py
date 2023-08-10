@@ -1,7 +1,9 @@
 import json
 import os
+import time
 
 from google.cloud import compute_v1
+from google.cloud.monitoring_v3 import query, QueryServiceClient, MetricServiceClient, TimeInterval, ListTimeSeriesRequest
 
 from cloud.gcp.zones import zones
 
@@ -11,6 +13,29 @@ def get_instances(sub_id:str, path_to_output:str="./"):
     my_instances = []
     networks_client = compute_v1.NetworksClient()
     instances_client = compute_v1.InstancesClient()
+    client = MetricServiceClient()
+    # for bucket in storage_client.list_buckets():
+        # print(bucket)
+        # print(bucket.name)
+
+    now = time.time()
+    seconds = int(now)
+    nanos = int((now - seconds) * 10**9)
+    interval = TimeInterval(
+        {
+            "end_time": {"seconds": seconds, "nanos": nanos},
+            "start_time": {"seconds": (seconds - 900), "nanos": nanos},
+        }
+    )
+
+    results = client.list_time_series(
+        request={
+            "name": f"projects/{sub_id}",
+            "filter": f'metric.type = "compute.googleapis.com/guest/disk/bytes_used"',
+            "interval": interval,
+            "view": ListTimeSeriesRequest.TimeSeriesView.FULL,
+        }
+    )
     for zone in zones:
         for instance in instances_client.list(project=sub_id, zone=zone):
             name = instance.name
