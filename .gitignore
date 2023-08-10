@@ -164,3 +164,6 @@ verinfast/results
 verinfast/log.txt
 verinfast/temp_repo
 results
+tests/node_modules
+tests/dependencies.json
+tests/package-lock.json
