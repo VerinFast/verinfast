@@ -1,0 +1,31 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "verinfast"
+version = "0.3.3"
+authors = [
+  { name="Example Author", email="author@example.com" },
+]
+description = "A small example package"
+readme = "README.md"
+requires-python = ">=3.11"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    # "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dynamic=["dependencies"]
+
+[project.urls]
+"Homepage" = "https://github.com/StartupOS/verinfast"
+"Bug Tracker" = "https://github.com/StartupOS/verinfast/issues"
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]
