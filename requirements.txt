@@ -1,9 +1,9 @@
 modernmetric>=1.0.2
-PyYAML
-httpx
+pyyaml
+httpx[http2]
 semgrep
 boto3
-pygount=1.6.1
+pygount==1.6.1
 azure-identity
 azure-monitor-query
 azure-mgmt-compute

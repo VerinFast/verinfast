@@ -2,10 +2,14 @@ import json
 import os
 from typing import List
 
+import defusedxml
+
 from dependencies.walkers.maven import mavenWalker
 from dependencies.walkers.npm import nodeWalker
 from dependencies.walkers.nuget import nugetWalker
 from dependencies.walkers.classes import Entry
+
+defusedxml.defuse_stdlib()
 
 # Manifests we support
 # should probably move this to a conf
@@ -34,5 +38,6 @@ def walk(path:str="./", output_file="./dependencies.json"):
     # entries += nugetWalker.entries
 
     with open(output_file, 'w') as outfile:
-        outfile.write(json.dumps(entries, indent=4))
+        dicts = [entry.to_json() for entry in entries]
+        outfile.write(json.dumps(dicts, indent=4))
     return output_file

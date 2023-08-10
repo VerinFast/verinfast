@@ -13,11 +13,11 @@ class Entry(dict):
     def __init__(self,
         name:str,
         source:str,
-        specifier:str,
-        license,
-        requires,
-        required_by,
-        summary:str
+        specifier:str=None,
+        license:str=None,
+        summary:str=None,
+        requires=None,
+        required_by=None,
     )->None:
         if not name:
             raise Exception("Entries must have a package name")
@@ -31,6 +31,25 @@ class Entry(dict):
         self.requires=requires
         self.required_by=required_by
         self.summary=summary
+    
+    def __str__(self) -> str:
+        d = self.to_json()
+        return json.dumps(d, indent=4)
+
+    def __repr__(self) -> str:
+        return str(self)
+    
+    def to_json(self)->dict:
+        d = {}
+        d["name"] = self.name
+        d["source"] = self.source
+        if self.specifier:
+            d["specifier"] = self.specifier
+        if self.license:
+            d["license"] = self.license
+        if self.summary:
+            d["summary"] = self.summary
+        return d
 
 class Walker():
     def __init__(self, 
@@ -69,7 +88,7 @@ class Walker():
                     self.parse(file=str(p.absolute()), expand=expand)
                     print(p)
         
-    def parse(self, file, expand=False):
+    def parse(self, file:str, expand=False):
         raise Exception("No parser for this Walker")
 
     def expand(self, file):

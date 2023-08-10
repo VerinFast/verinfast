@@ -163,3 +163,4 @@ cython_debug/
 verinfast/results
 verinfast/log.txt
 verinfast/temp_repo
+results
