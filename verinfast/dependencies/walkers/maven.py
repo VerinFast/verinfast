@@ -31,7 +31,7 @@ class MavenWalker(Walker):
     # ...
     # </project>
 
-    def parse(self, file:TextIO, expand=False):
+    def parse(self, file:str, expand=False):
         tree = ET.parse(file)
         # root = tree.getroot()
         dependencies = tree.findall('dependencies/dependency')

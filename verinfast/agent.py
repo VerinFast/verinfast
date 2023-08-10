@@ -357,11 +357,11 @@ def parseRepo(path:str, repo_name:str):
 
         # Calling modernmetric with subprocess works, but we might want to call
         # Modernmetric directly, ala lines 91-110 from modernmetric main
-        with open(stats_output_file, 'w') as f:
-            with open(stats_error_file, 'w') as e:
-                subprocess.check_call(["modernmetric", f"--file={stats_input_file}"], stdout=f, stderr=e, encoding='utf-8')
+        # with open(stats_output_file, 'w') as f:
+        #     with open(stats_error_file, 'w') as e:
+        #         subprocess.check_call(["modernmetric", f"--file={stats_input_file}"], stdout=f, stderr=e, encoding='utf-8')
 
-    upload(stats_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/stats", repo_name)
+    # upload(stats_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/stats", repo_name)
 
     # Run SEMGrep
     findings_output_file = os.path.join(output_dir, repo_name + ".findings.json")

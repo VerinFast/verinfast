@@ -20,39 +20,52 @@ class NodeWalker(Walker):
             os.system("npm install")
             print("npm target_dir")
             print(target_dir)
-            self.walk()
+            self.walk('node_modules')
 
-    def parse(self, file:TextIO, expand=False):
+    def parse(self, file:str, expand=False):
         entry = {}
+        license={}
+        print('NPM parsing file')
+        print(file)
         try:
-            d=json.load(file)
-            key=d["name"] + "@" + d["version"]
-            entry["source"] = "npm"
-            entry["name"] = d["name"]
-            entry["specifier"] = "==" + d["version"]
-            if type(d["license"]) == type({}):
-                license[key]=d["license"]["type"]
-            else:
-                license[key]=d["license"]
-            entry["license"] = license[key]
-            entry["requires"] = []
-            for key in d["dependencies"].keys():
-                k = key
-                value = d["dependencies"]
-                if isdigit(value[0]):
-                    value="=="+value
-                entry["requires"].append(k+value)
+            with open(file) as f:
+                d=json.load(f)
+                key=d["name"] + "@" + d["version"]
+                entry["source"] = "npm"
+                entry["name"] = d["name"]
+                entry["specifier"] = "==" + d["version"]
+                if "license" in d  and type(d["license"]) == type({}):
+                    license[key]=d["license"]["type"]
+                elif "license" in d:
+                    license[key]=d["license"]
+                else:
+                    license[key]=""
+                entry["license"] = license[key]
+                entry["requires"] = []
+                if "dependencies" in d:
+                    for key in d["dependencies"].keys():
+                        k = key
+                        print(k)
+                        value = d["dependencies"][k]
+                        print(value)
+                        if isdigit(value[0]):
+                            value="=="+value
+                        entry["requires"].append(k+value)
 
-            entry["required_by"] = []
-            entry["summary"] = d["description"]
-            e = Entry(
-                name=entry["name"],
-                specifier=entry["specifier"],
-                source=entry["source"],
-                license=entry["license"],
-                summary=entry["summary"]
-            )
-            self.entries.append(e)
+                entry["required_by"] = []
+                if "description" in d:
+                    entry["summary"] = d["description"]
+                else:
+                    entry["summary"] = ""
+
+                e = Entry(
+                    name=entry["name"],
+                    specifier=entry["specifier"],
+                    source=entry["source"],
+                    license=entry["license"],
+                    summary=entry["summary"]
+                )
+                self.entries.append(e)
         except Exception as error:
             # handle the exception
             print("An exception occurred in npm.py:", error)
