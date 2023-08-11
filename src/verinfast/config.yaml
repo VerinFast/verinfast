@@ -9,7 +9,7 @@ modules:
   code:
     provider: corsis
     git:
-      start: 2022-11-23
+      start: 2023-02-09
     dry: false # Flag to just reupload files
     dependencies: true
   cloud: 
@@ -22,6 +22,8 @@ modules:
   #   start: "2023-05-01"
   #   end: "2023-06-01"
 repos:
-  - git@github.com:StartupOS/small-test-repo.git
+#  - git@github.com:StartupOS/small-test-repo.git
+  - git@github.com:StartupOS/atd.git
 #  - git@github.com:rails/rails.git
+#  - git@github.com:tensorflow/tensorflow.git
 localrepos:
