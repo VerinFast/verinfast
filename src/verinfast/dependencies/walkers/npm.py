@@ -5,15 +5,13 @@ from typing import List
 
 from curses.ascii import isdigit
 
-from pathlib import Path
-from typing import TextIO
-
 from verinfast.dependencies.walkers.classes import Walker, Entry
 
+
 class NodeWalker(Walker):
-    def initialize(self, root_path: str="./"):
+    def initialize(self, root_path: str = "./"):
         root_path = str(Path(root_path).absolute())
-        self.install_points:List[Path] = []
+        self.install_points: List[Path] = []
         for p in Path(root_path).rglob('**/*.*'):
             if p.name in self.manifest_files:
                 self.install_points.append(p)
@@ -24,22 +22,22 @@ class NodeWalker(Walker):
             self.walk('node_modules')
             os.chdir(root_path)
 
-    def parse(self, file:str, expand=False):
+    def parse(self, file: str, expand=False):
         entry = {}
-        license={}
+        license = {}
         try:
             with open(file) as f:
-                d=json.load(f)
-                key=d["name"] + "@" + d["version"]
+                d = json.load(f)
+                key = d["name"] + "@" + d["version"]
                 entry["source"] = "npm"
                 entry["name"] = d["name"]
                 entry["specifier"] = "==" + d["version"]
-                if "license" in d  and type(d["license"]) == type({}):
-                    license[key]=d["license"]["type"]
+                if "license" in d and type(d["license"]) is type({}):
+                    license[key] = d["license"]["type"]
                 elif "license" in d:
-                    license[key]=d["license"]
+                    license[key] = d["license"]
                 else:
-                    license[key]=""
+                    license[key] = ""
                 entry["license"] = license[key]
                 entry["requires"] = []
                 if "dependencies" in d:
@@ -47,7 +45,7 @@ class NodeWalker(Walker):
                         k = key
                         value = d["dependencies"][k]
                         if isdigit(value[0]):
-                            value="=="+value
+                            value = "==" + value
                         entry["requires"].append(k+value)
 
                 entry["required_by"] = []
@@ -68,5 +66,6 @@ class NodeWalker(Walker):
             # handle the exception
             print("An exception occurred in npm.py:", error)
             pass
+
 
 nodeWalker = NodeWalker(manifest_type='json', manifest_files=["package.json"])

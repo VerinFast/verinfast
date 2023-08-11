@@ -1,8 +1,6 @@
 from verinfast.dependencies.walkers.classes import Walker, Entry
-from typing import TextIO
 import xml.etree.ElementTree as ET
 
-# TODO implement defusedxml
 
 class MavenWalker(Walker):
     # pkg:maven/springframework/spring@1.2.6
@@ -31,7 +29,7 @@ class MavenWalker(Walker):
     # ...
     # </project>
 
-    def parse(self, file:str, expand=False):
+    def parse(self, file: str, expand=False):
         tree = ET.parse(file)
         # root = tree.getroot()
         dependencies = tree.findall('dependencies/dependency')
@@ -42,15 +40,16 @@ class MavenWalker(Walker):
             g = groupId.text
             a = artifcact.text
             v = version.text
-            n = g+ "/" + a
+            n = g + "/" + a
             e = Entry(
-                name=n, 
-                source='maven', 
+                name=n,
+                source='maven',
                 specifier="=="+v
             )
             self.entries.append(e)
 
     def expand(self, file):
         raise Exception("No expansion for this Walker")
+
 
 mavenWalker = Walker(manifest_type="xml", manifest_files=["pom.xml"])

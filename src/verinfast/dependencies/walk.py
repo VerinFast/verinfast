@@ -1,5 +1,4 @@
 import json
-import os
 from pathlib import Path
 from typing import List
 
@@ -23,14 +22,15 @@ python_matches = ["requirements.txt", "requirements-dev.txt"]
 ruby_matches = ["Gemfile"]
 
 # TODO: Parse Cargo.toml
-# Example: https://github.com/servo/servo/blob/master/components/style/Cargo.toml
+# Example: https://github.com/servo/servo/blob/master/components/style/Cargo.toml # noqa: E501
 rust_matches = ["Cargo.toml"]
 
-# Finds all manifests we can process in the repo 
+
+# Finds all manifests we can process in the repo
 # and stores their path in memory
-def walk(path:str="./", output_file="./dependencies.json"):
+def walk(path: str = "./", output_file="./dependencies.json"):
     path = str(Path(path).absolute())
-    entries:List[Entry]=[]
+    entries: List[Entry] = []
     mavenWalker.walk(path=path)
     entries += mavenWalker.entries
     nodeWalker.initialize(root_path=path)
