@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import argparse
 import json
 import platform
 import subprocess
@@ -7,9 +8,10 @@ import os
 import yaml
 import httpx
 import shutil
+# import sys
 import re
 
-from utils.utils import DebugLog
+from verinfast.utils.utils import DebugLog
 
 from verinfast.cloud.aws.costs import runAws
 from verinfast.cloud.azure.costs import runAzure
@@ -20,7 +22,7 @@ from verinfast.cloud.aws.blocks import getBlocks as get_aws_blocks
 from verinfast.cloud.azure.blocks import getBlocks as get_az_blocks
 from verinfast.cloud.gcp.blocks import getBlocks as get_gcp_blocks
 
-from dependencies.walk import walk as dependency_walk
+from verinfast.dependencies.walk import walk as dependency_walk
 
 # from modernmetric.fp import file_process
 # If we want to run modernmetric directly
@@ -58,6 +60,26 @@ debugLog = DebugLog(os.getcwd())
 debugLog.log(msg='', tag="Started")
 
 
+def init_argparse() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="verinfast",
+        usage="%(prog)s [OPTION] [FILE]...",
+        # TODO: Description
+        # description="Print or check SHA1 (160-bit) checksums."
+    )
+    parser.add_argument(
+        "-c", "--config",
+        dest="config"
+    )
+
+    parser.add_argument(
+        "-o", "--output", "--output_dir",
+        dest="output_dir"
+    )
+
+    return parser
+
+
 def main():
     global shouldUpload
     global shouldManualFileScan
@@ -66,6 +88,7 @@ def main():
     global baseUrl
     global corsisId
     global config
+    global output_dir
 
     global runGit
     global runSizes
@@ -74,8 +97,21 @@ def main():
     global runScan
     global runDependencies
 
+    parser = init_argparse()
+    args = parser.parse_args()
+
+    cfg_path = "config.yaml"
+    if "config" in args:
+        cfg_path = args.config
+
+    if "output_dir" in args:
+        output_dir = args.output_dir
+
+    # print(cfg_path)
+    # sys.exit(0)
+
     # Read the config file
-    with open('config.yaml') as f:
+    with open(cfg_path) as f:
         config = yaml.safe_load(f)
     debugLog.log(msg=config, tag="Config", display=True)
 
@@ -247,6 +283,9 @@ def formatGitHash(hash: str):
 
 
 def parseRepo(path: str, repo_name: str):
+    global output_dir
+
+    print('parseRepo')
     if not dry:
         os.chdir(path)
 
@@ -308,6 +347,12 @@ def parseRepo(path: str, repo_name: str):
                         prevHash = lineArr[0]
 
             debugLog.log(msg=truncate(finalArr), tag=f"{repo_name} Git Stats")
+
+        print('OUTPUT PATH COMPONENTS:')
+        print(output_dir)
+        print(repo_name)
+
+        exit(1)
 
         git_output_file = os.path.join(output_dir, repo_name + ".git.log.json")
 
@@ -432,7 +477,7 @@ def parseRepo(path: str, repo_name: str):
         dependencies_output_file = os.path.join(output_dir, repo_name + ".dependencies.json")
         debugLog.log(msg=repo_name, tag="Scanning dependencies", display=True)
         if not dry:
-            dependencies_file = dependency_walk(output_file=dependencies_output_file, path_to_output=output_dir)
+            dependencies_file = dependency_walk(output_file=dependencies_output_file)
         debugLog.log(msg=dependencies_file, tag="Dependency File", display=False)
         upload(dependencies_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/dependencies", repo_name)
 

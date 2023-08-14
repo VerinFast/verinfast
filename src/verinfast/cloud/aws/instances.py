@@ -3,7 +3,7 @@ import os
 
 import boto3
 
-import cloud.aws.regions as r
+import verinfast.cloud.aws.regions as r
 
 regions = r.regions
 
