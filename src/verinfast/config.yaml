@@ -12,7 +12,7 @@ modules:
       start: 2023-02-09
     dry: false # Flag to just reupload files
     dependencies: true
-  cloud: 
+  cloud:
   # - provider: azure
   #   account: d6f7992c-2a21-4a9c-b46b-e70d2c90070d
   #   start: "2023-05-01"
@@ -22,8 +22,8 @@ modules:
   #   start: "2023-05-01"
   #   end: "2023-06-01"
 repos:
-#  - git@github.com:StartupOS/small-test-repo.git
-  - git@github.com:StartupOS/atd.git
+ - git@github.com:StartupOS/small-test-repo.git
+#   - git@github.com:StartupOS/atd.git
 #  - git@github.com:rails/rails.git
 #  - git@github.com:tensorflow/tensorflow.git
 localrepos:
