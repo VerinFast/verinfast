@@ -2,7 +2,7 @@ import json
 import os
 import subprocess
 
-from utils.utils import DebugLog
+from verinfast.utils.utils import DebugLog
 debugLog = DebugLog(os.getcwd())
 
 

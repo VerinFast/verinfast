@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "setuptools", "build"]
 build-backend = "hatchling.build"
 
 [project]
@@ -11,13 +11,13 @@ authors = [
 ]
 description = "A small example package"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: Free for non-commercial use",
     "Operating System :: OS Independent",
 ]
-dynamic=["dependencies"]
+dynamic = ["dependencies"]
 
 [project.urls]
 "Homepage" = "https://github.com/StartupOS/verinfast"
