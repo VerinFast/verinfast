@@ -9,7 +9,8 @@ import cloud.aws.regions as r
 
 regions = r.regions
 
-def getBlocks(sub_id:str, path_to_output:str="./"):
+
+def getBlocks(sub_id: str, path_to_output: str = "./"):
     session = boto3.Session()
     profiles = session.available_profiles
     right_session = None
@@ -19,7 +20,7 @@ def getBlocks(sub_id:str, path_to_output:str="./"):
         id = sts.get_caller_identity()
         print(id["Account"])
         if int(id['Account']) == int(sub_id):
-            right_session=s2
+            right_session = s2
             break
     if right_session is None:
         return None
@@ -27,7 +28,7 @@ def getBlocks(sub_id:str, path_to_output:str="./"):
     #     try:
     s3 = right_session.client('s3', region_name=regions[0])
     response = s3.list_buckets()
-    known_buckets={}
+    known_buckets = {}
     for bucket in response['Buckets']:
         # print(f'  {bucket["Name"]}')
         # print(bucket)
@@ -57,7 +58,11 @@ def getBlocks(sub_id:str, path_to_output:str="./"):
             # print('Have region')
             cloudwatch = right_session.client('cloudwatch', region_name=region)
         else:
-            cloudwatch = right_session.client('cloudwatch', region_name='us-east-1')
+            cloudwatch = right_session.client(
+                'cloudwatch',
+                region_name='us-east-1'
+            )
+
         response = cloudwatch.get_metric_statistics(
             Namespace="AWS/S3",
             MetricName="BucketSizeBytes",
@@ -66,7 +71,10 @@ def getBlocks(sub_id:str, path_to_output:str="./"):
                     u"Name": u"BucketName",
                     u"Value": bucket_name
                 },
-                 {u'Name': 'StorageType', u'Value': 'StandardStorage'}
+                {
+                    u'Name': 'StorageType',
+                    u'Value': 'StandardStorage'
+                }
             ],
             StartTime=datetime.now() - timedelta(days=2),
             EndTime=datetime.now(),
@@ -95,9 +103,13 @@ def getBlocks(sub_id:str, path_to_output:str="./"):
                     "provider": "aws",
                     "account": str(sub_id)
                 },
-                "data" : my_buckets
+                "data": my_buckets
             }
-    aws_output_file = os.path.join(path_to_output, f'aws-storage-{sub_id}.json')
+    aws_output_file = os.path.join(
+        path_to_output,
+        f'aws-storage-{sub_id}.json'
+    )
+
     with open(aws_output_file, 'w') as outfile:
         outfile.write(json.dumps(upload, indent=4))
     print(json.dumps(upload, indent=4))

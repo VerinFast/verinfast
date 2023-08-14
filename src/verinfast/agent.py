@@ -4,7 +4,6 @@ import json
 import platform
 import subprocess
 import os
-import time
 import yaml
 import httpx
 import shutil
@@ -23,9 +22,10 @@ from verinfast.cloud.gcp.blocks import getBlocks as get_gcp_blocks
 
 from dependencies.walk import walk as dependency_walk
 
-#from modernmetric.fp import file_process # If we want to run modernmetric directly
+# from modernmetric.fp import file_process
+# If we want to run modernmetric directly
 
-requestx = httpx.Client(http2=True,timeout=None)
+requestx = httpx.Client(http2=True, timeout=None)
 
 shouldUpload = False
 shouldManualFileScan = True
@@ -37,7 +37,7 @@ runStats = True
 runScan = True
 runDependencies = True
 
-dry = False # Flag to not run scans, just upload files (if shouldUpload==True)
+dry = False  # Flag to not run scans, just upload files (if shouldUpload==True)
 config = FileNotFoundError
 reportId = 0
 corsisId = 0
@@ -56,6 +56,7 @@ os.makedirs(output_dir, exist_ok=True)
 debugLog = DebugLog(os.getcwd())
 
 debugLog.log(msg='', tag="Started")
+
 
 def main():
     global shouldUpload
@@ -76,7 +77,7 @@ def main():
     # Read the config file
     with open('config.yaml') as f:
         config = yaml.safe_load(f)
-    debugLog.log(msg=config,tag="Config", display=True)
+    debugLog.log(msg=config, tag="Config", display=True)
 
     global_dependencies()
 
@@ -123,7 +124,7 @@ def main():
                     debugLog.log(msg=corsisId, tag="Report Run Id", display=True)
                 else:
                     raise Exception(f"{corsisId} returned for failed report Id fetch.")
-            else :
+            else:
                 print("ID only fetched for upload")
             scanRepos(config)
         if "cloud" in config['modules']:
@@ -131,30 +132,35 @@ def main():
 
     debugLog.log(msg='', tag="Finished")
 
-##### Helpers #####
-#newline = "\n" # TODO - Set to system appropriate newline character. This doesn't work with modernmetric
+# #### Helpers #####
+# newline = "\n" # TODO - Set to system appropriate newline character. This doesn't work with modernmetric
+
 
 # Excludes files in .git directories. Takes path of full path with filename
 def allowfile(path, allowDir=False):
     normpath = os.path.normpath(path)
     dirlist = normpath.split(os.sep)
-    if ("node_modules" not in dirlist and
+    if (
+        "node_modules" not in dirlist and
         ".git" not in dirlist and
         not os.path.islink(path) and
-        (os.path.isfile(path) or allowDir)):
-            return True
+        (os.path.isfile(path) or allowDir)
+    ):
+        return True
     else:
         return False
 
+
 # Get recursive size of a directory
-def get_raw_size(start_path = '.'):
+def get_raw_size(start_path='.'):
     total_size = 0
     for dirpath, dirnames, filenames in os.walk(start_path):
         for f in filenames:
             fp = os.path.join(dirpath, f)
-            if(os.path.isfile(fp) and not os.path.islink(fp)):
-                total_size += os.path.getsize(fp) #os.stat(fp).st_size
+            if (os.path.isfile(fp) and not os.path.islink(fp)):
+                total_size += os.path.getsize(fp)  # os.stat(fp).st_size
     return total_size
+
 
 # Simple algorithm for lines of code in a file
 def getloc(file):
@@ -167,10 +173,13 @@ def getloc(file):
         return count
     except:
         return 0
+
+
 # Truncate large strings for display
 def truncate(text, length=100):
-    testStr = str(text) # Supports passing in Lists and other types
-    return((testStr[:length] + '..') if len(testStr) > length else testStr)
+    testStr = str(text)  # Supports passing in Lists and other types
+    return ((testStr[:length] + '..') if len(testStr) > length else testStr)
+
 
 # Chunk a list
 def chunks(lst, n):
@@ -178,7 +187,8 @@ def chunks(lst, n):
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
 
-###### Setup ######
+
+# ##### Setup ######
 def checkDependency(command, name):
     which = shutil.which(command)
     if not which:
@@ -187,20 +197,22 @@ def checkDependency(command, name):
     else:
         debugLog.log(msg=f"{name} is installed at {which}.", tag=f"{name} status", display=True)
 
+
 def global_dependencies():
     # Check if Python3 is installed. This would catch if run with Python 2
     checkDependency("python3", "Python3")
 
-##### Upload #####
+
+# #### Upload #####
 def upload(file, route, source=''):
     global shouldUpload
     global baseUrl
 
     if shouldUpload:
         with open(file, 'rb') as f:
-            debugLog.log(msg=f"{baseUrl}{route}", tag=f"Uploading to")
+            debugLog.log(msg=f"{baseUrl}{route}", tag="Uploading to")
             headers = {
-                'Content-Type': 'application/json', 
+                'Content-Type': 'application/json',
                 'accept': 'application/json'
             }
             response = requestx.post(baseUrl + route, data=f, headers=headers)
@@ -209,15 +221,18 @@ def upload(file, route, source=''):
         else:
             debugLog.log(msg=response.status_code, tag=f"Failed to upload {file} for {source} to {baseUrl}{route}", display=True)
 
-#### Helpers2 #####
-def escapeChars(text:str):
+
+# ### Helpers2 #####
+def escapeChars(text: str):
     fixedText = re.sub(r'([\"\{\}])', r'\\\1', text)
-    return(fixedText)
+    return fixedText
 
-def trimLineBreaks(text:str):
-    return(text.replace("\n", "").replace("\r",""))
 
-def formatGitHash(hash:str):
+def trimLineBreaks(text: str):
+    return text.replace("\n", "").replace("\r", "")
+
+
+def formatGitHash(hash: str):
     message = subprocess.check_output(["git", "log", "-n1", "--pretty=format:%B", hash]).decode('utf-8')
     author = subprocess.check_output(["git", "log", "-n1", "--pretty=format:%aN <%aE>", hash]).decode('utf-8')
     commit = subprocess.check_output(["git", "log", "-n1", "--pretty=format:%H", hash]).decode('utf-8')
@@ -230,25 +245,26 @@ def formatGitHash(hash:str):
     }
     return returnVal
 
-def parseRepo(path:str, repo_name:str):
+
+def parseRepo(path: str, repo_name: str):
     if not dry:
         os.chdir(path)
 
     # Get Correct Branch
     # TODO Get a list of branches and use most recent if no main or master
-    branch=""
+    branch = ""
     try:
         if not dry:
             subprocess.check_call(["git", f"--work-tree={path}", "checkout", "main"])
-            branch="main"
+            branch = "main"
     except subprocess.CalledProcessError:
         try:
             if not dry:
                 subprocess.check_call(["git", "checkout", "master"])
-                branch="master"
+                branch = "master"
         except subprocess.CalledProcessError:
             raise Exception("Error checking out branch from git.")
-    branch=branch.strip()
+    branch = branch.strip()
 
     # Git Stats
     if runGit:
@@ -261,7 +277,7 @@ def parseRepo(path:str, repo_name:str):
         '''
         try:
             if not dry:
-                results=subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+                results = subprocess.run(command, shell=True, stdout=subprocess.PIPE)
                 log = results.stdout.decode()
         except subprocess.CalledProcessError:
             raise Exception("Error getting log from git.")
@@ -271,12 +287,12 @@ def parseRepo(path:str, repo_name:str):
             prevHash = ''
             filesArr = []
             finalArr = []
-        
+
             for line in resultArr:
                 lineArr = line.split("\t")
                 if len(lineArr) > 1:
                     filesArr.append({
-                        "insertions": lineArr[0], 
+                        "insertions": lineArr[0],
                         "deletions": lineArr[1],
                         "path": lineArr[2]
                     })
@@ -310,29 +326,29 @@ def parseRepo(path:str, repo_name:str):
             git_size = get_raw_size("./.git")
 
             # get sizes
-            real_size= repo_size - git_size
+            real_size = repo_size - git_size
             debugLog.log(msg=repo_size, tag="Repo Size")
             debugLog.log(msg=git_size, tag="Git Size")
             sizes = {
-                "files":{
-                    ".":{
-                        "size" : repo_size,
-                        "loc" : 0,
-                        "ext" : None,
-                        "directory" : True
+                "files": {
+                    ".": {
+                        "size": repo_size,
+                        "loc": 0,
+                        "ext": None,
+                        "directory": True
                     }
                 },
-                "metadata":{
+                "metadata": {
                     "env": machine,
                     "real_size": real_size,
                     "uname": system
                 }
             }
-            #filelist for modernmetric
+            # filelist for modernmetric
             filelist = []
 
             for filepath, subdirs, list in os.walk("."):
-                #print(subdirs)
+                # print(subdirs)
                 for name in list:
                     fp = os.path.join(filepath, name)
                     extRe = re.search("^[^\.]*\.(.*)", name)
@@ -340,13 +356,13 @@ def parseRepo(path:str, repo_name:str):
                     if allowfile(path=fp):
                         if shouldManualFileScan:
                             file = {
-                                "size" : os.path.getsize(fp),
-                                "loc" : getloc(fp),
-                                "ext" : ext, #os.path.splitext(name)[1],
-                                "directory" : False
+                                "size": os.path.getsize(fp),
+                                "loc": getloc(fp),
+                                "ext": ext,  # os.path.splitext(name)[1],
+                                "directory": False
                             }
                             sizes["files"][fp] = file
-                        filelist.append({"name":name,"path":fp})
+                        filelist.append({"name": name, "path": fp})
 
         sizes_output_file = os.path.join(output_dir, repo_name + ".sizes.json")
 
@@ -362,11 +378,11 @@ def parseRepo(path:str, repo_name:str):
             debugLog.log(msg=repo_name, tag="Getting LOC from repository", display=True)
             subprocess.check_call([
                 "pygount",
-                "-F=.git,node_modules", # Folders to ignore
+                "-F=.git,node_modules",  # Folders to ignore
                 "--format=json",
                 "-o",
                 pygount_output_file,
-                "." # Scan current directory
+                "."  # Scan current directory
             ])
         upload(pygount_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/pygount", repo_name)
 
@@ -411,7 +427,7 @@ def parseRepo(path:str, repo_name:str):
                 debugLog.log(msg=output, tag="Scanning repository return", display=True)
         upload(findings_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/findings", repo_name)
 
-###### Scan Dependencies ######
+# ##### Scan Dependencies ######
     if runDependencies:
         dependencies_output_file = os.path.join(output_dir, repo_name + ".dependencies.json")
         debugLog.log(msg=repo_name, tag="Scanning dependencies", display=True)
@@ -420,7 +436,8 @@ def parseRepo(path:str, repo_name:str):
         debugLog.log(msg=dependencies_file, tag="Dependency File", display=False)
         upload(dependencies_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/dependencies", repo_name)
 
-###### Scan Repos ######
+
+# ##### Scan Repos ######
 def scanRepos(config):
 
     # Loop over all remote repositories from config file
@@ -439,7 +456,7 @@ def scanRepos(config):
                 debugLog.log(msg=temp_dir, tag="Temp Directory")
                 if not dry:
                     try:
-                        #subprocess.check_call(["git", "clone", repo_url, temp_dir])
+                        # subprocess.check_call(["git", "clone", repo_url, temp_dir])
                         subprocess.check_output(["git", "clone", repo_url, temp_dir])
                     except subprocess.CalledProcessError:
                         debugLog.log(msg=repo_url, tag="Failed to clone", display=True)
@@ -454,7 +471,7 @@ def scanRepos(config):
                 if not dry:
                     shutil.rmtree(temp_dir)
         else:
-             debugLog.log(msg='', tag="No remote repos", display=True)
+            debugLog.log(msg='', tag="No remote repos", display=True)
     else:
         debugLog.log(msg='', tag="No remote repos", display=True)
 
@@ -473,17 +490,18 @@ def scanRepos(config):
 
         debugLog.log(msg='', tag="Finished repo scans")
 
-###### Scan Cloud ######
+
+# ##### Scan Cloud ######
 def scanCloud(config):
-    debugLog.log(msg='',tag="Doing cloud scan",display=True)
+    debugLog.log(msg='', tag="Doing cloud scan", display=True)
     cloud_config = config['modules']['cloud']
     debugLog.log(msg=cloud_config, tag='Cloud Config')
 
-    if None == cloud_config:
+    if cloud_config is None:
         return
 
     for provider in cloud_config:
-        if(provider["provider"] == "aws"):
+        if provider["provider"] == "aws":
             # Check if AWS-CLI is installed
             checkDependency("aws", "AWS Command-line tool")
 
@@ -497,7 +515,7 @@ def scanCloud(config):
             debugLog(msg=aws_block_file, tag="AWS Storage")
             upload(file=aws_block_file, route=f"/report/{config['report']['id']}/storage", source="AWS")
 
-        if(provider["provider"] == "azure"):
+        if provider["provider"] == "azure":
             # Check if Azure CLI is installed
             checkDependency("az", "Azure Command-line tool")
 
@@ -521,6 +539,7 @@ def scanCloud(config):
             gcp_block_file = get_gcp_blocks(sub_id=provider["account"], path_to_output=output_dir)
             debugLog(msg=gcp_block_file, tag="GCP Storage")
             upload(file=gcp_block_file, route=f"/report/{config['report']['id']}/storage", source="GCP")
+
 
 # For test runs from commandline. Comment out before packaging.
 main()

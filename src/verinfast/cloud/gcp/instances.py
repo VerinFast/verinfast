@@ -5,11 +5,12 @@ from google.cloud import compute_v1
 
 from cloud.gcp.zones import zones
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="/Users/jason/.config/gcloud/application_default_credentials.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/Users/jason/.config/gcloud/application_default_credentials.json"  # noqa: E501
 
-def get_instances(sub_id:str, path_to_output:str="./"):
+
+def get_instances(sub_id: str, path_to_output: str = "./"):
     my_instances = []
-    networks_client = compute_v1.NetworksClient()
+    # networks_client = compute_v1.NetworksClient()
     instances_client = compute_v1.InstancesClient()
     for zone in zones:
         for instance in instances_client.list(project=sub_id, zone=zone):
@@ -18,7 +19,7 @@ def get_instances(sub_id:str, path_to_output:str="./"):
             hw = instance.machine_type
             state = instance.status
             region = zone[0:-3]
-            z=zone[-1:]
+            z = zone[-1:]
             nic = instance.network_interfaces[0]
             subnet = nic.subnetwork
             public_ip = "n/a"
@@ -31,7 +32,7 @@ def get_instances(sub_id:str, path_to_output:str="./"):
                 "type": hw.split("/")[-1],
                 "state": state,
                 "zone": z,
-                "region" : region,
+                "region": region,
                 "subnet": subnet.split("/")[-1],
                 "architecture": architecture,
                 "publicIp": public_ip,
@@ -45,9 +46,12 @@ def get_instances(sub_id:str, path_to_output:str="./"):
                     "provider": "gcp",
                     "account": str(sub_id)
                 },
-                "data" : my_instances
+                "data": my_instances
             }
-    gcp_output_file = os.path.join(path_to_output, f'gcp-instances-{sub_id}.json')
+    gcp_output_file = os.path.join(
+        path_to_output,
+        f'gcp-instances-{sub_id}.json'
+    )
     with open(gcp_output_file, 'w') as outfile:
         outfile.write(json.dumps(upload, indent=4))
     return gcp_output_file

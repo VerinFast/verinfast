@@ -1,4 +1,4 @@
-zones=[
+zones = [
     "asia-east1-a",
     "asia-east1-b",
     "asia-east1-c",
