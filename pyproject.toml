@@ -6,14 +6,15 @@ build-backend = "hatchling.build"
 name = "verinfast"
 version = "0.3.3"
 authors = [
-  { name="Example Author", email="author@example.com" },
+  { name="Jason Nichols", email="github@startupos.dev" },
+  { name="Sean Conrad", email="github@startupos.dev"}
 ]
 description = "A small example package"
 readme = "README.md"
 requires-python = ">=3.11"
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: CC BY-NC 4.0",
+    "License :: Free for non-commercial use",
     "Operating System :: OS Independent",
 ]
 dynamic=["dependencies"]
@@ -21,6 +22,7 @@ dynamic=["dependencies"]
 [project.urls]
 "Homepage" = "https://github.com/StartupOS/verinfast"
 "Bug Tracker" = "https://github.com/StartupOS/verinfast/issues"
+"Source" = "https://github.com/StartupOS/verinfast"
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
