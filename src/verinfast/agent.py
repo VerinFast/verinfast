@@ -53,7 +53,6 @@ version = uname.version
 machine = uname.machine
 
 output_dir = os.path.join(os.getcwd(), "results")
-os.makedirs(output_dir, exist_ok=True)
 
 debugLog = DebugLog(os.getcwd())
 
@@ -101,11 +100,13 @@ def main():
     args = parser.parse_args()
 
     cfg_path = "config.yaml"
-    if "config" in args:
+    if "config" in args and args.config is not None:
         cfg_path = args.config
 
-    if "output_dir" in args:
-        output_dir = args.output_dir
+    if "output_dir" in args and args.output_dir is not None:
+        output_dir = os.path.join(os.getcwd(), args.output_dir)
+
+    os.makedirs(output_dir, exist_ok=True)
 
     # print(cfg_path)
     # sys.exit(0)
@@ -347,12 +348,6 @@ def parseRepo(path: str, repo_name: str):
                         prevHash = lineArr[0]
 
             debugLog.log(msg=truncate(finalArr), tag=f"{repo_name} Git Stats")
-
-        print('OUTPUT PATH COMPONENTS:')
-        print(output_dir)
-        print(repo_name)
-
-        exit(1)
 
         git_output_file = os.path.join(output_dir, repo_name + ".git.log.json")
 
