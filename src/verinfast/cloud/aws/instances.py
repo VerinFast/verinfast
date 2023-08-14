@@ -7,7 +7,8 @@ import cloud.aws.regions as r
 
 regions = r.regions
 
-def get_instances(accountId:int, path_to_output:str="./"):
+
+def get_instances(accountId: int, path_to_output: str = "./"):
     session = boto3.Session()
     profiles = session.available_profiles
     right_session = None
@@ -16,7 +17,7 @@ def get_instances(accountId:int, path_to_output:str="./"):
         sts = s2.client('sts')
         id = sts.get_caller_identity()
         if int(id['Account']) == accountId:
-            right_session=s2
+            right_session = s2
             break
     if right_session is None:
         return []
@@ -33,7 +34,7 @@ def get_instances(accountId:int, path_to_output:str="./"):
                     instances = reservation['Instances']
                     for instance in instances:
                         tags = instance['Tags']
-                        name = [t['Value'] for t in tags if t['Key'] == 'Name'][0]
+                        name = [t['Value'] for t in tags if t['Key'] == 'Name'][0]  # noqa: E501
 
                         # print(instance)
                         result = {
@@ -42,7 +43,7 @@ def get_instances(accountId:int, path_to_output:str="./"):
                             "state": instance["State"]["Name"],
                             "type": instance['InstanceType'],
                             "zone": instance['Placement']['AvailabilityZone'],
-                            "region" : instance['Placement']['AvailabilityZone'][0:-1],
+                            "region": instance['Placement']['AvailabilityZone'][0:-1],  # noqa: E501
                             "subnet": instance['SubnetId'],
                             "architecture": instance['Architecture'],
                             "vpc": instance['VpcId'],
@@ -55,19 +56,23 @@ def get_instances(accountId:int, path_to_output:str="./"):
                         for interface in ni:
                             if 'Association' in interface:
                                 if 'PublicIp' in interface['Association']:
-                                    result["publicIp"] = interface['Association']['PublicIp']
+                                    result["publicIp"] = interface['Association']['PublicIp']  # noqa: E501
 
                         my_instances.append(result)
-        except:
+        except:  # noqa: E722
             pass
     upload = {
                 "metadata": {
                     "provider": "aws",
                     "account": str(accountId)
                 },
-                "data" : my_instances
+                "data": my_instances
             }
-    aws_output_file = os.path.join(path_to_output, f'aws-instances-{accountId}.json')
+    aws_output_file = os.path.join(
+        path_to_output,
+        f'aws-instances-{accountId}.json'
+    )
+
     with open(aws_output_file, 'w') as outfile:
         outfile.write(json.dumps(upload, indent=4))
     return aws_output_file
