@@ -35,17 +35,15 @@ def getBlocks(sub_id: str, path_to_output: str = "./"):
     for bucket in response['Buckets']:
         bucket_name = bucket["Name"]
         resp = s3.get_bucket_location(Bucket=bucket_name)
-
         permissions = []
         try:
             policy_status_resp = s3.get_bucket_policy_status(Bucket=bucket_name)
+            policy_response = s3.get_bucket_policy(Bucket=bucket_name)
             public = policy_status_resp["PolicyStatus"]["IsPublic"]
-
-            if "Policy" in policy_status_resp:
-                p_string = policy_status_resp["Policy"]
+            if "Policy" in policy_response:
+                p_string = policy_response["Policy"]
                 p_dict = json.loads(p_string)
                 statements = p_dict["Statement"]
-                # print(statements)
                 permissions = [json.dumps(s) for s in statements]
                 # print(s2)
         except s3.exceptions.from_code('NoSuchBucketPolicy'):
