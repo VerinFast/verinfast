@@ -1,15 +1,19 @@
 [build-system]
-requires = ["hatchling", "setuptools", "build"]
+requires = [
+  "hatchling", 
+  "setuptools", 
+  "setuptools_scm[toml]>=6.0",
+  "build"
+]
 build-backend = "hatchling.build"
 
 [project]
 name = "verinfast"
-version = "0.3.3"
 authors = [
   { name="Jason Nichols", email="github@startupos.dev" },
   { name="Sean Conrad", email="github@startupos.dev"}
 ]
-description = "A small example package"
+description = "This tool safely and securely analyzes applications for benchmarking."
 readme = "README.md"
 requires-python = ">=3.10"
 classifiers = [
@@ -17,7 +21,7 @@ classifiers = [
     "License :: Free for non-commercial use",
     "Operating System :: OS Independent",
 ]
-dynamic = ["dependencies"]
+dynamic = ["dependencies", "version"]
 
 [project.urls]
 "Homepage" = "https://github.com/StartupOS/verinfast"
@@ -29,6 +33,7 @@ verinfast = "verinfast.agent:main"
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
+version = { file = "VERSION" }
 
 [tool.pytest.ini_options]
 addopts = [
