@@ -5,11 +5,6 @@ from johnnydep.lib import JohnnyDist, flatten_deps
 from verinfast.dependencies.walkers.classes import Walker, Entry
 
 
-class Target:
-    def __init__(self, name, version):
-        self.url = name
-
-
 def parseFile(args, filename="requirements.txt", ret=False):
     dists = []
     default_fields = [
