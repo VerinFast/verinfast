@@ -32,7 +32,7 @@ class NodeWalker(Walker):
                 entry["source"] = "npm"
                 entry["name"] = d["name"]
                 entry["specifier"] = "==" + d["version"]
-                if "license" in d and type(d["license"]) is type({}):
+                if "license" in d and isinstance(d["license"], dict):
                     license[key] = d["license"]["type"]
                 elif "license" in d:
                     license[key] = d["license"]

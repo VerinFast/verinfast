@@ -16,3 +16,6 @@ print(version)
 
 with open("VERSION", "w") as f:
     f.write(version)
+
+with open("VERSION.py", "w") as f:
+    f.write("__version__ = '" + str(version) + "'")

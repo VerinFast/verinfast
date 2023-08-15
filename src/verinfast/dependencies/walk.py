@@ -7,15 +7,13 @@ import defusedxml
 from verinfast.dependencies.walkers.maven import mavenWalker
 from verinfast.dependencies.walkers.npm import nodeWalker
 from verinfast.dependencies.walkers.nuget import nugetWalker
+from verinfast.dependencies.walkers.python import py_walker
 from verinfast.dependencies.walkers.classes import Entry
 
 defusedxml.defuse_stdlib()
 
 # Manifests we support
 # should probably move this to a conf
-
-# TODO: Pip parse
-python_matches = ["requirements.txt", "requirements-dev.txt"]
 
 # TODO: Gemfile parse
 # Example: https://github.com/mastodon/mastodon/blob/main/Gemfile
@@ -38,6 +36,8 @@ def walk(path: str = "./", output_file="./dependencies.json"):
     nugetWalker.initialize()
     nugetWalker.walk(path=path)
     entries += nugetWalker.entries
+    py_walker.walk(path=path)
+    entries += py_walker.entries
 
     with open(output_file, 'w') as outfile:
         dicts = [entry.to_json() for entry in entries]

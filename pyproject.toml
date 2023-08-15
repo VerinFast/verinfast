@@ -1,9 +1,10 @@
 [build-system]
 requires = [
-  "hatchling", 
-  "setuptools", 
+  "hatchling",
+  "setuptools",
   "setuptools_scm[toml]>=6.0",
-  "build"
+  "build",
+  "hatch-requirements-txt"
 ]
 build-backend = "hatchling.build"
 
@@ -31,11 +32,16 @@ dynamic = ["dependencies", "version"]
 [project.scripts]
 verinfast = "verinfast.agent:main"
 
-[tool.setuptools.dynamic]
-dependencies = {file = ["requirements.txt"]}
-version = { file = "VERSION" }
-
 [tool.pytest.ini_options]
 addopts = [
     "--import-mode=importlib",
 ]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.hatch.version]
+path = "VERSION.py"
+
+[tool.hatch.metadata.hooks.requirements_txt]
+files = ["requirements.txt"]

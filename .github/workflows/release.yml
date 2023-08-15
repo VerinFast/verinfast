@@ -1,10 +1,10 @@
 name: "Python Release"
-on: 
+on:
   push:
-    branches: 
+    branches:
       - main
   pull_request:
-    branches: 
+    branches:
       - main
 jobs:
   unit-tests:
@@ -25,8 +25,8 @@ jobs:
           pip install
           build hatchling
           --user
-      - name: install dependencies
-        run: pip install -r requirements.txt
+      - name: Make VERSION
+        run: python make_version.py
       - name: install self
         run: pip install -e .
       - name: Unit Tests
