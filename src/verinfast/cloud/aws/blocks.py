@@ -7,6 +7,9 @@ import boto3
 
 import verinfast.cloud.aws.regions as r
 
+from verinfast.utils.utils import DebugLog
+debugLog = DebugLog(os.getcwd())
+
 regions = r.regions
 
 
@@ -30,28 +33,33 @@ def getBlocks(sub_id: str, path_to_output: str = "./"):
     response = s3.list_buckets()
     known_buckets = {}
     for bucket in response['Buckets']:
-        # print(f'  {bucket["Name"]}')
-        # print(bucket)
         bucket_name = bucket["Name"]
-        # print(bucket_name)
         resp = s3.get_bucket_location(Bucket=bucket_name)
-        policy_status_resp = s3.get_bucket_policy_status(Bucket=bucket_name)
-        public = policy_status_resp["PolicyStatus"]["IsPublic"]
-        versioning_response = s3.get_bucket_versioning(Bucket=bucket_name)
-        # print(versioning_response)
-        versioning = None
-        if "Status" in versioning_response:
-            versioning = versioning_response["Status"]
-        policy_resp = s3.get_bucket_policy(Bucket=bucket_name)
+
         permissions = []
-        if "Policy" in policy_resp:
-            p_string = policy_resp["Policy"]
-            p_dict = json.loads(p_string)
-            statements = p_dict["Statement"]
-            # print(statements)
-            permissions = [json.dumps(s) for s in statements]
-            # print(s2)
-        # print(public)
+        try:
+            policy_status_resp = s3.get_bucket_policy_status(Bucket=bucket_name)
+            public = policy_status_resp["PolicyStatus"]["IsPublic"]
+
+            if "Policy" in policy_status_resp:
+                p_string = policy_status_resp["Policy"]
+                p_dict = json.loads(p_string)
+                statements = p_dict["Statement"]
+                # print(statements)
+                permissions = [json.dumps(s) for s in statements]
+                # print(s2)
+        except s3.exceptions.from_code('NoSuchBucketPolicy'):
+            debugLog.log(msg=bucket_name, tag="No Bucket Policy for bucket")
+
+        versioning = None
+        try:
+            versioning_response = s3.get_bucket_versioning(Bucket=bucket_name)
+            if "Status" in versioning_response:
+                versioning = versioning_response["Status"]
+
+        except s3.exceptions.from_code('NoSuchBucketStatus'):
+            debugLog.log(msg=bucket_name, tag="No Bucket Status for bucket")
+
         region = resp['LocationConstraint']
         # print(region)
         if region:
@@ -112,7 +120,6 @@ def getBlocks(sub_id: str, path_to_output: str = "./"):
 
     with open(aws_output_file, 'w') as outfile:
         outfile.write(json.dumps(upload, indent=4))
-    print(json.dumps(upload, indent=4))
     return aws_output_file
 
 # Test Code

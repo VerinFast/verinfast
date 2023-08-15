@@ -548,11 +548,11 @@ def scanCloud(config):
             aws_cost_file = runAws(targeted_account=provider["account"], start=provider["start"], end=provider["end"], path_to_output=output_dir)
             debugLog.log(msg=aws_cost_file, tag="AWS Costs")
             upload(file=aws_cost_file, route=f"/report/{config['report']['id']}/Costs", source="AWS")
-            aws_instance_file = get_aws_instances(accountId=provider["account"], path_to_output=output_dir)
+            aws_instance_file = get_aws_instances(sub_id=provider["account"], path_to_output=output_dir)
             debugLog.log(msg=aws_instance_file, tag="AWS Instances")
             upload(file=aws_instance_file, route=f"/report/{config['report']['id']}/instances", source="AWS")
-            aws_block_file = get_aws_blocks(accountId=provider["account"], path_to_output=output_dir)
-            debugLog(msg=aws_block_file, tag="AWS Storage")
+            aws_block_file = get_aws_blocks(sub_id=provider["account"], path_to_output=output_dir)
+            debugLog.log(msg=aws_block_file, tag="AWS Storage")
             upload(file=aws_block_file, route=f"/report/{config['report']['id']}/storage", source="AWS")
 
         if provider["provider"] == "azure":
@@ -566,7 +566,7 @@ def scanCloud(config):
             debugLog.log(msg=azure_instance_file, tag="Azure instances")
             upload(file=azure_instance_file, route=f"/report/{config['report']['id']}/instances", source="Azure")
             azure_block_file = get_az_blocks(sub_id=provider["account"], path_to_output=output_dir)
-            debugLog(msg=azure_block_file, tag="Azure Storage")
+            debugLog.log(msg=azure_block_file, tag="Azure Storage")
             upload(file=azure_block_file, route=f"/report/{config['report']['id']}/storage", source="Azure")
 
         if provider["provider"] == "gcp":
@@ -581,5 +581,4 @@ def scanCloud(config):
             upload(file=gcp_block_file, route=f"/report/{config['report']['id']}/storage", source="GCP")
 
 
-# For test runs from commandline. Comment out before packaging.
-main()
+# For test runs from commandline. Comment out before packaging. # main()
