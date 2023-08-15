@@ -120,7 +120,6 @@ def getBlocks(sub_id: str, path_to_output: str = "./"):
 
     with open(aws_output_file, 'w') as outfile:
         outfile.write(json.dumps(upload, indent=4))
-    print(json.dumps(upload, indent=4))
     return aws_output_file
 
 # Test Code
