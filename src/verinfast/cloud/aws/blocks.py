@@ -7,6 +7,9 @@ import boto3
 
 import verinfast.cloud.aws.regions as r
 
+from verinfast.utils.utils import DebugLog
+debugLog = DebugLog(os.getcwd())
+
 regions = r.regions
 
 
@@ -49,7 +52,7 @@ def getBlocks(sub_id: str, path_to_output: str = "./"):
                 permissions = [json.dumps(s) for s in statements]
                 # print(s2)
         except s3.exceptions.from_code('NoSuchBucketPolicy'):
-            print("No Bucket Policy for bucket " + bucket_name)
+            debugLog.log(msg=bucket_name, tag="No Bucket Policy for bucket")
 
         versioning = None
         try:
@@ -58,7 +61,7 @@ def getBlocks(sub_id: str, path_to_output: str = "./"):
                 versioning = versioning_response["Status"]
 
         except s3.exceptions.from_code('NoSuchBucketStatus'):
-            print("No Bucket Status for bucket " + bucket_name)
+            debugLog.log(msg=bucket_name, tag="No Bucket Status for bucket")
 
         region = resp['LocationConstraint']
         # print(region)
