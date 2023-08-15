@@ -14,11 +14,14 @@
  - Your dependency mangement tools (e.g. `npm` or `yarn` or `maven`)
 
 ## To run the Agent:
- - Install this package with `python3 setup.py install --user`
+ - Install this package with `pip install verinfast`
  - In a directory with a `config.yaml` file run
    `verinfast`
+   - Alternatively you can point to a config with `verinfast --config=/path/to/config`
 
- 
+## Config Options
+ - If you want to check the output for yourself you can set `should_upload: false`, and use the flag `--output=/path/to/dir`. This will give you the chance to inspect what we collect before uploading. For large repositories, it is a lot of information, but we never upload your code or any credentials, just the summary data we collect.
+
 ## Troubleshooting:
 ### Python
  - Run `python3 -m pip install --upgrade pip setuptools wheel`
@@ -34,7 +37,7 @@
  - Run `which semgrep`, `semgrep --version`
 ### pip
  - Run `which pip`
- - If no `pip``, run:
+ - If no `pip`, run:
     `curl -o get-pip.py https://bootstrap.pypa.io/get-pip.py`
     `python get-pip.py`  OR `python3 get-pip.py`
  Run `sudo apt update`
