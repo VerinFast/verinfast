@@ -53,17 +53,8 @@ jobs:
           pip install
           build
           --user
-      - name: Get the version
-        id: get_version
-        run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
-      - name: Set version
-        if: startsWith(github.ref, 'refs/tags')
-        run: >-
-          sed 
-          s/
-            version = "\digit\+\.\digit\+\.\digit\+"/
-            version = "${{ steps.get_version.outputs.VERSION }}"/ 
-          pyproject.toml
+      - name: Make VERSION
+        run: python make_version.py
       - name: Build a binary wheel and a source tarball
         run: >-
           python3 -m
