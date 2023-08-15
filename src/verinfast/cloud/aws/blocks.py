@@ -33,10 +33,7 @@ def getBlocks(sub_id: str, path_to_output: str = "./"):
     response = s3.list_buckets()
     known_buckets = {}
     for bucket in response['Buckets']:
-        # print(f'  {bucket["Name"]}')
-        print(bucket)
         bucket_name = bucket["Name"]
-        print(bucket_name)
         resp = s3.get_bucket_location(Bucket=bucket_name)
 
         permissions = []
