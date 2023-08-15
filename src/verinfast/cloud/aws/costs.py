@@ -2,24 +2,30 @@ import json
 import os
 import subprocess
 
-from utils.utils import DebugLog
+from verinfast.utils.utils import DebugLog
 debugLog = DebugLog(os.getcwd())
 
-def runAws (targeted_account, start, end, path_to_output):
-    results=subprocess.run('aws configure list-profiles', shell=True, stdout=subprocess.PIPE)
-    text=results.stdout.decode()
-    profiles=[]
-    available_accounts=[]
+
+def runAws(targeted_account, start, end, path_to_output):
+    results = subprocess.run(
+        'aws configure list-profiles',
+        shell=True,
+        stdout=subprocess.PIPE
+    )
+
+    text = results.stdout.decode()
+    profiles = []
+    available_accounts = []
     for line in text.splitlines():
         profiles.append(line)
-        cmd=f'aws sts get-caller-identity --profile={line}'
-        results=subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
-        text=results.stdout.decode()
-        identity=json.loads(text)
-        account=identity["Account"]
+        cmd = f'aws sts get-caller-identity --profile={line}'
+        results = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
+        text = results.stdout.decode()
+        identity = json.loads(text)
+        account = identity["Account"]
         available_accounts.append(account)
         if str(account) == str(targeted_account):
-            cmd=f'''
+            cmd = f'''
                 aws ce get-cost-and-usage \
                 --time-period Start={start},End={end} \
                 --granularity=DAILY \
@@ -29,19 +35,24 @@ def runAws (targeted_account, start, end, path_to_output):
             '''
 
             try:
-                results=subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
+                results = subprocess.run(
+                    cmd,
+                    shell=True,
+                    stdout=subprocess.PIPE
+                )
+
             except subprocess.CalledProcessError:
                 raise Exception("Error getting aws cli data.")
-            
-            text=results.stdout.decode()
-            obj=json.loads(text)
+
+            text = results.stdout.decode()
+            obj = json.loads(text)
             results_by_time = obj["ResultsByTime"]
             charges = []
             for charge in results_by_time:
                 if charge["Groups"]:
                     for group in charge["Groups"]:
                         newCharge = {
-                            "Date" : charge["TimePeriod"]["Start"],
+                            "Date": charge["TimePeriod"]["Start"],
                             "Group": group["Keys"][0],
                             "Cost": group["Metrics"]["BlendedCost"]["Amount"],
                             "Currency": group["Metrics"]["BlendedCost"]["Unit"]
@@ -52,9 +63,13 @@ def runAws (targeted_account, start, end, path_to_output):
                     "provider": "aws",
                     "account": str(targeted_account)
                 },
-                "data" : charges
+                "data": charges
             }
-            aws_output_file = os.path.join(path_to_output, f'aws-cost-{targeted_account}.json')
+            aws_output_file = os.path.join(
+                path_to_output,
+                f'aws-cost-{targeted_account}.json'
+            )
+
             with open(aws_output_file, 'w') as outfile:
                 outfile.write(json.dumps(upload, indent=4))
             return aws_output_file

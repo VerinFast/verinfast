@@ -1,7 +1,8 @@
 import os
 import time
 
-class DebugLog: 
+
+class DebugLog:
 
     def __init__(self, path, debug=True):
         self.path = path

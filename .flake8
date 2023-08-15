@@ -1,0 +1,14 @@
+[flake8]
+per-file-ignores =
+    # line too long
+    src/verinfast/agent.py: E501, E722, W605
+    src/verinfast/cloud/aws/blocks.py: E501
+    VERSION.py: W292
+exclude =
+    build
+    __pycache__
+    manage.py
+    settings.py
+    env
+    .env
+    VERSION.py
