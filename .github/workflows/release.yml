@@ -6,6 +6,8 @@ on:
   pull_request:
     branches:
       - main
+  release:
+    types: [created]
 jobs:
   unit-tests:
     runs-on: ubuntu-latest
