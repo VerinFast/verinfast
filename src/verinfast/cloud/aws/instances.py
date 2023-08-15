@@ -8,7 +8,7 @@ import verinfast.cloud.aws.regions as r
 regions = r.regions
 
 
-def get_instances(accountId: int, path_to_output: str = "./"):
+def get_instances(sub_id: int, path_to_output: str = "./"):
     session = boto3.Session()
     profiles = session.available_profiles
     right_session = None
@@ -16,7 +16,7 @@ def get_instances(accountId: int, path_to_output: str = "./"):
         s2 = boto3.Session(profile_name=profile)
         sts = s2.client('sts')
         id = sts.get_caller_identity()
-        if int(id['Account']) == accountId:
+        if int(id['Account']) == sub_id:
             right_session = s2
             break
     if right_session is None:
@@ -64,13 +64,13 @@ def get_instances(accountId: int, path_to_output: str = "./"):
     upload = {
                 "metadata": {
                     "provider": "aws",
-                    "account": str(accountId)
+                    "account": str(sub_id)
                 },
                 "data": my_instances
             }
     aws_output_file = os.path.join(
         path_to_output,
-        f'aws-instances-{accountId}.json'
+        f'aws-instances-{sub_id}.json'
     )
 
     with open(aws_output_file, 'w') as outfile:

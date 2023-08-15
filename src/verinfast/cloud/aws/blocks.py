@@ -10,7 +10,7 @@ import verinfast.cloud.aws.regions as r
 regions = r.regions
 
 
-def getBlocks(sub_id: str, path_to_output: str = "./"):
+def getBlocks(sub_id=str, path_to_output: str = "./"):
     session = boto3.Session()
     profiles = session.available_profiles
     right_session = None
@@ -31,27 +31,35 @@ def getBlocks(sub_id: str, path_to_output: str = "./"):
     known_buckets = {}
     for bucket in response['Buckets']:
         # print(f'  {bucket["Name"]}')
-        # print(bucket)
+        print(bucket)
         bucket_name = bucket["Name"]
-        # print(bucket_name)
+        print(bucket_name)
         resp = s3.get_bucket_location(Bucket=bucket_name)
-        policy_status_resp = s3.get_bucket_policy_status(Bucket=bucket_name)
-        public = policy_status_resp["PolicyStatus"]["IsPublic"]
-        versioning_response = s3.get_bucket_versioning(Bucket=bucket_name)
-        # print(versioning_response)
-        versioning = None
-        if "Status" in versioning_response:
-            versioning = versioning_response["Status"]
-        policy_resp = s3.get_bucket_policy(Bucket=bucket_name)
+
         permissions = []
-        if "Policy" in policy_resp:
-            p_string = policy_resp["Policy"]
-            p_dict = json.loads(p_string)
-            statements = p_dict["Statement"]
-            # print(statements)
-            permissions = [json.dumps(s) for s in statements]
-            # print(s2)
-        # print(public)
+        try:
+            policy_status_resp = s3.get_bucket_policy_status(Bucket=bucket_name)
+            public = policy_status_resp["PolicyStatus"]["IsPublic"]
+
+            if "Policy" in policy_status_resp:
+                p_string = policy_status_resp["Policy"]
+                p_dict = json.loads(p_string)
+                statements = p_dict["Statement"]
+                # print(statements)
+                permissions = [json.dumps(s) for s in statements]
+                # print(s2)
+        except s3.exceptions.from_code('NoSuchBucketPolicy'):
+            print("No Bucket Policy for bucket " + bucket_name)
+
+        versioning = None
+        try:
+            versioning_response = s3.get_bucket_versioning(Bucket=bucket_name)
+            if "Status" in versioning_response:
+                versioning = versioning_response["Status"]
+
+        except s3.exceptions.from_code('NoSuchBucketStatus'):
+            print("No Bucket Status for bucket " + bucket_name)
+
         region = resp['LocationConstraint']
         # print(region)
         if region:
