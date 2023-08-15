@@ -581,5 +581,4 @@ def scanCloud(config):
             upload(file=gcp_block_file, route=f"/report/{config['report']['id']}/storage", source="GCP")
 
 
-# For test runs from commandline. Comment out before packaging.
-main()
+# For test runs from commandline. Comment out before packaging. # main()
