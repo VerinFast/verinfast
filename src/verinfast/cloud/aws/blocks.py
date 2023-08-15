@@ -10,7 +10,7 @@ import verinfast.cloud.aws.regions as r
 regions = r.regions
 
 
-def getBlocks(sub_id=str, path_to_output: str = "./"):
+def getBlocks(sub_id: str, path_to_output: str = "./"):
     session = boto3.Session()
     profiles = session.available_profiles
     right_session = None
