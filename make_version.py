@@ -7,7 +7,7 @@ ref = None
 if "GITHUB_REF" in os.environ:
     ref = os.environ["GITHUB_REF"]
 
-if ref and ref is not None and ref is str and ref.startswith("refs/tags/"):
+if ref and ref is not None and ref.startswith("refs/tags/"):
     version = ref.replace("refs/tags/", "")
 else:
     version = datetime.datetime.now().strftime("%Y.%m.%d%H%M%S")
