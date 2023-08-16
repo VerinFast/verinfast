@@ -166,6 +166,8 @@ def main():
             scanRepos(config)
         if "cloud" in config['modules']:
             scanCloud(config)
+        if "sitescan" in config['modules']:
+            scanWebSite(config)
 
     debugLog.log(msg='', tag="Finished")
 
@@ -580,5 +582,9 @@ def scanCloud(config):
             debugLog(msg=gcp_block_file, tag="GCP Storage")
             upload(file=gcp_block_file, route=f"/report/{config['report']['id']}/storage", source="GCP")
 
+
+# ##### Scan Web Site ######
+def scanWebSite(config):
+    checkDependency("vp-cli")
 
 # For test runs from commandline. Comment out before packaging. # main()
