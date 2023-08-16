@@ -160,6 +160,9 @@ cython_debug/
 #.idea/
 
 # Downloaded and results files
+src/verinfast/results
+src/verinfast/log.txt
+src/verinfast/temp_repo
 verinfast/results
 verinfast/log.txt
 verinfast/temp_repo
