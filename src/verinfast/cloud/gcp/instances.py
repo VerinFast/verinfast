@@ -24,39 +24,39 @@ metrics = [
 metrics_client = MetricServiceClient()
 now = time.time()
 seconds = int(now)
+start_seconds = seconds - (90 * 24 * 60 * 60)
 nanos = int((now - seconds) * 10**9)
 interval = TimeInterval(
     {
         "end_time": {"seconds": seconds, "nanos": nanos},
-        "start_time": {"seconds": seconds, "nanos": nanos},
+        "start_time": {"seconds": start_seconds, "nanos": nanos},
     }
 )
 
 aggregation = Aggregation(
     {
-        "alignment_period": {"seconds": 3600},  # 20 minutes
+        "alignment_period": {"seconds": 3600},  # 60 minutes
         "per_series_aligner": Aggregation.Aligner.ALIGN_MEAN,
         "cross_series_reducer": Aggregation.Reducer.REDUCE_MEAN
     }
 )
 
+
 def get_metrics_for_instance(sub_id: str, instance_id: str, metric: str):
+    request = ListTimeSeriesRequest(
+        filter=f'metric.type = "{metric}" AND metric.labels.instance_name = "{instance_id}"',  # noqa: E501
+        view=ListTimeSeriesRequest.TimeSeriesView.FULL,
+        aggregation=aggregation,
+        name=f"projects/{sub_id}",
+        interval=interval
+    )
     results = metrics_client.list_time_series(
-        request= {
-            "name": f"projects/{sub_id}",
-            "filter": f'metric.type = "{metric}" and resource.labels.instance_id="{instance_id}',  # noqa: E501
-            "interval": interval,
-            "view": ListTimeSeriesRequest.TimeSeriesView.FULL,
-            "aggregation": aggregation
-        },
+        request=request
     )
     for result in results:
-        result.points[0].
         if result.resource and result.resource.labels:
-            bn = result.resource.labels["bucket_name"]
-            size = result.points[-1].value.double_value
-            if bn in known_buckets:
-                known_buckets[bn]["size"] = size
+            # size = result.points[-1].value.double_value
+            print(result)
 
 
 def get_instances(sub_id: str, path_to_output: str = "./"):
@@ -77,6 +77,11 @@ def get_instances(sub_id: str, path_to_output: str = "./"):
             if nic.access_configs:
                 public_ip = nic.access_configs[0].nat_i_p
             vnet_name = nic.network
+            get_metrics_for_instance(
+                sub_id=sub_id,
+                instance_id=name,
+                metric='compute.googleapis.com/instance/cpu/utilization'
+            )
 
             my_instance = {
                 "name": name,
