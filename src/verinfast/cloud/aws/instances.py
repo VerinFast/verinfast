@@ -1,10 +1,14 @@
 from datetime import datetime, timedelta
 import json
 import os
+from typing import List
 
 import boto3
 
 import verinfast.cloud.aws.regions as r
+from verinfast.cloud.cloud_dataclass import \
+    Utilization_Datapoint as Datapoint,  \
+    Utilization_Datum as Datum
 
 regions = r.regions
 
@@ -38,12 +42,13 @@ def get_metric_for_instance(
     return response
 
 
-def parse_multi(datapoint: dict) -> dict:
-    dp_sum = 0
-    dp_count = 0
-    dp_min = 0
-    dp_max = 0
+def parse_multi(datapoint: dict) -> Datapoint:
+    dp_sum: float = 0
+    dp_count: int = 0
+    dp_min: float = 0
+    dp_max: float = 0
 
+    my_datapoint = Datapoint()
     for entry in datapoint:
         if 'Average' in entry:
             e = entry['Average']
@@ -54,15 +59,17 @@ def parse_multi(datapoint: dict) -> dict:
         if 'Maximum' in entry:
             dp_max += entry['Maximum']
 
-    return {
-        "Timestamp": datapoint["Timestamp"],
-        "Minimum": dp_min / dp_count,
-        "Average": dp_sum / dp_count,
-        "Maximum": dp_max / dp_count
-        }
+    dp_count = max(dp_count, 1)
+    my_datapoint.Average = dp_sum / dp_count
+    my_datapoint.Maximum = dp_max / dp_count
+    my_datapoint.Minimum = dp_min / dp_count
+
+    my_datapoint.Timestamp = datapoint['Timestamp']
+
+    return my_datapoint
 
 
-def get_instance_utilization(instance_id: str):
+def get_instance_utilization(instance_id: str) -> List[Datum]:
     cpu_resp = get_metric_for_instance(
             metric='CPUUtilization',
             instance_id=instance_id
@@ -90,24 +97,39 @@ def get_instance_utilization(instance_id: str):
         cpu_stats.append(summary)
 
     # memory and disk are not collected by default
-
-    # each instance may have more than one disk
-    if "Datapoints" in hdd_resp:
-        for datapoint in hdd_resp["Datapoints"]:
-            summary = parse_multi(datapoint)
-            hdd_stats.append(summary)
-    # memory
-    if "Datapoints" in mem_resp:
-        mem_stats = mem_resp["Datapoints"]
+    try:
+        # each instance may have more than one disk
+        if "Datapoints" in hdd_resp:
+            for datapoint in hdd_resp["Datapoints"]:
+                summary = parse_multi(datapoint)
+                hdd_stats.append(summary)
+        # memory
+        if "Datapoints" in mem_resp:
+            mem_stats = [Datapoint.From(i) for i in mem_resp["Datapoints"]]
+    except Exception:
+        pass
 
     data = []
-    for t in zip(cpu_stats, mem_stats, hdd_stats):
-        datum = {
-            "cpu": t[0],
-            "mem": t[1],
-            "hdd": t[2]
-        }
-        data.append(datum)
+    m = max(len(cpu_stats), len(mem_stats), len(hdd_stats))
+    if m == 0:
+        return []
+    else:
+        for i in range(m):
+            datum = Datum()
+            if i <= len(cpu_stats):
+                datum.cpu = cpu_stats[i]
+            else:
+                datum.cpu = None
+            if i <= len(mem_stats):
+                datum.mem = mem_stats[i]
+            else:
+                datum.mem = None
+            if i <= len(hdd_stats):
+                datum.hdd = hdd_stats[i]
+            else:
+                datum.hdd = None
+
+            data.append(datum)
 
     return data
 
@@ -126,6 +148,7 @@ def get_instances(sub_id: int, path_to_output: str = "./"):
     if right_session is None:
         return []
     my_instances = []
+    metrics = []
     for region in regions:
         try:
             client = right_session.client('ec2', region_name=region)
@@ -139,7 +162,14 @@ def get_instances(sub_id: int, path_to_output: str = "./"):
                     for instance in instances:
                         tags = instance['Tags']
                         name = [t['Value'] for t in tags if t['Key'] == 'Name'][0]  # noqa: E501
-
+                        m = get_instance_utilization(
+                            instance_id=instance["InstanceId"]
+                        )
+                        d = {
+                                "id": instance["InstanceId"],
+                                "metrics": m
+                            }
+                        metrics.append(d)
                         # print(instance)
                         result = {
                             "id": instance["InstanceId"],
@@ -179,6 +209,11 @@ def get_instances(sub_id: int, path_to_output: str = "./"):
 
     with open(aws_output_file, 'w') as outfile:
         outfile.write(json.dumps(upload, indent=4))
+
+    upload['data'] = metrics
+    with open(aws_output_file[:-5]+"-utilization.json", "w") as outfile2:
+        outfile2.write(json.dumps(upload, indent=4))
+
     return aws_output_file
 
 # Test Code

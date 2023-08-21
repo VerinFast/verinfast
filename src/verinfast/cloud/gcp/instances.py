@@ -1,11 +1,62 @@
 import json
 import os
+import time
+
 
 from google.cloud import compute_v1
+from google.cloud.monitoring_v3 import Aggregation, MetricServiceClient, TimeInterval, ListTimeSeriesRequest  # noqa: E501
 
 from verinfast.cloud.gcp.zones import zones
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/Users/jason/.config/gcloud/application_default_credentials.json"  # noqa: E501
+
+base_url = [
+    'compute.googleapis.com/',
+    'agent.googleapis.com/'
+    ]
+
+metrics = [
+    'instance/cpu/utilization',
+    'disk/percent_used',
+    'memory/percent_used'
+    ]
+
+metrics_client = MetricServiceClient()
+now = time.time()
+seconds = int(now)
+nanos = int((now - seconds) * 10**9)
+interval = TimeInterval(
+    {
+        "end_time": {"seconds": seconds, "nanos": nanos},
+        "start_time": {"seconds": seconds, "nanos": nanos},
+    }
+)
+
+aggregation = Aggregation(
+    {
+        "alignment_period": {"seconds": 3600},  # 20 minutes
+        "per_series_aligner": Aggregation.Aligner.ALIGN_MEAN,
+        "cross_series_reducer": Aggregation.Reducer.REDUCE_MEAN
+    }
+)
+
+def get_metrics_for_instance(sub_id: str, instance_id: str, metric: str):
+    results = metrics_client.list_time_series(
+        request= {
+            "name": f"projects/{sub_id}",
+            "filter": f'metric.type = "{metric}" and resource.labels.instance_id="{instance_id}',  # noqa: E501
+            "interval": interval,
+            "view": ListTimeSeriesRequest.TimeSeriesView.FULL,
+            "aggregation": aggregation
+        },
+    )
+    for result in results:
+        result.points[0].
+        if result.resource and result.resource.labels:
+            bn = result.resource.labels["bucket_name"]
+            size = result.points[-1].value.double_value
+            if bn in known_buckets:
+                known_buckets[bn]["size"] = size
 
 
 def get_instances(sub_id: str, path_to_output: str = "./"):
