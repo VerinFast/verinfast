@@ -1,30 +1,32 @@
+from datetime import datetime
 import json
 import os
 import time
+from typing import List
 
-
+from google.api_core.exceptions import NotFound
 from google.cloud import compute_v1
 from google.cloud.monitoring_v3 import Aggregation, MetricServiceClient, TimeInterval, ListTimeSeriesRequest  # noqa: E501
 
 from verinfast.cloud.gcp.zones import zones
+from verinfast.cloud.cloud_dataclass import \
+    Utilization_Datapoint as Datapoint,  \
+    Utilization_Datum as Datum
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/Users/jason/.config/gcloud/application_default_credentials.json"  # noqa: E501
 
-base_url = [
-    'compute.googleapis.com/',
-    'agent.googleapis.com/'
-    ]
+metric_identifiers = {
+    "cpu": 'compute.googleapis.com/instance/cpu/utilization',
+    "hdd": 'agent.googleapis.com/disk/percent_used',  # multiple
+    "mem": 'agent.googleapis.com/memory/percent_used'
+}
 
-metrics = [
-    'instance/cpu/utilization',
-    'disk/percent_used',
-    'memory/percent_used'
-    ]
+metrics = []
 
 metrics_client = MetricServiceClient()
 now = time.time()
 seconds = int(now)
-start_seconds = seconds - (90 * 24 * 60 * 60)
+start_seconds = seconds - (90 * 24 * 60 * 60)  # 90 days ago
 nanos = int((now - seconds) * 10**9)
 interval = TimeInterval(
     {
@@ -33,7 +35,7 @@ interval = TimeInterval(
     }
 )
 
-aggregation = Aggregation(
+mean_aggregation = Aggregation(
     {
         "alignment_period": {"seconds": 3600},  # 60 minutes
         "per_series_aligner": Aggregation.Aligner.ALIGN_MEAN,
@@ -41,22 +43,76 @@ aggregation = Aggregation(
     }
 )
 
+min_aggregation = Aggregation(
+    {
+        "alignment_period": {"seconds": 3600},  # 60 minutes
+        "per_series_aligner": Aggregation.Aligner.ALIGN_MIN,
+        "cross_series_reducer": Aggregation.Reducer.REDUCE_MIN
+    }
+)
 
-def get_metrics_for_instance(sub_id: str, instance_id: str, metric: str):
-    request = ListTimeSeriesRequest(
-        filter=f'metric.type = "{metric}" AND metric.labels.instance_name = "{instance_id}"',  # noqa: E501
-        view=ListTimeSeriesRequest.TimeSeriesView.FULL,
-        aggregation=aggregation,
-        name=f"projects/{sub_id}",
-        interval=interval
-    )
-    results = metrics_client.list_time_series(
-        request=request
-    )
-    for result in results:
-        if result.resource and result.resource.labels:
-            # size = result.points[-1].value.double_value
-            print(result)
+max_aggregation = Aggregation(
+    {
+        "alignment_period": {"seconds": 3600},  # 60 minutes
+        "per_series_aligner": Aggregation.Aligner.ALIGN_MAX,
+        "cross_series_reducer": Aggregation.Reducer.REDUCE_MAX
+    }
+)
+
+aggregations = {
+    "min": min_aggregation,
+    "mean": mean_aggregation,
+    "max": max_aggregation
+}
+
+
+def get_metrics_for_instance(sub_id: str, instance_name: str) -> List[Datum]:
+    results_dict = {}
+    for m in metric_identifiers:
+        metric = metric_identifiers[m]
+        for a in aggregations:
+            aggregation = aggregations[a]
+            request = ListTimeSeriesRequest(
+                filter=f'metric.type = "{metric}" AND metric.labels.instance_name = "{instance_name}"',  # noqa: E501
+                view=ListTimeSeriesRequest.TimeSeriesView.FULL,
+                aggregation=aggregation,
+                name=f"projects/{sub_id}",
+                interval=interval
+            )
+            try:
+                results = metrics_client.list_time_series(
+                    request=request
+                )
+                for result in results:
+                    for point in result.points:
+                        d = str(datetime.fromtimestamp(
+                            point.interval.start_time.timestamp()
+                        ))
+                        if d not in results_dict:
+                            results_dict[d] = {}
+                        if m not in results_dict[d]:
+                            results_dict[d][m] = {}
+                        results_dict[d][m][a] = point.value.double_value
+                        results_dict[d]["t"] = \
+                            point.interval.start_time.timestamp()
+            except NotFound as e:
+                print(e)
+    data = []
+    for t in results_dict:
+        p = results_dict[t]
+        temp = {}
+        for k in p:
+            if k != "t":
+                t2 = {}
+                t2["Average"] = p[k]["mean"]
+                t2["Maximum"] = p[k]["max"]
+                t2["Minimum"] = p[k]["min"]
+                my_datapoint = Datapoint(**t2)
+                temp[k] = my_datapoint
+        temp["Timestamp"] = p["t"]
+        datum = Datum(**temp)
+        data.append(datum)
+    return data
 
 
 def get_instances(sub_id: str, path_to_output: str = "./"):
@@ -77,13 +133,19 @@ def get_instances(sub_id: str, path_to_output: str = "./"):
             if nic.access_configs:
                 public_ip = nic.access_configs[0].nat_i_p
             vnet_name = nic.network
-            get_metrics_for_instance(
+
+            m = get_metrics_for_instance(
                 sub_id=sub_id,
-                instance_id=name,
-                metric='compute.googleapis.com/instance/cpu/utilization'
+                instance_name=name
             )
+            d = {
+                    "id": instance.id,
+                    "metrics": [metric.dict for metric in m]
+                }
+            metrics.append(d)
 
             my_instance = {
+                "id": instance.id,
                 "name": name,
                 "type": hw.split("/")[-1],
                 "state": state,
@@ -110,6 +172,11 @@ def get_instances(sub_id: str, path_to_output: str = "./"):
     )
     with open(gcp_output_file, 'w') as outfile:
         outfile.write(json.dumps(upload, indent=4))
+
+    upload['data'] = metrics
+    with open(gcp_output_file[:-5]+"-utilization.json", "w") as outfile2:
+        outfile2.write(json.dumps(upload, indent=4))
+
     return gcp_output_file
 
 # Test code

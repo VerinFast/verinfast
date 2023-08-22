@@ -1,18 +1,84 @@
+import datetime
 import json
 import os
+from typing import List
 
 from azure.identity import DefaultAzureCredential
 from azure.mgmt.compute import ComputeManagementClient
 from azure.mgmt.network import NetworkManagementClient
+from azure.monitor.query import MetricsQueryClient, MetricAggregationType
+
+
+from verinfast.cloud.cloud_dataclass import \
+    Utilization_Datapoint as Datapoint,  \
+    Utilization_Datum as Datum
+
+
+metric_name = "Percentage CPU"
+d = datetime.timedelta(
+                days=90,
+                seconds=0,
+                microseconds=0,
+                milliseconds=0,
+                minutes=0,
+                hours=0,
+                weeks=0
+            )
+
+metric_identifiers = {"cpu": metric_name}
+aggregations = [
+    MetricAggregationType.MINIMUM,
+    MetricAggregationType.AVERAGE,
+    MetricAggregationType.MAXIMUM
+]
+
+
+def get_metrics_for_instance(
+        metrics_client: MetricsQueryClient,
+        instance_id: str,
+        instance_name: str
+        ) -> List[Datum]:
+    print("Get Metrics for Instance")
+    data = []
+    try:
+        o = metrics_client.query_resource(
+            resource_uri=instance_id,
+            interval=datetime.timedelta(hours=1),
+            aggregations=aggregations,
+            metric_names=[metric_name],
+            timespan=d,
+
+        )
+        for dp in o.metrics[0].timeseries[0].data:
+            n = Datapoint(
+                Minimum=dp.minimum,
+                Maximum=dp.maximum,
+                Average=dp.average
+            )
+            datum = Datum(
+                Timestamp=dp.timestamp.timestamp(),
+                cpu=n
+            )
+            data.append(datum)
+
+    except Exception as e:
+        print(e)
+        pass
+
+    return data
 
 
 def get_instances(sub_id: str, path_to_output: str = "./"):
     my_instances = []
+    metrics = []
     client = ComputeManagementClient(
             credential=DefaultAzureCredential(),
             subscription_id=sub_id
         )
-
+    metrics_client = MetricsQueryClient(
+            credential=DefaultAzureCredential(),
+            subscription_id=sub_id
+        )
     networkClient = NetworkManagementClient(
             credential=DefaultAzureCredential(),
             subscription_id=sub_id
@@ -67,6 +133,16 @@ def get_instances(sub_id: str, path_to_output: str = "./"):
             "vpc": vnet_name
         }
         my_instances.append(my_instance)
+        m = get_metrics_for_instance(
+            metrics_client=metrics_client,
+            instance_id=vm.id,
+            instance_name=name
+        )
+        d = {
+            "id": vm.id,
+            "metrics": [metric.dict for metric in m]
+        }
+        metrics.append(d)
     upload = {
                 "metadata": {
                     "provider": "azure",
@@ -80,6 +156,10 @@ def get_instances(sub_id: str, path_to_output: str = "./"):
     )
     with open(azure_output_file, 'w') as outfile:
         outfile.write(json.dumps(upload, indent=4))
+
+    upload['data'] = metrics
+    with open(azure_output_file[:-5]+"-utilization.json", "w") as outfile2:
+        outfile2.write(json.dumps(upload, indent=4))
     return azure_output_file
 
 # Test code

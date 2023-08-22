@@ -155,7 +155,6 @@ def get_instances(sub_id: int, path_to_output: str = "./"):
             paginator = client.get_paginator('describe_instances')
             page_iterator = paginator.paginate()
             for page in page_iterator:
-                # print(page)
                 reservations = page['Reservations']
                 for reservation in reservations:
                     instances = reservation['Instances']
@@ -167,7 +166,7 @@ def get_instances(sub_id: int, path_to_output: str = "./"):
                         )
                         d = {
                                 "id": instance["InstanceId"],
-                                "metrics": m
+                                "metrics": [metric.dict for metric in m]
                             }
                         metrics.append(d)
                         # print(instance)
