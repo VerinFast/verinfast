@@ -549,12 +549,12 @@ def scanCloud(config):
             debugLog.log(msg=aws_cost_file, tag="AWS Costs")
             upload(file=aws_cost_file, route=f"/report/{config['report']['id']}/Costs", source="AWS")
             aws_instance_file = get_aws_instances(sub_id=provider["account"], path_to_output=output_dir)
-            debugLog.log(msg=aws_instance_file, tag="AWS Instances")
-            upload(file=aws_instance_file, route=f"/report/{config['report']['id']}/instances", source="AWS")
-            aws_utilization_file = aws_instance_file[:-5]+"-utilization.json"
-            upload(file=aws_utilization_file, route=f"/report/{config['report']['id']}/instance_utilization", source="AWS")
+            if aws_instance_file is not None:
+                upload(file=aws_instance_file, route=f"/report/{config['report']['id']}/instances", source="AWS")
+                aws_utilization_file = aws_instance_file[:-5] + "-utilization.json"
+                upload(file=aws_utilization_file, route=f"/report/{config['report']['id']}/instance_utilization", source="AWS")
             aws_block_file = get_aws_blocks(sub_id=provider["account"], path_to_output=output_dir)
-            debugLog.log(msg=aws_block_file, tag="AWS Storage")
+            debugLog.log(msg=aws_block_file)
             upload(file=aws_block_file, route=f"/report/{config['report']['id']}/storage", source="AWS")
 
         if provider["provider"] == "azure":
@@ -567,7 +567,7 @@ def scanCloud(config):
             azure_instance_file = get_az_instances(sub_id=provider["account"], path_to_output=output_dir)
             debugLog.log(msg=azure_instance_file, tag="Azure instances")
             upload(file=azure_instance_file, route=f"/report/{config['report']['id']}/instances", source="Azure")
-            azure_utilization_file = azure_instance_file[:-5]+"-utilization.json"
+            azure_utilization_file = azure_instance_file[:-5] + "-utilization.json"
             upload(file=azure_utilization_file, route=f"/report/{config['report']['id']}/instance_utilization", source="Azure")
             azure_block_file = get_az_blocks(sub_id=provider["account"], path_to_output=output_dir)
             debugLog.log(msg=azure_block_file, tag="Azure Storage")
@@ -580,7 +580,7 @@ def scanCloud(config):
             gcp_instance_file = get_gcp_instances(sub_id=provider["account"], path_to_output=output_dir)
             debugLog.log(msg=gcp_instance_file, tag="GCP instances")
             upload(file=gcp_instance_file, route=f"/report/{config['report']['id']}/instances", source="GCP")
-            gcp_utilization_file = gcp_instance_file[:-5]+"-utilization.json"
+            gcp_utilization_file = gcp_instance_file[:-5] + "-utilization.json"
             upload(file=gcp_utilization_file, route=f"/report/{config['report']['id']}/instance_utilization", source="GCP")
             gcp_block_file = get_gcp_blocks(sub_id=provider["account"], path_to_output=output_dir)
             debugLog.log(msg=gcp_block_file, tag="GCP Storage")

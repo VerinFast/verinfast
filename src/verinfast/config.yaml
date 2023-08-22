@@ -13,18 +13,18 @@ modules:
 #     dry: false # Flag to just reupload files
 #     dependencies: true
   cloud:
-  - provider: azure
-#     # No idea wtf this is
-#     # account: d6f7992c-2a21-4a9c-b46b-e70d2c90070d
-#     # SOS account
-    account: 80dc7a6b-df94-44be-a235-7e7ade335a3c
-    start: "2023-05-01"
-    end: "2023-09-01"
+#   - provider: azure
+# #     # No idea wtf this is
+# #     # account: d6f7992c-2a21-4a9c-b46b-e70d2c90070d
+# #     # SOS account
+#     account: 80dc7a6b-df94-44be-a235-7e7ade335a3c
+#     start: "2023-05-01"
+#     end: "2023-09-01"
   - provider: aws
 #     SOS
-#     account: 436708548746
+    account: 436708548746
 #     Techlens
-    account: 606817498212
+    # account: 606817498212
     start: "2023-05-01"
     end: "2023-09-01"
   - provider: gcp

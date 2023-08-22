@@ -74,23 +74,25 @@ def get_instance_utilization(instance_id: str) -> List[Datum]:
             metric='CPUUtilization',
             instance_id=instance_id
         )
+    try:
+        mem_resp = get_metric_for_instance(
+                metric='mem_used_percent',
+                instance_id=instance_id,
+                namespace='CWAgent'
+            )
 
-    mem_resp = get_metric_for_instance(
-            metric='mem_used_percent',
-            instance_id=instance_id,
-            namespace='CWAgent'
-        )
-
-    hdd_resp = get_metric_for_instance(
-            metric='disk_used_percent',
-            instance_id=instance_id,
-            namespace='CWAgent'
-        )
+        hdd_resp = get_metric_for_instance(
+                metric='disk_used_percent',
+                instance_id=instance_id,
+                namespace='CWAgent'
+            )
+    except Exception:
+        pass
 
     cpu_stats = []
     mem_stats = []
     hdd_stats = []
-
+    print(cpu_resp)
     # each instance may have more than 1 CPU
     for datapoint in cpu_resp['Datapoints']:
         summary = parse_multi(datapoint)
@@ -108,7 +110,6 @@ def get_instance_utilization(instance_id: str) -> List[Datum]:
             mem_stats = [Datapoint.From(i) for i in mem_resp["Datapoints"]]
     except Exception:
         pass
-
     data = []
     m = max(len(cpu_stats), len(mem_stats), len(hdd_stats))
     if m == 0:
@@ -130,11 +131,10 @@ def get_instance_utilization(instance_id: str) -> List[Datum]:
                 datum.hdd = None
 
             data.append(datum)
-
     return data
 
 
-def get_instances(sub_id: int, path_to_output: str = "./"):
+def get_instances(sub_id: int, path_to_output: str = "./") -> str | None:
     session = boto3.Session()
     profiles = session.available_profiles
     right_session = None
@@ -146,7 +146,7 @@ def get_instances(sub_id: int, path_to_output: str = "./"):
             right_session = s2
             break
     if right_session is None:
-        return []
+        return None
     my_instances = []
     metrics = []
     for region in regions:
@@ -169,7 +169,6 @@ def get_instances(sub_id: int, path_to_output: str = "./"):
                                 "metrics": [metric.dict for metric in m]
                             }
                         metrics.append(d)
-                        # print(instance)
                         result = {
                             "id": instance["InstanceId"],
                             "name": name,
@@ -190,9 +189,8 @@ def get_instances(sub_id: int, path_to_output: str = "./"):
                             if 'Association' in interface:
                                 if 'PublicIp' in interface['Association']:
                                     result["publicIp"] = interface['Association']['PublicIp']  # noqa: E501
-
                         my_instances.append(result)
-        except:  # noqa: E722
+        except Exception:  # noqa: E722
             pass
     upload = {
                 "metadata": {

@@ -29,8 +29,8 @@ start_seconds = seconds - (30 * 24 * 60 * 60)  # 30 days ago
 nanos = int((now - seconds) * 10**9)
 interval = TimeInterval(
     {
-        "end_time": {"seconds": seconds, "nanos": nanos},
-        "start_time": {"seconds": start_seconds, "nanos": nanos},
+        "end_time": {"seconds": seconds, "nanos": 0},
+        "start_time": {"seconds": start_seconds, "nanos": 0},
     }
 )
 
@@ -95,8 +95,8 @@ def get_metrics_for_instance(sub_id: str, instance_name: str) -> List[Datum]:
                         results_dict[d][m][a] = point.value.double_value
                         results_dict[d]["t"] = \
                             point.interval.start_time.timestamp()
-            except NotFound as e:
-                print(e)
+            except NotFound:
+                pass
     data = []
     for t in results_dict:
         p = results_dict[t]

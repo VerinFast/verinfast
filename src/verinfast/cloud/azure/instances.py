@@ -122,6 +122,7 @@ def get_instances(sub_id: str, path_to_output: str = "./"):
             architecture = "Arm"
 
         my_instance = {
+            "id": vm.id,
             "name": name,
             "type": hw,
             "state": status.display_status,
