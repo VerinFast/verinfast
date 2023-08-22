@@ -25,7 +25,7 @@ metrics = []
 
 now = time.time()
 seconds = int(now)
-start_seconds = seconds - (90 * 24 * 60 * 60)  # 90 days ago
+start_seconds = seconds - (30 * 24 * 60 * 60)  # 30 days ago
 nanos = int((now - seconds) * 10**9)
 interval = TimeInterval(
     {

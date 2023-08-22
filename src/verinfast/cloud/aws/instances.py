@@ -29,7 +29,7 @@ def get_metric_for_instance(
                 'Value': instance_id
             },
         ],
-        StartTime=datetime.today() - timedelta(days=90),
+        StartTime=datetime.today() - timedelta(days=30),
         EndTime=datetime.today(),
         Period=60*60,
         Statistics=[
