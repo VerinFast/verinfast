@@ -16,7 +16,7 @@ from verinfast.cloud.cloud_dataclass import \
 
 metric_name = "Percentage CPU"
 d = datetime.timedelta(
-                days=90,
+                days=30,
                 seconds=0,
                 microseconds=0,
                 milliseconds=0,
