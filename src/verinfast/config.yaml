@@ -27,10 +27,10 @@ modules:
     # account: 606817498212
     start: "2023-05-01"
     end: "2023-09-01"
-  - provider: gcp
-    account: startupos-328814
-    start: "2023-05-01"
-    end: "2023-09-01"
+#   - provider: gcp
+#     account: startupos-328814
+#     start: "2023-05-01"
+#     end: "2023-09-01"
 repos:
  - git@github.com:StartupOS/small-test-repo.git
 #   - git@github.com:StartupOS/atd.git

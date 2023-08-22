@@ -16,30 +16,37 @@ regions = r.regions
 def get_metric_for_instance(
             metric: str,
             instance_id: str,
+            session,
             namespace: str = 'AWS/EC2',
-            unit: str = 'Percent'
+            unit: str = 'Percent',
         ):
-    client = boto3.client('cloudwatch')
-    response = client.get_metric_statistics(
-        Namespace=namespace,
-        MetricName=metric,
-        Dimensions=[
-            {
-                'Name': 'InstanceId',
-                'Value': instance_id
-            },
-        ],
-        StartTime=datetime.today() - timedelta(days=30),
-        EndTime=datetime.today(),
-        Period=60*60,
-        Statistics=[
-            'Average',
-            'Maximum',
-            'Minimum'
-        ],
-        Unit=unit
-    )
-    return response
+    print('get metric for instance')
+    try:
+        client = session.client('cloudwatch')
+        response = client.get_metric_statistics(
+            Namespace=namespace,
+            MetricName=metric,
+            Dimensions=[
+                {
+                    'Name': 'InstanceId',
+                    'Value': instance_id
+                },
+            ],
+            StartTime=datetime.utcnow() - timedelta(hours=2),
+            EndTime=datetime.utcnow(),
+            Period=5*60,
+            Statistics=[
+                'Average',
+                'Maximum',
+                'Minimum'
+            ],
+            Unit=unit
+        )
+        print(instance_id)
+        print(response)
+        return response
+    except Exception as e:
+        print(e)
 
 
 def parse_multi(datapoint: dict) -> Datapoint:
@@ -69,22 +76,25 @@ def parse_multi(datapoint: dict) -> Datapoint:
     return my_datapoint
 
 
-def get_instance_utilization(instance_id: str) -> List[Datum]:
+def get_instance_utilization(instance_id: str, session) -> List[Datum]:
     cpu_resp = get_metric_for_instance(
             metric='CPUUtilization',
-            instance_id=instance_id
+            instance_id=instance_id,
+            session=session
         )
     try:
         mem_resp = get_metric_for_instance(
                 metric='mem_used_percent',
                 instance_id=instance_id,
-                namespace='CWAgent'
+                namespace='CWAgent',
+                session=session
             )
 
         hdd_resp = get_metric_for_instance(
                 metric='disk_used_percent',
                 instance_id=instance_id,
-                namespace='CWAgent'
+                namespace='CWAgent',
+                session=session
             )
     except Exception:
         pass
@@ -92,7 +102,10 @@ def get_instance_utilization(instance_id: str) -> List[Datum]:
     cpu_stats = []
     mem_stats = []
     hdd_stats = []
+    print("\n\n")
+    print(instance_id)
     print(cpu_resp)
+    print("\n")
     # each instance may have more than 1 CPU
     for datapoint in cpu_resp['Datapoints']:
         summary = parse_multi(datapoint)
@@ -162,7 +175,8 @@ def get_instances(sub_id: int, path_to_output: str = "./") -> str | None:
                         tags = instance['Tags']
                         name = [t['Value'] for t in tags if t['Key'] == 'Name'][0]  # noqa: E501
                         m = get_instance_utilization(
-                            instance_id=instance["InstanceId"]
+                            instance_id=instance["InstanceId"],
+                            session=right_session
                         )
                         d = {
                                 "id": instance["InstanceId"],

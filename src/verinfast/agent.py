@@ -586,5 +586,3 @@ def scanCloud(config):
             debugLog.log(msg=gcp_block_file, tag="GCP Storage")
             upload(file=gcp_block_file, route=f"/report/{config['report']['id']}/storage", source="GCP")
 
-
-# For test runs from commandline. Comment out before packaging. # main()
