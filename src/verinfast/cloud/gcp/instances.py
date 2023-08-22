@@ -13,7 +13,7 @@ from verinfast.cloud.cloud_dataclass import \
     Utilization_Datapoint as Datapoint,  \
     Utilization_Datum as Datum
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/Users/jason/.config/gcloud/application_default_credentials.json"  # noqa: E501
+# os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/Users/jason/.config/gcloud/application_default_credentials.json"  # noqa: E501
 
 metric_identifiers = {
     "cpu": 'compute.googleapis.com/instance/cpu/utilization',
@@ -23,7 +23,6 @@ metric_identifiers = {
 
 metrics = []
 
-metrics_client = MetricServiceClient()
 now = time.time()
 seconds = int(now)
 start_seconds = seconds - (90 * 24 * 60 * 60)  # 90 days ago
@@ -67,6 +66,7 @@ aggregations = {
 
 
 def get_metrics_for_instance(sub_id: str, instance_name: str) -> List[Datum]:
+    metrics_client = MetricServiceClient()
     results_dict = {}
     for m in metric_identifiers:
         metric = metric_identifiers[m]
