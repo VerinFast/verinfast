@@ -585,4 +585,3 @@ def scanCloud(config):
             gcp_block_file = get_gcp_blocks(sub_id=provider["account"], path_to_output=output_dir)
             debugLog.log(msg=gcp_block_file, tag="GCP Storage")
             upload(file=gcp_block_file, route=f"/report/{config['report']['id']}/storage", source="GCP")
-
