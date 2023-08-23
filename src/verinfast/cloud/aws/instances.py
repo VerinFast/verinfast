@@ -32,9 +32,9 @@ def get_metric_for_instance(
                     'Value': instance_id
                 },
             ],
-            StartTime=datetime.utcnow() - timedelta(hours=2),
+            StartTime=datetime.utcnow() - timedelta(days=30),
             EndTime=datetime.utcnow(),
-            Period=5*60,
+            Period=60*60,
             Statistics=[
                 'Average',
                 'Maximum',
