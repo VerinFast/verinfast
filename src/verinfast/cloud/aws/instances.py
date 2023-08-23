@@ -4,6 +4,7 @@ import os
 from typing import List
 
 import boto3
+import botocore
 
 import verinfast.cloud.aws.regions as r
 from verinfast.cloud.cloud_dataclass import \
@@ -20,7 +21,6 @@ def get_metric_for_instance(
             namespace: str = 'AWS/EC2',
             unit: str = 'Percent',
         ):
-    print('get metric for instance')
     try:
         client = session.client('cloudwatch')
         response = client.get_metric_statistics(
@@ -42,20 +42,21 @@ def get_metric_for_instance(
             ],
             Unit=unit
         )
-        print(instance_id)
-        print(response)
         return response
-    except Exception as e:
-        print(e)
+    except botocore.exceptions.ClientError:
+        pass
 
 
-def parse_multi(datapoint: dict) -> Datapoint:
+def parse_multi(datapoint: dict | List[dict]) -> Datapoint:
     dp_sum: float = 0
     dp_count: int = 0
     dp_min: float = 0
     dp_max: float = 0
 
     my_datapoint = Datapoint()
+    my_datapoint.Timestamp = datapoint['Timestamp']
+    if type(datapoint) is not list:
+        datapoint = [datapoint]
     for entry in datapoint:
         if 'Average' in entry:
             e = entry['Average']
@@ -65,13 +66,10 @@ def parse_multi(datapoint: dict) -> Datapoint:
             dp_min += entry['Minimum']
         if 'Maximum' in entry:
             dp_max += entry['Maximum']
-
     dp_count = max(dp_count, 1)
     my_datapoint.Average = dp_sum / dp_count
     my_datapoint.Maximum = dp_max / dp_count
     my_datapoint.Minimum = dp_min / dp_count
-
-    my_datapoint.Timestamp = datapoint['Timestamp']
 
     return my_datapoint
 
@@ -82,67 +80,58 @@ def get_instance_utilization(instance_id: str, session) -> List[Datum]:
             instance_id=instance_id,
             session=session
         )
-    try:
-        mem_resp = get_metric_for_instance(
-                metric='mem_used_percent',
-                instance_id=instance_id,
-                namespace='CWAgent',
-                session=session
-            )
+    mem_resp = get_metric_for_instance(
+            metric='mem_used_percent',
+            instance_id=instance_id,
+            namespace='CWAgent',
+            session=session
+        )
 
-        hdd_resp = get_metric_for_instance(
-                metric='disk_used_percent',
-                instance_id=instance_id,
-                namespace='CWAgent',
-                session=session
-            )
-    except Exception:
-        pass
+    hdd_resp = get_metric_for_instance(
+            metric='disk_used_percent',
+            instance_id=instance_id,
+            namespace='CWAgent',
+            session=session
+        )
 
-    cpu_stats = []
-    mem_stats = []
-    hdd_stats = []
-    print("\n\n")
-    print(instance_id)
-    print(cpu_resp)
-    print("\n")
+    cpu_stats: List[Datapoint] = []
+    mem_stats: List[Datapoint] = []
+    hdd_stats: List[Datapoint] = []
+
     # each instance may have more than 1 CPU
     for datapoint in cpu_resp['Datapoints']:
         summary = parse_multi(datapoint)
         cpu_stats.append(summary)
 
     # memory and disk are not collected by default
-    try:
-        # each instance may have more than one disk
-        if "Datapoints" in hdd_resp:
-            for datapoint in hdd_resp["Datapoints"]:
-                summary = parse_multi(datapoint)
-                hdd_stats.append(summary)
-        # memory
-        if "Datapoints" in mem_resp:
-            mem_stats = [Datapoint.From(i) for i in mem_resp["Datapoints"]]
-    except Exception:
-        pass
+    # each instance may have more than one disk
+    if "Datapoints" in hdd_resp:
+        for datapoint in hdd_resp["Datapoints"]:
+            summary = parse_multi(datapoint)
+            hdd_stats.append(summary)
+    # memory
+    if "Datapoints" in mem_resp:
+        mem_stats = [Datapoint.From(i) for i in mem_resp["Datapoints"]]
+
     data = []
     m = max(len(cpu_stats), len(mem_stats), len(hdd_stats))
     if m == 0:
         return []
     else:
         for i in range(m):
-            datum = Datum()
-            if i <= len(cpu_stats):
+            datum = Datum(Timestamp=cpu_stats[i].Timestamp)
+            if i < len(cpu_stats):
                 datum.cpu = cpu_stats[i]
             else:
                 datum.cpu = None
-            if i <= len(mem_stats):
+            if i < len(mem_stats):
                 datum.mem = mem_stats[i]
             else:
                 datum.mem = None
-            if i <= len(hdd_stats):
+            if i < len(hdd_stats):
                 datum.hdd = hdd_stats[i]
             else:
                 datum.hdd = None
-
             data.append(datum)
     return data
 
@@ -204,8 +193,9 @@ def get_instances(sub_id: int, path_to_output: str = "./") -> str | None:
                                 if 'PublicIp' in interface['Association']:
                                     result["publicIp"] = interface['Association']['PublicIp']  # noqa: E501
                         my_instances.append(result)
-        except Exception:  # noqa: E722
+        except botocore.exceptions.ClientError:
             pass
+
     upload = {
                 "metadata": {
                     "provider": "aws",
@@ -220,7 +210,6 @@ def get_instances(sub_id: int, path_to_output: str = "./") -> str | None:
 
     with open(aws_output_file, 'w') as outfile:
         outfile.write(json.dumps(upload, indent=4))
-
     upload['data'] = metrics
     with open(aws_output_file[:-5]+"-utilization.json", "w") as outfile2:
         outfile2.write(json.dumps(upload, indent=4))
