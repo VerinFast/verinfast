@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-import datetime
+from datetime import datetime
 from typing import Optional
 
 
@@ -8,6 +8,7 @@ class Utilization_Datapoint():
     Minimum: Optional[float] = None
     Average: Optional[float] = None
     Maximum: Optional[float] = None
+    Timestamp: Optional[datetime] = None
 
     @property
     def dict(self):
@@ -40,19 +41,22 @@ class Utilization_Datapoint():
 
 @dataclass
 class Utilization_Datum():
-    Timestamp: datetime
+    Timestamp: datetime | float
     cpu: Optional[Utilization_Datapoint] = None
     mem: Optional[Utilization_Datapoint] = None
     hdd: Optional[Utilization_Datapoint] = None
 
     @property
     def dict(self):
-        o = {"timestamp": self.Timestamp}
+        if type(self.Timestamp) is datetime:
+            s = int(self.Timestamp.timestamp())
+        else:
+            s = self.Timestamp
+        o = {"timestamp": s}
         if self.cpu is not None:
             o["cpu"] = self.cpu.dict
         if self.mem is not None:
             o["mem"] = self.mem.dict
         if self.hdd is not None:
             o["hdd"] = self.hdd.dict
-
         return o
