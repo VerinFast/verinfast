@@ -7,6 +7,9 @@ from curses.ascii import isdigit
 
 from verinfast.dependencies.walkers.classes import Walker, Entry
 
+from verinfast.utils.utils import DebugLog
+debugLog = DebugLog(os.getcwd())
+
 
 class NodeWalker(Walker):
     def initialize(self, root_path: str = "./"):
@@ -63,8 +66,10 @@ class NodeWalker(Walker):
                 )
                 self.entries.append(e)
         except Exception as error:
-            # handle the exception
-            print("An exception occurred in npm.py:", error)
+            debugLog.log(
+                msg=error,
+                tag="An exception occurred in npm.py",
+                display=False)
             pass
 
 
