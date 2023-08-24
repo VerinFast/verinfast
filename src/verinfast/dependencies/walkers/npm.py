@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from pathlib import Path
 from typing import List
@@ -64,7 +65,7 @@ class NodeWalker(Walker):
                 self.entries.append(e)
         except Exception as error:
             # handle the exception
-            print("An exception occurred in npm.py:", error)
+            logging.exception(error)
             pass
 
 
