@@ -19,7 +19,15 @@ modernmetric>=1.0.2
 pandas
 protobuf
 pygount==1.6.1
-pygments-tsx @ git+https://github.com/hatarist/pygments-tsx.git@master
+#pygments-tsx @ git+https://github.com/hatarist/pygments-tsx.git@master
+#pygments-tsx @ ./dependencies/pygments-tsx
+#pygments-tsx @ ./dependencies/pygments-tsx/setup.py
+#pygments-tsx ./dependencies/pygments-tsx
+#pygments-tsx ./dependencies/pygments-tsx/setup.py
+#./dependencies/pygments-tsx
+#./dependencies/pygments-tsx/setup.py
+#pygments-tsx -e ./dependencies/pygments-tsx
+#-e ./dependencies/pygmentstsx
 pytest
 pytest-cov
 pyyaml

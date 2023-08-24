@@ -5,6 +5,7 @@ import json
 import platform
 import subprocess
 import os
+from pathlib import Path
 import yaml
 import httpx
 import shutil
@@ -23,9 +24,28 @@ from verinfast.cloud.azure.blocks import getBlocks as get_az_blocks
 from verinfast.cloud.gcp.blocks import getBlocks as get_gcp_blocks
 
 from verinfast.dependencies.walk import walk as dependency_walk
+# from pygments.lexers.javascript import TypeScriptLexer
 
-# from modernmetric.fp import file_process
-# If we want to run modernmetric directly
+# from verinfast.dependencies.pygmentstsx import pygments_tsx
+
+from pygments import lexers
+
+from modernmetric.__main__ import main as mm
+
+
+# class TypeScriptXLexer(TypeScriptLexer):
+#     name = 'TypeScriptX'
+#     aliases = ['tsx', 'typescriptx']
+#     filenames = ['*.tsx']
+
+# Patch for pyment tsx
+current_file_path = Path(os.path.abspath(__file__))
+current_module_dir = current_file_path.parent
+tsxLexerPath = Path.joinpath(current_file_path.parent, "./dependencies/pygments-tsx/pygments_tsx.py")
+lexers.load_lexer_from_file(filename=tsxLexerPath.absolute())
+
+
+mm()
 
 requestx = httpx.Client(http2=True, timeout=None)
 
