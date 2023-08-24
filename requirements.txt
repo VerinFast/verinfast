@@ -19,6 +19,7 @@ modernmetric>=1.0.2
 pandas
 protobuf
 pygount==1.6.1
+pygments-tsx @ git+https://github.com/hatarist/pygments-tsx.git@master
 pytest
 pytest-cov
 pyyaml
