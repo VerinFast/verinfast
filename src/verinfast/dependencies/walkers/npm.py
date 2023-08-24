@@ -8,9 +8,6 @@ from curses.ascii import isdigit
 
 from verinfast.dependencies.walkers.classes import Walker, Entry
 
-from verinfast.utils.utils import DebugLog
-debugLog = DebugLog(os.getcwd())
-
 
 class NodeWalker(Walker):
     def initialize(self, root_path: str = "./"):
