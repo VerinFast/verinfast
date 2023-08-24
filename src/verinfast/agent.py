@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import chardet
 import json
 import platform
 import subprocess
@@ -10,6 +11,42 @@ import httpx
 import shutil
 # import sys
 import re
+
+from modernmetric.fp import file_process, get_modules_calculated, get_modules_metrics
+from pygments.lexers.javascript import TypeScriptLexer
+from pygments.lexers._mapping import LEXERS
+from pygments.lexers import _lexer_cache
+
+
+class TypeScriptXLexer(TypeScriptLexer):
+    name = 'TypeScriptX'
+    aliases = ['tsx', 'typescriptx']
+    filenames = ['*.tsx']
+
+
+# tsx = TypeScriptXLexer()
+# Hack to register an internal lexer.
+_lexer_cache['TypeScriptXLexer'] = TypeScriptXLexer
+LEXERS['TypeScriptXLexer'] = ('./narbleshobs', 'TypeScriptXLexer', ('typescriptx', 'tsx'), ('*.tsx',), ('application/x-typescript', 'text/x-typescript'))
+
+
+class Fargs():
+    ignore_lexer_errors = False
+    dump = False
+
+
+class Fimporter():
+    def items(self):
+        return []
+
+
+fimporter = Fimporter()
+fargs = Fargs()
+_file = './tests/Blank.tsx'
+
+results = file_process(_file, fargs, fimporter)
+print(results)
+exit(1)
 
 from verinfast.utils.utils import DebugLog
 
