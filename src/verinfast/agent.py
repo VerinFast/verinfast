@@ -24,8 +24,11 @@ from verinfast.cloud.gcp.blocks import getBlocks as get_gcp_blocks
 
 from verinfast.dependencies.walk import walk as dependency_walk
 
+from verinfast.pygments_patch import patch_pygments
 # from modernmetric.fp import file_process
 # If we want to run modernmetric directly
+
+patch_pygments()
 
 requestx = httpx.Client(http2=True, timeout=None)
 
