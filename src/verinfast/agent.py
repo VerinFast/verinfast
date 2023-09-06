@@ -34,7 +34,6 @@ shouldManualFileScan = True
 
 runGit = True
 runSizes = True
-runPygount = True
 runStats = True
 runScan = True
 runDependencies = True
@@ -91,7 +90,6 @@ def main():
 
     global runGit
     global runSizes
-    global runPygount
     global runStats
     global runScan
     global runDependencies
@@ -122,7 +120,6 @@ def main():
 
     runGit = config['run_git'] if 'run_git' in config else runGit
     runSizes = config['run_sizes'] if 'run_sizes' in config else runSizes
-    runPygount = config['run_pygount'] if 'run_pygount' in config else runPygount
     runStats = config['run_stats'] if 'run_stats' in config else runStats
     runScan = config['run_scan'] if 'run_scan' in config else runScan
     runDependencies = config['run_dependencies'] if 'run_dependencies' in config else runDependencies
@@ -145,9 +142,6 @@ def main():
 
             # Check if SEMGrep is installed
             checkDependency("semgrep", "SEMGrep")
-
-            # Check if Pygount is installed
-            checkDependency("pygount", "Pygount")
 
             if shouldUpload:
                 headers = {
@@ -410,21 +404,6 @@ def parseRepo(path: str, repo_name: str):
             with open(sizes_output_file, 'w') as f:
                 f.write(json.dumps(sizes, indent=4))
         upload(sizes_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/sizes", repo_name)
-
-    # Run Pygount
-    if runPygount:
-        pygount_output_file = os.path.join(output_dir, repo_name + ".pygount.json")
-        if not dry:
-            debugLog.log(msg=repo_name, tag="Getting LOC from repository", display=True)
-            subprocess.check_call([
-                "pygount",
-                "-F=.git,node_modules",  # Folders to ignore
-                "--format=json",
-                "-o",
-                pygount_output_file,
-                "."  # Scan current directory
-            ])
-        upload(pygount_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/pygount", repo_name)
 
     # Run Modernmetric
     if runStats:
