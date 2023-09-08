@@ -452,8 +452,8 @@ def parseRepo(path: str, repo_name: str):
         debugLog.log(msg=repo_name, tag="Scanning dependencies", display=True)
         if not dry:
             dependencies_file = dependency_walk(output_file=dependencies_output_file)
-        debugLog.log(msg=dependencies_file, tag="Dependency File", display=False)
-        upload(dependencies_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/dependencies", repo_name)
+            debugLog.log(msg=dependencies_file, tag="Dependency File", display=False)
+        upload(dependencies_output_file, f"/report/{config['report']['id']}/CorsisCode/{corsisId}/{repo_name}/dependencies", repo_name)
 
 
 # ##### Scan Repos ######
