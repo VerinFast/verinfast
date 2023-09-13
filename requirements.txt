@@ -17,7 +17,7 @@ httpx[http2]==0.24.1
 johnnydep==1.20.3
 modernmetric>=1.0.2
 pandas==2.0.3
-protobuf==4.24.0
+protobuf==4.24.3
 pytest==7.4.2
 pytest-cov==4.1.0
 pyyaml==6.0.1
