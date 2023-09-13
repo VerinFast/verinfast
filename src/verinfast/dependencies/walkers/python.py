@@ -5,7 +5,7 @@ from johnnydep.lib import JohnnyDist, flatten_deps
 from verinfast.dependencies.walkers.classes import Walker, Entry
 
 
-def parseFile(args, filename="requirements.txt", ret=False):
+def parseFile(filename="requirements.txt", ret=False):
     dists = []
     default_fields = [
         "name",
@@ -25,10 +25,7 @@ def parseFile(args, filename="requirements.txt", ret=False):
             else:
                 dists.append(JohnnyDist(
                         stripped_line,
-                        index_url=args.index_url,
-                        env=args.env,
-                        extra_index_url=args.extra_index_url,
-                        ignore_errors=args.ignore_errors,
+                        ignore_errors=True,
                     )
                 )
     data = []

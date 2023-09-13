@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import subprocess
 from pathlib import Path
 from typing import List
 
@@ -19,7 +20,11 @@ class NodeWalker(Walker):
         for p in self.install_points:
             target_dir = Path(p).parent
             os.chdir(target_dir)
-            os.system("npm install --production")
+            subprocess.run(
+                "npm install --production",
+                capture_output=True,
+                shell=True
+            )
             self.walk('node_modules')
             os.chdir(root_path)
 
