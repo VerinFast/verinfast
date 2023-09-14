@@ -16,7 +16,7 @@ google-cloud-monitoring>=2.15.1
 httpx[http2]==0.25.0
 johnnydep==1.20.3
 modernmetric>=1.0.2
-pandas==2.0.3
+pandas==2.1.0
 protobuf==4.24.3
 pytest==7.4.2
 pytest-cov==4.1.0
