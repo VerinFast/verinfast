@@ -1,4 +1,5 @@
 import json
+import logging
 
 from johnnydep.lib import JohnnyDist, flatten_deps
 
@@ -23,11 +24,20 @@ def parseFile(filename="requirements.txt", ret=False):
             if stripped_line[0:2] == '--' or not stripped_line:
                 pass
             else:
-                dists.append(JohnnyDist(
-                        stripped_line,
-                        ignore_errors=True,
+                try:
+                    dists.append(JohnnyDist(
+                            stripped_line,
+                            ignore_errors=True,
+                        )
                     )
-                )
+                except Exception as error:
+                    # handle the exception, hiding for now
+                    logger = logging.getLogger()
+                    logger.disabled = True
+                    logger.exception(error)
+                    logger.disabled = False
+                    pass
+
     data = []
     for idx, d in enumerate(dists):
         deps = flatten_deps(d)
