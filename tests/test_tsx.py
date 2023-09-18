@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 from verinfast.agent import Agent
 
@@ -18,6 +19,8 @@ def test_scan():
     agent.config.runSizes = False
     agent.config.runStats = True
     agent.config.output_dir = test_folder.joinpath("results")
+    os.makedirs(agent.config.output_dir, exist_ok=True)
+
     agent.parseRepo(path=tsx_path, repo_name=repo_name)
 
     with open(output_path) as output_file:
