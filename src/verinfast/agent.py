@@ -177,25 +177,25 @@ class Agent:
         self.log(msg='parseRepo')
         if not self.config.dry:
             os.chdir(path)
-
-        # Get Correct Branch
-        # TODO Get a list of branches and use most recent if no main or master
-        branch = ""
-        try:
-            if not self.config.dry:
-                subprocess.check_call(["git", f"--work-tree={path}", "checkout", "main"])
-                branch = "main"
-        except subprocess.CalledProcessError:
+        if self.config.runGit:
+            # Get Correct Branch
+            # TODO Get a list of branches and use most recent if no main or master
+            branch = ""
             try:
                 if not self.config.dry:
-                    subprocess.check_call(["git", "checkout", "master"])
-                    branch = "master"
+                    subprocess.check_call(["git", f"--work-tree={path}", "checkout", "main"])
+                    branch = "main"
             except subprocess.CalledProcessError:
-                if self.config.runGit:
-                    raise Exception("Error checking out branch from git.")
-                else:
-                    self.log("Error checking out branch from git.")
-        branch = branch.strip()
+                try:
+                    if not self.config.dry:
+                        subprocess.check_call(["git", "checkout", "master"])
+                        branch = "master"
+                except subprocess.CalledProcessError:
+                    if self.config.runGit:
+                        raise Exception("Error checking out branch from git.")
+                    else:
+                        self.log("Error checking out branch from git.")
+            branch = branch.strip()
 
         # Git Stats
         if self.config.runGit:
