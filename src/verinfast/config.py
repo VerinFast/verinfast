@@ -104,7 +104,7 @@ class Config:
     # Flag to not run scans, just upload files (if shouldUpload==True)
     dry: bool = False
     local_scan_path: str = "./"
-    modules: ConfigModules | None = None
+    modules: ConfigModules = None
     output_dir = os.path.join(os.getcwd(), "results")
     reportId: int = 0
     runDependencies: bool = True
