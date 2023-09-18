@@ -31,7 +31,7 @@ _file = './tests/tsx_test/Blank.tsx'
 
 results = file_process(_file, fargs, fimporter)
 print(results[3])
-assert (results[0]['lang'][0] == 'TypeScriptX')
+assert (results[0]['lang'][0] == 'TypeScriptX')  # noqa: E999
 
 
 def patch_pygments():
