@@ -103,6 +103,7 @@ class Config:
     delete_config_after = False
     # Flag to not run scans, just upload files (if shouldUpload==True)
     dry: bool = False
+    local_scan_path: str = "./"
     output_dir = os.path.join(os.getcwd(), "results")
     reportId: int = 0
     runDependencies: bool = True
@@ -142,6 +143,13 @@ class Config:
 
         self.handle_config_file()
         self.handle_args(args)
+        if "config" not in self.config:
+            self.config.config = {}
+        if (
+            "repos" not in self.config.config and
+            "localrepos" not in self.config.config
+        ):
+            self.config.config["localrepos"] = self.local_scan_path
 
     def init_argparse(self) -> argparse.ArgumentParser:
         """config.init_argparse
@@ -216,6 +224,23 @@ class Config:
             here on the command line."""
         )
 
+        parser.add_argument(
+            "--path",
+            type=str,
+            dest="local_scan_path",
+            help="""This argument will be ignored if a config file specifies
+            repositories to scan. This is only used for a single path scan.
+            """
+        )
+
+        parser.add_argument(
+            "--noGit", "-g",
+            type=bool,
+            dest="should_git",
+            help="""Used to skip contributions and only run a
+            code quality scan."""
+        )
+
         return parser
 
     def handle_args(self, args):
@@ -237,7 +262,13 @@ class Config:
             self.shouldUpload = args.should_upload
 
         if "dry" in args and args.dry is not None:
-            self.dry = args.dry
+            self.dry = True
+
+        if "local_scan_path" in args and args.local_scan_path is not None:
+            self.local_scan_path = args.local_scan_path
+
+        if "should_git" in args and args.should_git is not None:
+            self.runGit = False
 
     def is_path_remote(self) -> bool:
         s = self.cfg_path
