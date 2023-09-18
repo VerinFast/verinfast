@@ -135,6 +135,7 @@ class Agent:
         if self.config.shouldUpload:
             with open(file, 'rb') as f:
                 self.log(msg=f"{self.config.baseUrl}{route}", tag="Uploading to")
+
                 headers = {
                     'Content-Type': 'application/json',
                     'accept': 'application/json'
@@ -265,6 +266,7 @@ class Agent:
                         "uname": system
                     }
                 }
+
                 # filelist for modernmetric
                 filelist = []
 
@@ -390,6 +392,7 @@ class Agent:
                         shutil.rmtree(temp_dir)
             else:
                 self.log(msg='', tag="No remote repos", display=True)
+
         else:
             self.log(msg='', tag="No remote repos", display=True)
 
