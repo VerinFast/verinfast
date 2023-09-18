@@ -9,6 +9,7 @@ import shutil
 import re
 
 from verinfast.utils.utils import DebugLog, std_exec, trimLineBreaks, escapeChars, truncate
+from verinfast.upload import make_upload_path
 
 from verinfast.cloud.aws.costs import runAws
 from verinfast.cloud.azure.costs import runAzure
@@ -131,8 +132,14 @@ class Agent:
         # Check if Python3 is installed. This would catch if run with Python 2
         self.checkDependency("python3", "Python3")
 
-    def upload(self, file, route, source=''):
+    def upload(self, file: str, route: str, source: str = ''):
         if self.config.shouldUpload:
+            route = make_upload_path(
+                path_type=route,
+                report=self.config.reportId,
+                code=self.corsisId,
+                repo_name=source
+            )
             with open(file, 'rb') as f:
                 self.log(msg=f"{self.config.baseUrl}{route}", tag="Uploading to")
 
@@ -237,7 +244,11 @@ class Agent:
                 with open(git_output_file, 'w') as f:
                     f.write(json.dumps(finalArr, indent=4))
 
-            self.upload(git_output_file, f"/report/{self.config.report.id}/CorsisCode/{self.corsisId}/{repo_name}/git", repo_name)
+            self.upload(
+                file=git_output_file,
+                route="git",
+                source=repo_name
+            )
 
             # Manual File Sizes and Info
             if not self.config.dry:
@@ -292,7 +303,11 @@ class Agent:
             if not self.config.dry:
                 with open(sizes_output_file, 'w') as f:
                     f.write(json.dumps(sizes, indent=4))
-            self.upload(sizes_output_file, f"/report/{self.config.report.id}/CorsisCode/{self.corsisId}/{repo_name}/sizes", repo_name)
+            self.upload(
+                file=sizes_output_file,
+                route="sizes",
+                source=repo_name
+            )
 
         # Run Pygount
         if self.config.runPygount:
@@ -307,7 +322,11 @@ class Agent:
                     pygount_output_file,
                     "."  # Scan current directory
                 ])
-            self.upload(pygount_output_file, f"/report/{self.config.report.id}/CorsisCode/{self.corsisId}/{repo_name}/pygount", repo_name)
+            self.upload(
+                file=pygount_output_file,
+                route="pygount",
+                source=repo_name
+            )
 
         # Run Modernmetric
         if self.config.runStats:
@@ -326,7 +345,11 @@ class Agent:
                     with open(stats_error_file, 'w') as e:
                         subprocess.check_call(["modernmetric", f"--file={stats_input_file}"], stdout=f, stderr=e, encoding='utf-8')
 
-            self.upload(stats_output_file, f"/report/{self.config.report.id}/CorsisCode/{self.corsisId}/{repo_name}/stats", repo_name)
+            self.upload(
+                file=stats_output_file,
+                route="stats",
+                source=repo_name
+            )
 
         # Run SEMGrep
         if self.config.runScan:
@@ -348,7 +371,11 @@ class Agent:
                 except subprocess.CalledProcessError as e:
                     output = e.output
                     self.log(msg=output, tag="Scanning repository return", display=True)
-            self.upload(findings_output_file, f"/report/{self.config.report.id}/CorsisCode/{self.corsisId}/{repo_name}/findings", repo_name)
+            self.upload(
+                file=findings_output_file,
+                route="findings",
+                source=repo_name
+            )
 
         # ##### Scan Dependencies ######
         if self.config.runDependencies:
@@ -357,7 +384,11 @@ class Agent:
             if not self.config.dry:
                 dependencies_file = dependency_walk(output_file=dependencies_output_file)
             self.log(msg=dependencies_file, tag="Dependency File", display=False)
-            self.upload(dependencies_file, f"/report/{self.config.report.id}/CorsisCode/{self.corsisId}/{repo_name}/dependencies", repo_name)
+            self.upload(
+                file=dependencies_file,
+                route="dependencies",
+                source=repo_name
+            )
 
     # ##### Scan Repos ######
     def scanRepos(self):
@@ -432,19 +463,31 @@ class Agent:
                     path_to_output=self.config.output_dir
                 )
                 self.log(msg=aws_cost_file, tag="AWS Costs")
-                self.upload(file=aws_cost_file, route=f"/report/{self.config.report.id}/Costs", source="AWS")
+                self.upload(
+                    file=aws_cost_file,
+                    route="Costs",
+                    source="AWS"
+                )
                 aws_instance_file = get_aws_instances(
                     sub_id=provider["account"],
                     path_to_output=self.config.output_dir
                 )
                 self.log(msg=aws_instance_file, tag="AWS Instances")
-                self.upload(file=aws_instance_file, route=f"/report/{self.config.report.id}/instances", source="AWS")
+                self.upload(
+                    file=aws_instance_file,
+                    route="instances",
+                    source="AWS"
+                )
                 aws_block_file = get_aws_blocks(
                     sub_id=provider["account"],
                     path_to_output=self.config.output_dir
                 )
                 self.log(msg=aws_block_file, tag="AWS Storage")
-                self.upload(file=aws_block_file, route=f"/report/{self.config.report.id}/storage", source="AWS")
+                self.upload(
+                    file=aws_block_file,
+                    route="storage",
+                    source="AWS"
+                )
 
             if provider["provider"] == "azure":
                 # Check if Azure CLI is installed
@@ -457,19 +500,31 @@ class Agent:
                     path_to_output=self.config.output_dir
                 )
                 self.log(msg=azure_cost_file, tag="Azure Costs")
-                self.upload(file=azure_cost_file, route=f"/report/{self.config.report.id}/Costs", source="Azure")
+                self.upload(
+                    file=azure_cost_file,
+                    route="Costs",
+                    source="Azure"
+                )
                 azure_instance_file = get_az_instances(
                     sub_id=provider["account"],
                     path_to_output=self.config.output_dir
                 )
                 self.log(msg=azure_instance_file, tag="Azure instances")
-                self.upload(file=azure_instance_file, route=f"/report/{self.config.report.id}/instances", source="Azure")
+                self.upload(
+                    file=azure_instance_file,
+                    route="instances",
+                    source="Azure"
+                )
                 azure_block_file = get_az_blocks(
                     sub_id=provider["account"],
                     path_to_output=self.config.output_dir
                 )
                 self.log(msg=azure_block_file, tag="Azure Storage")
-                self.upload(file=azure_block_file, route=f"/report/{self.config.report.id}/storage", source="Azure")
+                self.upload(
+                    file=azure_block_file,
+                    route="storage",
+                    source="Azure"
+                )
 
             if provider["provider"] == "gcp":
                 # Check if Google Cloud CLI is installed
@@ -480,12 +535,20 @@ class Agent:
                     path_to_output=self.config.output_dir
                 )
                 self.log(msg=gcp_instance_file, tag="GCP instances")
-                self.upload(file=gcp_instance_file, route=f"/report/{self.config.report.id}/instances", source="GCP")
+                self.upload(
+                    file=gcp_instance_file,
+                    route="instances",
+                    source="GCP"
+                )
                 gcp_block_file = get_gcp_blocks(
                     sub_id=provider["account"],
                     path_to_output=self.config.output_dir
                 )
                 self.log(msg=gcp_block_file, tag="GCP Storage")
-                self.upload(file=gcp_block_file, route=f"/report/{self.config.report.id}/storage", source="GCP")
+                self.upload(
+                    file=gcp_block_file,
+                    route="storage",
+                    source="GCP"
+                )
 
 # For test runs from commandline. Comment out before packaging. # main()
