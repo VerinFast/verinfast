@@ -18,27 +18,39 @@ class Fargs():
     dump = False
 
 
+fargs = Fargs()
+
+
 class Fimporter():
     def items(self):
         return []
 
 
-# Hack to register an internal lexer.
-_lexer_cache['TypeScriptXLexer'] = TypeScriptXLexer
-_lexer_cache['JsxLexer'] = JsxLexer
-
-LEXERS['TypeScriptXLexer'] = ('', 'TypeScriptXLexer', ('typescriptx', 'tsx'), ('*.tsx',), ('application/x-typescript', 'text/x-typescript'))
-LEXERS['JsxLexers'] = ('', 'JsxLexer', ('react', 'jsx'), ('*.jsx', '*.react'), ('text/jsx'))
-
-
 fimporter = Fimporter()
-fargs = Fargs()
 _file = './tests/Blank.tsx'
 
 results = file_process(_file, fargs, fimporter)
-print(results)
-assert (results[0])
+print(results[3])
+assert (results[0]['lang'][0] == 'TypeScriptX')
 
 
 def patch_pygments():
-    print('pygments patched')
+    # Hack to register an internal lexer.
+    _lexer_cache['TypeScriptXLexer'] = TypeScriptXLexer
+    _lexer_cache['JsxLexer'] = JsxLexer
+
+    LEXERS['TypeScriptXLexer'] = (
+        '',
+        'TypeScriptXLexer',
+        ('typescriptx', 'tsx'),
+        ('*.tsx',),
+        ('application/x-typescript', 'text/x-typescript')
+    )
+
+    LEXERS['JsxLexers'] = (
+        '',
+        'JsxLexer',
+        ('react', 'jsx'),
+        ('*.jsx', '*.react'),
+        ('text/jsx')
+    )
