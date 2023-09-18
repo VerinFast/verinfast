@@ -1,11 +1,12 @@
 import json
+import logging
 
 from johnnydep.lib import JohnnyDist, flatten_deps
 
 from verinfast.dependencies.walkers.classes import Walker, Entry
 
 
-def parseFile(args, filename="requirements.txt", ret=False):
+def parseFile(filename="requirements.txt", ret=False):
     dists = []
     default_fields = [
         "name",
@@ -23,14 +24,20 @@ def parseFile(args, filename="requirements.txt", ret=False):
             if stripped_line[0:2] == '--' or not stripped_line:
                 pass
             else:
-                dists.append(JohnnyDist(
-                        stripped_line,
-                        index_url=args.index_url,
-                        env=args.env,
-                        extra_index_url=args.extra_index_url,
-                        ignore_errors=args.ignore_errors,
+                try:
+                    dists.append(JohnnyDist(
+                            stripped_line,
+                            ignore_errors=True,
+                        )
                     )
-                )
+                except Exception as error:
+                    # handle the exception, hiding for now
+                    logger = logging.getLogger()
+                    logger.disabled = True
+                    logger.exception(error)
+                    logger.disabled = False
+                    pass
+
     data = []
     for idx, d in enumerate(dists):
         deps = flatten_deps(d)
