@@ -23,11 +23,11 @@ from verinfast.config import Config
 
 from verinfast.dependencies.walk import walk as dependency_walk
 
-from verinfast.pygments_patch import patch_pygments
+# from verinfast.pygments_patch import patch_pygments
 # from modernmetric.fp import file_process
 # If we want to run modernmetric directly
 
-patch_pygments()
+# patch_pygments()
 
 requestx = httpx.Client(http2=True, timeout=None)
 uname = platform.uname()
@@ -41,17 +41,16 @@ machine = uname.machine
 class Agent:
     def __init__(self):
         self.config = Config()
-        self.debug = DebugLog(path=self.config.output_dir)
+        os.makedirs(self.config.output_dir, exist_ok=True)
+        self.debug = DebugLog(path=self.config.output_dir, debug=False)
         self.log = self.debug.log
         self.log(msg='', tag="Started")
 
     def scan(self):
-        os.makedirs(self.config.output_dir, exist_ok=True)
-
         self.global_dependencies()
 
-        if "modules" in self.config:
-            if "code" in self.config.modules:
+        if self.config.modules is not None:
+            if self.config.modules.code is not None:
                 # Check if Git is installed
                 self.checkDependency("git", "Git")
 
@@ -192,7 +191,10 @@ class Agent:
                     subprocess.check_call(["git", "checkout", "master"])
                     branch = "master"
             except subprocess.CalledProcessError:
-                raise Exception("Error checking out branch from git.")
+                if self.config.runGit:
+                    raise Exception("Error checking out branch from git.")
+                else:
+                    self.log("Error checking out branch from git.")
         branch = branch.strip()
 
         # Git Stats
@@ -250,53 +252,53 @@ class Agent:
                 source=repo_name
             )
 
-            # Manual File Sizes and Info
-            if not self.config.dry:
-                self.log(msg=repo_name, tag="Gathering file sizes for", display=True)
-                # Sizes for writing to output file
-                # Intialize file list with "." as total size
-                repo_size = self.get_raw_size(".")
-                git_size = self.get_raw_size("./.git")
+        # Manual File Sizes and Info
+        if not self.config.dry:
+            self.log(msg=repo_name, tag="Gathering file sizes for", display=True)
+            # Sizes for writing to output file
+            # Intialize file list with "." as total size
+            repo_size = self.get_raw_size(".")
+            git_size = self.get_raw_size("./.git")
 
-                # get sizes
-                real_size = repo_size - git_size
-                self.log(msg=repo_size, tag="Repo Size")
-                self.log(msg=git_size, tag="Git Size")
-                sizes = {
-                    "files": {
-                        ".": {
-                            "size": repo_size,
-                            "loc": 0,
-                            "ext": None,
-                            "directory": True
-                        }
-                    },
-                    "metadata": {
-                        "env": machine,
-                        "real_size": real_size,
-                        "uname": system
+            # get sizes
+            real_size = repo_size - git_size
+            self.log(msg=repo_size, tag="Repo Size")
+            self.log(msg=git_size, tag="Git Size")
+            sizes = {
+                "files": {
+                    ".": {
+                        "size": repo_size,
+                        "loc": 0,
+                        "ext": None,
+                        "directory": True
                     }
+                },
+                "metadata": {
+                    "env": machine,
+                    "real_size": real_size,
+                    "uname": system
                 }
+            }
 
-                # filelist for modernmetric
-                filelist = []
+            # filelist for modernmetric
+            filelist = []
 
-                for filepath, subdirs, list in os.walk("."):
-                    # print(subdirs)
-                    for name in list:
-                        fp = os.path.join(filepath, name)
-                        extRe = re.search("^[^\.]*\.(.*)", name)
-                        ext = extRe.group(1) if extRe else ''
-                        if self.allowfile(path=fp):
-                            if self.config.shouldManualFileScan:
-                                file = {
-                                    "size": os.path.getsize(fp),
-                                    "loc": self.getloc(fp),
-                                    "ext": ext,  # os.path.splitext(name)[1],
-                                    "directory": False
-                                }
-                                sizes["files"][fp] = file
-                            filelist.append({"name": name, "path": fp})
+            for filepath, subdirs, list in os.walk("."):
+                # print(subdirs)
+                for name in list:
+                    fp = os.path.join(filepath, name)
+                    extRe = re.search("^[^\.]*\.(.*)", name)
+                    ext = extRe.group(1) if extRe else ''
+                    if self.allowfile(path=fp):
+                        if self.config.shouldManualFileScan:
+                            file = {
+                                "size": os.path.getsize(fp),
+                                "loc": self.getloc(fp),
+                                "ext": ext,  # os.path.splitext(name)[1],
+                                "directory": False
+                            }
+                            sizes["files"][fp] = file
+                        filelist.append({"name": name, "path": fp})
 
             sizes_output_file = os.path.join(self.config.output_dir, repo_name + ".sizes.json")
 
@@ -551,4 +553,12 @@ class Agent:
                     source="GCP"
                 )
 
+
+def main():
+    agent = Agent()
+    agent.scan()
+
+
+if __name__ == "__main__":
+    main()
 # For test runs from commandline. Comment out before packaging. # main()

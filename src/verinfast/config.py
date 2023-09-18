@@ -1,10 +1,11 @@
 # stdlib
 import argparse
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 from typing import List
 import os
 from pathlib import Path
+import sys
 from uuid import uuid4
 
 # external
@@ -14,7 +15,6 @@ import yaml
 # internal
 from verinfast.utils.utils import DebugLog
 
-debugLog = DebugLog()
 
 default_month_delta = 6
 
@@ -32,14 +32,14 @@ default_start_date = date(
 )
 
 default_start: str = (
-    default_start_date.year + "-" +
-    default_start_date.month + "-" +
-    default_start_date.day
+    str(default_start_date.year) + "-" +
+    str(default_start_date.month) + "-" +
+    str(default_start_date.day)
 )
 default_end: str = (
-    default_end_date.year + "-" +
-    default_end_date.month + "-" +
-    default_end_date.day
+    str(default_end_date.year) + "-" +
+    str(default_end_date.month) + "-" +
+    str(default_end_date.day)
 )
 
 
@@ -78,9 +78,9 @@ class CloudProvider:
 
 
 @dataclass
-class modules:
-    code: CodeModule
-    cloud: List[CloudProvider]
+class ConfigModules:
+    code: CodeModule = None
+    cloud: List[CloudProvider] = field(default_factory=list)
 
 
 class Config:
@@ -104,6 +104,7 @@ class Config:
     # Flag to not run scans, just upload files (if shouldUpload==True)
     dry: bool = False
     local_scan_path: str = "./"
+    modules: ConfigModules | None = None
     output_dir = os.path.join(os.getcwd(), "results")
     reportId: int = 0
     runDependencies: bool = True
@@ -115,10 +116,11 @@ class Config:
     shouldManualFileScan: bool = True
 
     def __init__(self) -> None:
-        parser = self.init_argparse()
-        args = parser.parse_args()
-        if "config" in args and args.config is not None:
-            self.cfg_path = args.config
+        if 'pytest' not in sys.argv[0]:
+            parser = self.init_argparse()
+            args = parser.parse_args()
+            if "config" in args and args.config is not None:
+                self.cfg_path = args.config
 
         # TODO: Support JSON
         if self.is_path_remote():
@@ -135,21 +137,25 @@ class Config:
             if not os.path.isfile(self.cfg_path):
                 curr_path = Path(os.getcwd())
                 parent = curr_path.parent
-                while parent:
+                while parent and Path(curr_path) != Path('/'):
                     if curr_path.joinpath(self.cfg_path).exists():
                         self.cfg_path = curr_path.joinpath(self.cfg_path)
                         break
                     parent = curr_path.parent
-
+                    curr_path = parent
         self.handle_config_file()
-        self.handle_args(args)
-        if "config" not in self.config:
-            self.config.config = {}
+        if 'pytest' not in sys.argv[0]:
+            self.handle_args(args)
+        if self.config is FileNotFoundError:
+            self.config = {}
         if (
-            "repos" not in self.config.config and
-            "localrepos" not in self.config.config
+            "repos" not in self.config and
+            "localrepos" not in self.config
         ):
-            self.config.config["localrepos"] = self.local_scan_path
+            self.config["localrepos"] = self.local_scan_path
+        os.makedirs(self.output_dir, exist_ok=True)
+        debugLog = DebugLog(path=self.output_dir)
+        debugLog.log(msg=self.config, tag="Config", display=True)
 
     def init_argparse(self) -> argparse.ArgumentParser:
         """config.init_argparse
@@ -306,6 +312,7 @@ class Config:
                             end=row["end"]
                         )
                         cloud_modules.append(provider)
-                self.modules = modules(code=code_modules, cloud=cloud_modules)
-
-            debugLog.log(msg=self.config, tag="Config", display=True)
+                self.modules = ConfigModules(
+                    code=code_modules,
+                    cloud=cloud_modules
+                )
