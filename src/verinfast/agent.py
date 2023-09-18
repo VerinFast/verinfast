@@ -148,56 +148,18 @@ def main():
                     'content-type': 'application/json',
                     'Accept-Charset': 'UTF-8',
                 }
-                response = requestx.post(self.config.baseUrl + route, data=f, headers=headers)
-            if response.status_code == 200:
-                self.log(
-                    msg='',
-                    tag=f"Successfully uploaded {file} for {source} to {self.config.baseUrl}{route}.",
-                    display=True
-                )
+                debugLog.log(msg=f"{baseUrl}/report/{reportId}/CorsisCode", tag="Report Run Id Fetch", display=True)
+                response = requestx.get(f"{baseUrl}/report/{reportId}/CorsisCode", headers=headers)
+                corsisId = response.text
+                if corsisId and corsisId != '':
+                    debugLog.log(msg=corsisId, tag="Report Run Id", display=True)
+                else:
+                    raise Exception(f"{corsisId} returned for failed report Id fetch.")
             else:
-                self.log(
-                    msg=response.status_code,
-                    tag=f"Failed to upload {file} for {source} to {self.config.baseUrl}{route}",
-                    display=True
-                )
-
-    def formatGitHash(self, hash: str):
-        message = std_exec(["git", "log", "-n1", "--pretty=format:%B", hash])
-        author = std_exec(["git", "log", "-n1", "--pretty=format:%aN <%aE>", hash])
-        commit = std_exec(["git", "log", "-n1", "--pretty=format:%H", hash])
-        date = std_exec(["git", "log", "-n1", "--pretty=format:%aD", hash])
-        returnVal = {
-            "message": trimLineBreaks(message),
-            "author": author,
-            "commit": commit,
-            "date": escapeChars(date)
-        }
-        return returnVal
-
-    def parseRepo(self, path: str, repo_name: str):
-        self.log(msg='parseRepo')
-        if not self.config.dry:
-            os.chdir(path)
-        if self.config.runGit:
-            # Get Correct Branch
-            # TODO Get a list of branches and use most recent if no main or master
-            branch = ""
-            try:
-                if not self.config.dry:
-                    subprocess.check_call(["git", f"--work-tree={path}", "checkout", "main"])
-                    branch = "main"
-            except subprocess.CalledProcessError:
-                try:
-                    if not self.config.dry:
-                        subprocess.check_call(["git", "checkout", "master"])
-                        branch = "master"
-                except subprocess.CalledProcessError:
-                    if self.config.runGit:
-                        raise Exception("Error checking out branch from git.")
-                    else:
-                        self.log("Error checking out branch from git.")
-            branch = branch.strip()
+                print("ID only fetched for upload")
+            scanRepos(config)
+        if "cloud" in config['modules']:
+            scanCloud(config)
 
     debugLog.log(msg='', tag="Finished")
 
