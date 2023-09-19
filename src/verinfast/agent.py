@@ -245,6 +245,8 @@ class Agent:
                 self.log(msg=truncate(finalArr), tag=f"{repo_name} Git Stats")
 
             git_output_file = os.path.join(self.config.output_dir, repo_name + ".git.log.json")
+            print(git_output_file)
+            self.log(msg=git_output_file, display=True)
 
             if not self.config.dry:
                 with open(git_output_file, 'w') as f:
@@ -440,7 +442,7 @@ class Agent:
             return
 
         for provider in cloud_config:
-            if provider["provider"] == "aws":
+            if provider.provider == "aws":
                 # Check if AWS-CLI is installed
                 self.checkDependency("aws", "AWS Command-line tool")
 
@@ -477,7 +479,7 @@ class Agent:
                     source="AWS"
                 )
 
-            if provider["provider"] == "azure":
+            if provider.provider == "azure":
                 # Check if Azure CLI is installed
                 self.checkDependency("az", "Azure Command-line tool")
 
@@ -514,7 +516,7 @@ class Agent:
                     source="Azure"
                 )
 
-            if provider["provider"] == "gcp":
+            if provider.provider == "gcp":
                 # Check if Google Cloud CLI is installed
                 self.checkDependency("gcloud", "Google Command-line tool")
 
