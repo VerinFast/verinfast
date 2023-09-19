@@ -363,10 +363,22 @@ class Config(printable):
                     self.reportId = self.config["report"]["id"]
 
             if "modules" in self.config:
-                code_modules = CodeModule()
+                m = self.config["modules"]
+                gm = GitModule()
+                code_modules = CodeModule(git=gm)
+                if "code" in m:
+                    c = m["code"]
+                    if "git" in c:
+                        g = ["git"]
+                        if "start" in g:
+                            gm.start = g["start"]
+                    if "dry" in c:
+                        self.dry = c["dry"]
+                    if "dependencies" in c:
+                        self.runDependencies = c["dependencies"]
                 cloud_modules = []
-                if "cloud" in self.config["modules"]:
-                    c = self.config["modules"]["cloud"]
+                if "cloud" in m:
+                    c = m["cloud"]
                     for row in c:
                         provider = CloudProvider(
                             provider=row["provider"],
