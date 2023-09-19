@@ -8,8 +8,10 @@ import httpx
 import shutil
 import re
 
+from pygments_tsx.tsx import patch_pygments
+
 from verinfast.utils.utils import DebugLog, std_exec, trimLineBreaks, escapeChars, truncate
-from verinfast.upload import make_upload_path
+from verinfast.upload import Uploader
 
 from verinfast.cloud.aws.costs import runAws
 from verinfast.cloud.azure.costs import runAzure
@@ -27,7 +29,7 @@ from verinfast.dependencies.walk import walk as dependency_walk
 # from modernmetric.fp import file_process
 # If we want to run modernmetric directly
 
-# patch_pygments()
+patch_pygments()
 
 requestx = httpx.Client(http2=True, timeout=None)
 uname = platform.uname()
@@ -45,10 +47,12 @@ class Agent:
         self.debug = DebugLog(path=self.config.output_dir, debug=False)
         self.log = self.debug.log
         self.log(msg='', tag="Started")
+        self.uploader = Uploader(self.config.upload_conf)
+        self.up = self.uploader.make_upload_path
 
     def scan(self):
         self.global_dependencies()
-
+        print(self.config)
         if self.config.modules is not None:
             if self.config.modules.code is not None:
                 # Check if Git is installed
@@ -77,9 +81,9 @@ class Agent:
                         raise Exception(f"{self.corsisId} returned for failed report Id fetch.")
                 else:
                     print("ID only fetched for upload")
-                self.scanRepos(self.config.config)
-            if "cloud" in self.config.modules:
-                self.scanCloud(self.config.config)
+                self.scanRepos()
+            if self.config.modules and self.config.modules.cloud and len(self.config.modules.cloud):
+                self.scanCloud()
 
         self.log(msg='', tag="Finished")
 
@@ -133,7 +137,7 @@ class Agent:
 
     def upload(self, file: str, route: str, source: str = ''):
         if self.config.shouldUpload:
-            route = make_upload_path(
+            route = self.up(
                 path_type=route,
                 report=self.config.reportId,
                 code=self.corsisId,
@@ -311,25 +315,6 @@ class Agent:
                 source=repo_name
             )
 
-        # Run Pygount
-        if self.config.runPygount:
-            pygount_output_file = os.path.join(self.config.output_dir, repo_name + ".pygount.json")
-            if not self.config.dry:
-                self.log(msg=repo_name, tag="Getting LOC from repository", display=True)
-                subprocess.check_call([
-                    "pygount",
-                    "-F=.git,node_modules",  # Folders to ignore
-                    "--format=json",
-                    "-o",
-                    pygount_output_file,
-                    "."  # Scan current directory
-                ])
-            self.upload(
-                file=pygount_output_file,
-                route="pygount",
-                source=repo_name
-            )
-
         # Run Modernmetric
         if self.config.runStats:
             stats_input_file = os.path.join(self.config.output_dir, repo_name + ".filelist.json")
@@ -430,6 +415,7 @@ class Agent:
             self.log(msg='', tag="No remote repos", display=True)
 
         # Loop over all local repositories from config file
+        print(self.config.config)
         if 'local_repos' in self.config.config:
             localrepos = self.config.config['local_repos']
             if localrepos:

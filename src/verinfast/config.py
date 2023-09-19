@@ -1,7 +1,8 @@
 # stdlib
 import argparse
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, is_dataclass, asdict
 from datetime import date
+import json
 from typing import List
 import os
 from pathlib import Path
@@ -14,7 +15,6 @@ import yaml
 
 # internal
 from verinfast.utils.utils import DebugLog
-
 
 default_month_delta = 6
 
@@ -43,20 +43,47 @@ default_end: str = (
 )
 
 
+class printable:
+    def __str__(self):
+        d = {}
+        for key in dir(self):
+            x = self.__getattribute__(key)
+            if not key.startswith("_") and not callable(x):  # noqa: E501
+                if is_dataclass(x):
+                    d[key] = asdict(x)
+                else:
+                    d[key] = x
+
+        return json.dumps(d, indent=4)
+
+
 @dataclass
-class GitModule:
+class UploadConfig(printable):
+    """
+        Args:
+            uuid (bool) : specifies whether to use the uuid path prefix
+            prefix (str) : defaults to "/report" if not specified
+    """
+    uuid: bool = False
+    prefix: str | None = "/report"
+    code_separator: str | None = "/CorsisCode"
+    cost_separator: str | None = None
+
+
+@dataclass
+class GitModule(printable):
     start: str = default_start
 
 
 @dataclass
-class CodeModule:
+class CodeModule(printable):
     git: GitModule
     dry: bool = False
     dependencies: bool = True
 
 
 @dataclass
-class CloudProvider:
+class CloudProvider(printable):
     """Cloud Provider
 
     This dataclass describes the configuration
@@ -78,12 +105,12 @@ class CloudProvider:
 
 
 @dataclass
-class ConfigModules:
+class ConfigModules(printable):
     code: CodeModule = None
     cloud: List[CloudProvider] = field(default_factory=list)
 
 
-class Config:
+class Config(printable):
     """VerinFast Config
     VerinFast takes configuration from either a .verinfast.yaml file
     or from the command line via arguments. The program will look for
@@ -112,8 +139,12 @@ class Config:
     runScan: bool = True
     runSizes: bool = True
     runStats: bool = True
+    server_prefix: str | None = None
+    server_code_separator: str | None = None
+    server_cost_separator: str | None = None
     shouldUpload: bool = False
     shouldManualFileScan: bool = True
+    use_uuid = False
 
     def __init__(self) -> None:
         if 'pytest' not in sys.argv[0]:
@@ -152,7 +183,21 @@ class Config:
             "repos" not in self.config and
             "localrepos" not in self.config
         ):
-            self.config["localrepos"] = self.local_scan_path
+            self.config["local_repos"] = [self.local_scan_path]
+            gm = GitModule()
+            cm = CodeModule(git=gm)
+            self.modules = ConfigModules(code=cm, cloud=[])
+            self.runGit = False
+        self.upload_conf = UploadConfig(
+            uuid=self.use_uuid
+        )
+        if self.server_cost_separator is not None:
+            self.upload_conf.cost_separator = self.server_cost_separator
+        if self.server_prefix is not None:
+            self.upload_conf.prefix = self.server_prefix
+        if self.server_code_separator is not None:
+            self.upload_conf.code_separator = self.server_code_separator
+
         os.makedirs(self.output_dir, exist_ok=True)
         debugLog = DebugLog(path=self.output_dir)
         debugLog.log(msg=self.config, tag="Config", display=True)
@@ -255,11 +300,13 @@ class Config:
         config.handle_args overwrites any values stored in the
         current config with the values passed on the command line.
         """
+        print(args)
         if "output_dir" in args and args.output_dir is not None:
             self.output_dir = os.path.join(os.getcwd(), args.output_dir)
 
         if "uuid" in args and args.uuid is not None:
             self.reportId = args.uuid
+            self.use_uuid = True
 
         if "base_url" in args and args.base_url is not None:
             self.baseUrl = args.base_url
@@ -267,7 +314,7 @@ class Config:
         if "should_upload" in args and args.should_upload is not None:
             self.shouldUpload = args.should_upload
 
-        if "dry" in args and args.dry is not None:
+        if "dry" in args and args.dry:
             self.dry = True
 
         if "local_scan_path" in args and args.local_scan_path is not None:
@@ -299,6 +346,22 @@ class Config:
             with open(self.cfg_path) as f:
                 self.config = yaml.safe_load(f)
 
+            if "server" in self.config:
+                s = self.config["server"]
+                if "prefix" in s:
+                    self.config.server_prefix = s["prefix"]
+                if "code_separator" in s:
+                    self.config.server_code_separator = s["code_separator"]
+                if "cost_separator" in s:
+                    self.config.server_cost_separator = s["cost_separator"]
+
+            if "report" in self.config:
+                if "uuid" in self.config["report"]:
+                    self.use_uuid = True
+                    self.reportId = self.config["report"]["uuid"]
+                elif "id" in self.config["report"]:
+                    self.reportId = self.config["report"]["id"]
+
             if "modules" in self.config:
                 code_modules = CodeModule()
                 cloud_modules = []
@@ -316,3 +379,5 @@ class Config:
                     code=code_modules,
                     cloud=cloud_modules
                 )
+
+
