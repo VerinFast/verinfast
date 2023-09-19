@@ -56,7 +56,7 @@ class printable:
                 else:
                     d[key] = x.__str__()
 
-        return json.dumps(d, indent=4)
+        return json.dumps(d, indent=4, default=str)
 
 
 @dataclass
