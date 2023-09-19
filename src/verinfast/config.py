@@ -51,8 +51,10 @@ class printable:
             if not key.startswith("_") and not callable(x):  # noqa: E501
                 if is_dataclass(x):
                     d[key] = asdict(x)
+                elif isinstance(x, date):
+                    d[key] = x.strftime('%Y-%mm-%dd')
                 else:
-                    d[key] = x
+                    d[key] = x.__str__()
 
         return json.dumps(d, indent=4)
 
