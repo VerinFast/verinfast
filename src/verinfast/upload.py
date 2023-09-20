@@ -35,6 +35,7 @@ class Uploader:
             "costs": f"{report}{cost_sep}/costs",
             "instances": f"{report}{cost_sep}/instances",
             "storage": f"{report}{cost_sep}/storage",
+            "scan_id": f"{report}{code_sep}"
         }
 
         if report is None:

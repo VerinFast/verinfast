@@ -72,8 +72,9 @@ class Agent:
                         'content-type': 'application/json',
                         'Accept-Charset': 'UTF-8',
                     }
-                    self.log(msg=f"{self.config.baseUrl}/report/{self.config.reportId}/CorsisCode", tag="Report Run Id Fetch", display=True)
-                    response = requestx.get(f"{self.config.baseUrl}/report/{self.config.reportId}/CorsisCode", headers=headers)
+                    get_url = self.uploader.make_upload_path("scan_id")
+                    self.log(msg=f"{self.config.baseUrl}{get_url}", tag="Report Run Id Fetch", display=True)
+                    response = requestx.get(f"{self.config.baseUrl}{get_url}", headers=headers)
                     self.corsisId = response.text
                     if self.corsisId and self.corsisId != '':
                         self.log(msg=self.corsisId, tag="Report Run Id", display=True)

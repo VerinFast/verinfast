@@ -59,27 +59,27 @@ class printable:
         return json.dumps(d, indent=4, default=str)
 
     # Dictionary-like access / updates
-    def __getitem__(self, name):
-        value = self.__dict[name]
-        if isinstance(value, dict):  # recursively view sub-dicts as objects
-            value = printable(value)
-        return value
+    # def __getitem__(self, name):
+    #     value = self.__dict[name]
+    #     if isinstance(value, dict):  # recursively view sub-dicts as objects
+    #         value = printable(value)
+    #     return value
 
-    def __setitem__(self, name, value):
-        self.__dict[name] = value
+    # def __setitem__(self, name, value):
+    #     self.__dict[name] = value
 
-    def __delitem__(self, name):
-        del self.__dict[name]
+    # def __delitem__(self, name):
+    #     del self.__dict[name]
 
-    # Object-like access / updates
-    def __getattr__(self, name):
-        return self[name]
+    # # Object-like access / updates
+    # def __getattr__(self, name):
+    #     return self[name]
 
-    def __setattr__(self, name, value):
-        self[name] = value
+    # def __setattr__(self, name, value):
+    #     self[name] = value
 
-    def __delattr__(self, name):
-        del self[name]
+    # def __delattr__(self, name):
+    #     del self[name]
 
 
 @dataclass
