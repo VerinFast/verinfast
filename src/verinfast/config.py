@@ -313,8 +313,8 @@ class Config(printable):
         if "base_url" in args and args.base_url is not None:
             self.baseUrl = args.base_url
 
-        if "should_upload" in args and args.should_upload is not None:
-            self.shouldUpload = args.should_upload
+        if "should_upload" in args and args.should_upload:
+            self.shouldUpload = True
 
         if "dry" in args and args.dry:
             self.dry = True
@@ -347,6 +347,9 @@ class Config(printable):
             # Read the config file
             with open(self.cfg_path) as f:
                 self.config = yaml.safe_load(f)
+
+            if "should_upload" in self.config:
+                self.shouldUpload = self.config["should_upload"]
 
             if "server" in self.config:
                 s = self.config["server"]

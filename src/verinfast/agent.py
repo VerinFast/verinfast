@@ -371,10 +371,10 @@ class Agent:
             dependencies_output_file = os.path.join(self.config.output_dir, repo_name + ".dependencies.json")
             self.log(msg=repo_name, tag="Scanning dependencies", display=True)
             if not self.config.dry:
-                dependencies_file = dependency_walk(output_file=dependencies_output_file)
-            self.log(msg=dependencies_file, tag="Dependency File", display=False)
+                dependencies_output_file = dependency_walk(output_file=dependencies_output_file)
+            self.log(msg=dependencies_output_file, tag="Dependency File", display=False)
             self.upload(
-                file=dependencies_file,
+                file=dependencies_output_file,
                 route="dependencies",
                 source=repo_name
             )
