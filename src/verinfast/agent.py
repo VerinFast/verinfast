@@ -72,7 +72,7 @@ class Agent:
                         'content-type': 'application/json',
                         'Accept-Charset': 'UTF-8',
                     }
-                    get_url = self.uploader.make_upload_path("scan_id")
+                    get_url = self.uploader.make_upload_path("scan_id", report=self.config.reportId)
                     self.log(msg=f"{self.config.baseUrl}{get_url}", tag="Report Run Id Fetch", display=True)
                     response = requestx.get(f"{self.config.baseUrl}{get_url}", headers=headers)
                     self.corsisId = response.text
