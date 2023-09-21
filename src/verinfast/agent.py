@@ -57,10 +57,6 @@ class Agent:
                 # Check if Git is installed
                 self.checkDependency("git", "Git")
 
-                # Check if Modernmetric is installed
-                # It's a dependency, this is redundant
-                # self.checkDependency("modernmetric", "ModernMetric")
-
                 if self.config.shouldUpload:
                     headers = {
                         'content-type': 'application/json',
