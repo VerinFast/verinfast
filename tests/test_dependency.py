@@ -30,3 +30,5 @@ def test_entity():
         first_dep = output[0]
         e = Entry(**first_dep)
         assert e.license == "ISC"
+
+    return True

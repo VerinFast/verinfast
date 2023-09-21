@@ -1,3 +1,5 @@
+[![Python Release](https://github.com/StartupOS/verinfast/actions/workflows/release.yml/badge.svg?event=release)](https://github.com/StartupOS/verinfast/actions/workflows/release.yml)
+[![codecov](https://codecov.io/gh/StartupOS/verinfast/graph/badge.svg?token=IECR8RD60P)](https://codecov.io/gh/StartupOS/verinfast)
 # VerinFast™
 
  Welcome to the Scanning Agent.
