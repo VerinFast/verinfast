@@ -64,9 +64,6 @@ class Agent:
                 # Check if SEMGrep is installed
                 self.checkDependency("semgrep", "SEMGrep")
 
-                # Check if Pygount is installed
-                self.checkDependency("pygount", "Pygount")
-
                 if self.config.shouldUpload:
                     headers = {
                         'content-type': 'application/json',
@@ -127,8 +124,8 @@ class Agent:
     def checkDependency(self, command, name):
         which = shutil.which(command)
         if not which:
-            self.log(msg=f"{name} is required but it's not installed.", tag=f"{name} status", display=False)
-            raise Exception(f"{name} is required but it's not installed.")
+            self.log(msg=f"{name} is required but it's not installed.", tag=f"{name} status", display=True)
+            # raise Exception(f"{name} is required but it's not installed.")
         else:
             self.log(msg=f"{name} is installed at {which}.", tag=f"{name} status", display=True)
 
