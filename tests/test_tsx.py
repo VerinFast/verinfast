@@ -26,3 +26,5 @@ def test_scan():
     with open(output_path) as output_file:
         output = json.load(output_file)
         assert output is not None
+
+    return True

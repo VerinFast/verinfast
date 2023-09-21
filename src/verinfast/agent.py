@@ -51,21 +51,11 @@ class Agent:
         self.up = self.uploader.make_upload_path
 
     def scan(self):
-        self.global_dependencies()
         print(self.config)
         if self.config.modules is not None:
             if self.config.modules.code is not None:
                 # Check if Git is installed
                 self.checkDependency("git", "Git")
-
-                # Check if Modernmetric is installed
-                self.checkDependency("modernmetric", "ModernMetric")
-
-                # Check if SEMGrep is installed
-                self.checkDependency("semgrep", "SEMGrep")
-
-                # Check if Pygount is installed
-                self.checkDependency("pygount", "Pygount")
 
                 if self.config.shouldUpload:
                     headers = {
@@ -124,17 +114,16 @@ class Agent:
         except:
             return 0
 
-    def checkDependency(self, command, name):
+    def checkDependency(self, command, name, kill=False) -> bool:
         which = shutil.which(command)
         if not which:
             self.log(msg=f"{name} is required but it's not installed.", tag=f"{name} status", display=False)
-            raise Exception(f"{name} is required but it's not installed.")
+            if kill:
+                raise Exception(f"{name} is required but it's not installed.")
+            return False
         else:
             self.log(msg=f"{name} is installed at {which}.", tag=f"{name} status", display=True)
-
-    def global_dependencies(self):
-        # Check if Python3 is installed. This would catch if run with Python 2
-        self.checkDependency("python3", "Python3")
+            return True
 
     def upload(self, file: str, route: str, source: str = ''):
         if self.config.shouldUpload:
@@ -182,7 +171,7 @@ class Agent:
         self.log(msg='parseRepo')
         if not self.config.dry:
             os.chdir(path)
-        if self.config.runGit:
+        if self.config.runGit and self.checkDependency("git", "Git"):
             # Get Correct Branch
             # TODO Get a list of branches and use most recent if no main or master
             branch = ""
@@ -343,29 +332,36 @@ class Agent:
 
         # Run SEMGrep
         if self.config.runScan:
-            findings_output_file = os.path.join(self.config.output_dir, repo_name + ".findings.json")
-            findings_error_file = os.path.join(self.config.output_dir, repo_name + ".findings.err")
-            if not self.config.dry:
-                self.log(msg=repo_name, tag="Scanning repository", display=True)
-                try:
-                    with open(findings_error_file, 'a') as e:
-                        subprocess.check_call([
-                            "semgrep",
-                            "scan",
-                            "--config",
-                            "auto",
-                            "--json",
-                            "-o",
-                            findings_output_file,
-                        ], stderr=e,)
-                except subprocess.CalledProcessError as e:
-                    output = e.output
-                    self.log(msg=output, tag="Scanning repository return", display=True)
-            self.upload(
-                file=findings_output_file,
-                route="findings",
-                source=repo_name
-            )
+            if system.lower() == 'windows':
+                self.log("""
+                Windows does not support Semgrep.
+                Please see the open issues here:
+                https://github.com/returntocorp/semgrep/issues/1330
+                         """)
+            if self.checkDependency('semgrep', "Semgrep"):
+                findings_output_file = os.path.join(self.config.output_dir, repo_name + ".findings.json")
+                findings_error_file = os.path.join(self.config.output_dir, repo_name + ".findings.err")
+                if not self.config.dry:
+                    self.log(msg=repo_name, tag="Scanning repository", display=True)
+                    try:
+                        with open(findings_error_file, 'a') as e:
+                            subprocess.check_call([
+                                "semgrep",
+                                "scan",
+                                "--config",
+                                "auto",
+                                "--json",
+                                "-o",
+                                findings_output_file,
+                            ], stderr=e,)
+                    except subprocess.CalledProcessError as e:
+                        output = e.output
+                        self.log(msg=output, tag="Scanning repository return", display=True)
+                self.upload(
+                    file=findings_output_file,
+                    route="findings",
+                    source=repo_name
+                )
 
         # ##### Scan Dependencies ######
         if self.config.runDependencies:
@@ -396,7 +392,7 @@ class Agent:
                         os.makedirs(temp_dir, exist_ok=True)
                     self.log(msg=repo_url, tag="Repo URL")
                     self.log(msg=temp_dir, tag="Temp Directory")
-                    if not self.config.dry:
+                    if not self.config.dry and self.config.runGit:
                         try:
                             subprocess.check_output(["git", "clone", repo_url, temp_dir])
                         except subprocess.CalledProcessError:
@@ -443,10 +439,8 @@ class Agent:
             return
 
         for provider in cloud_config:
-            if provider.provider == "aws":
-                # Check if AWS-CLI is installed
-                self.checkDependency("aws", "AWS Command-line tool")
-
+            # Check if AWS-CLI is installed
+            if provider.provider == "aws" and self.checkDependency("aws", "AWS Command-line tool"):
                 aws_cost_file = runAws(
                     targeted_account=provider["account"],
                     start=provider["start"],
@@ -480,10 +474,8 @@ class Agent:
                     source="AWS"
                 )
 
-            if provider.provider == "azure":
-                # Check if Azure CLI is installed
-                self.checkDependency("az", "Azure Command-line tool")
-
+            # Check if Azure CLI is installed
+            if provider.provider == "azure" and self.checkDependency("az", "Azure Command-line tool"):
                 azure_cost_file = runAzure(
                     subscription_id=provider["account"],
                     start=provider["start"],
@@ -517,10 +509,7 @@ class Agent:
                     source="Azure"
                 )
 
-            if provider.provider == "gcp":
-                # Check if Google Cloud CLI is installed
-                self.checkDependency("gcloud", "Google Command-line tool")
-
+            if provider.provider == "gcp" and self.checkDependency("gcloud", "Google Command-line tool"):
                 gcp_instance_file = get_gcp_instances(
                     sub_id=provider["account"],
                     path_to_output=self.config.output_dir
