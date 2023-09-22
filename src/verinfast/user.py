@@ -6,6 +6,10 @@ import yaml
 user_home = os.path.expanduser('~')
 
 
+def __get_input__(t: str):
+    return input(t)
+
+
 def initial_prompt():
     should_upload_log = False
 
@@ -39,14 +43,14 @@ def initial_prompt():
     repeat_prompt = "(Y)/n"
     if "upload_permission" not in conf:
         print(warning)
-        resp = input(repeat_prompt)
+        resp = __get_input__(repeat_prompt)
         print(resp)
         if resp:
             resp_char = resp[0]
         else:
             resp_char = 'y'
         while resp_char.lower() not in ['y', 'n']:
-            resp = input(repeat_prompt)
+            resp = __get_input__(repeat_prompt)
             print(resp)
             if resp:
                 resp_char = resp[0]
