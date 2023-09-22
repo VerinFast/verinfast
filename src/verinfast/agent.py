@@ -449,9 +449,9 @@ class Agent:
             # Check if AWS-CLI is installed
             if provider.provider == "aws" and self.checkDependency("aws", "AWS Command-line tool"):
                 aws_cost_file = runAws(
-                    targeted_account=provider["account"],
-                    start=provider["start"],
-                    end=provider["end"],
+                    targeted_account=provider.account,
+                    start=provider.start,
+                    end=provider.end,
                     path_to_output=self.config.output_dir
                 )
                 self.log(msg=aws_cost_file, tag="AWS Costs")
@@ -461,7 +461,7 @@ class Agent:
                     source="AWS"
                 )
                 aws_instance_file = get_aws_instances(
-                    sub_id=provider["account"],
+                    sub_id=provider.account,
                     path_to_output=self.config.output_dir
                 )
                 self.log(msg=aws_instance_file, tag="AWS Instances")
@@ -471,7 +471,7 @@ class Agent:
                     source="AWS"
                 )
                 aws_block_file = get_aws_blocks(
-                    sub_id=provider["account"],
+                    sub_id=provider.account,
                     path_to_output=self.config.output_dir
                 )
                 self.log(msg=aws_block_file, tag="AWS Storage")
@@ -484,9 +484,9 @@ class Agent:
             # Check if Azure CLI is installed
             if provider.provider == "azure" and self.checkDependency("az", "Azure Command-line tool"):
                 azure_cost_file = runAzure(
-                    subscription_id=provider["account"],
-                    start=provider["start"],
-                    end=provider["end"],
+                    subscription_id=provider.account,
+                    start=provider.start,
+                    end=provider.end,
                     path_to_output=self.config.output_dir
                 )
                 self.log(msg=azure_cost_file, tag="Azure Costs")
@@ -496,7 +496,7 @@ class Agent:
                     source="Azure"
                 )
                 azure_instance_file = get_az_instances(
-                    sub_id=provider["account"],
+                    sub_id=provider.account,
                     path_to_output=self.config.output_dir
                 )
                 self.log(msg=azure_instance_file, tag="Azure instances")
@@ -506,7 +506,7 @@ class Agent:
                     source="Azure"
                 )
                 azure_block_file = get_az_blocks(
-                    sub_id=provider["account"],
+                    sub_id=provider.account,
                     path_to_output=self.config.output_dir
                 )
                 self.log(msg=azure_block_file, tag="Azure Storage")
@@ -518,7 +518,7 @@ class Agent:
 
             if provider.provider == "gcp" and self.checkDependency("gcloud", "Google Command-line tool"):
                 gcp_instance_file = get_gcp_instances(
-                    sub_id=provider["account"],
+                    sub_id=provider.account,
                     path_to_output=self.config.output_dir
                 )
                 self.log(msg=gcp_instance_file, tag="GCP instances")
@@ -528,7 +528,7 @@ class Agent:
                     source="GCP"
                 )
                 gcp_block_file = get_gcp_blocks(
-                    sub_id=provider["account"],
+                    sub_id=provider.account,
                     path_to_output=self.config.output_dir
                 )
                 self.log(msg=gcp_block_file, tag="GCP Storage")
