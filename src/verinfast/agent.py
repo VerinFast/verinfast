@@ -130,7 +130,7 @@ class Agent:
             self.log(msg=f"{name} is installed at {which}.", tag=f"{name} status", display=True)
             return True
 
-    def upload(self, file: str, route: str, source: str = ''):
+    def upload(self, file: str, route: str, source: str = '', isJSON=True):
         if self.config.shouldUpload:
             route = self.up(
                 path_type=route,
@@ -138,14 +138,19 @@ class Agent:
                 code=self.corsisId,
                 repo_name=source
             )
+
             with open(file, 'rb') as f:
                 self.log(msg=f"{self.config.baseUrl}{route}", tag="Uploading to")
 
-                headers = {
-                    'Content-Type': 'application/json',
-                    'accept': 'application/json'
-                }
-                response = requestx.post(self.config.baseUrl + route, data=f, headers=headers)
+                if isJSON:
+                    headers = {
+                        'Content-Type': 'application/json',
+                        'accept': 'application/json'
+                    }
+                    response = requestx.post(self.config.baseUrl + route, data=f, headers=headers)
+                else:
+                    files = {'logFile': f}
+                    response = requestx.post(self.config.baseUrl + route, files=files)
             if response.status_code == 200:
                 self.log(
                     msg='',
@@ -549,11 +554,12 @@ def main():
             agent.upload(route="logs", file=agent.config.output_dir+"/log.txt")
         raise e
     if agent.config.upload_logs:
-        agent.upload(route="logs", file=agent.config.output_dir+"/log.txt")
+        agent.upload(route="logs", file=agent.config.output_dir+"/log.txt", isJSON=False)
         new_folder_name = (
             str(today.year) + str(today.month) + str(today.day)
         )
         d = agent.directory
+        os.makedirs(f'{d}/{new_folder_name}/', exist_ok=True)
         new_file_name = str(uuid4())+".txt"
         fp = f'{d}/{new_folder_name}/{new_file_name}'
         shutil.copy2(agent.config.output_dir+"/log.txt", fp)
