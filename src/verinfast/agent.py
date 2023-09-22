@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+from datetime import date
 import json
 import platform
 import subprocess
@@ -7,6 +7,7 @@ import os
 import httpx
 import shutil
 import re
+from uuid import uuid4
 
 from pygments_tsx.tsx import patch_pygments
 
@@ -22,6 +23,7 @@ from verinfast.cloud.aws.blocks import getBlocks as get_aws_blocks
 from verinfast.cloud.azure.blocks import getBlocks as get_az_blocks
 from verinfast.cloud.gcp.blocks import getBlocks as get_gcp_blocks
 from verinfast.config import Config
+from verinfast.user import initial_prompt, save_path
 
 from verinfast.dependencies.walk import walk as dependency_walk
 
@@ -30,6 +32,8 @@ from verinfast.dependencies.walk import walk as dependency_walk
 # If we want to run modernmetric directly
 
 patch_pygments()
+
+today = date.today()
 
 requestx = httpx.Client(http2=True, timeout=None)
 uname = platform.uname()
@@ -49,9 +53,10 @@ class Agent:
         self.log(msg='', tag="Started")
         self.uploader = Uploader(self.config.upload_conf)
         self.up = self.uploader.make_upload_path
+        self.config.upload_logs = initial_prompt()
+        self.directory = save_path()
 
     def scan(self):
-        print(self.config)
         if self.config.modules is not None:
             if self.config.modules.code is not None:
                 # Check if Git is installed
@@ -125,7 +130,7 @@ class Agent:
             self.log(msg=f"{name} is installed at {which}.", tag=f"{name} status", display=True)
             return True
 
-    def upload(self, file: str, route: str, source: str = ''):
+    def upload(self, file: str, route: str, source: str = '', isJSON=True):
         if self.config.shouldUpload:
             route = self.up(
                 path_type=route,
@@ -133,14 +138,19 @@ class Agent:
                 code=self.corsisId,
                 repo_name=source
             )
+
             with open(file, 'rb') as f:
                 self.log(msg=f"{self.config.baseUrl}{route}", tag="Uploading to")
 
-                headers = {
-                    'Content-Type': 'application/json',
-                    'accept': 'application/json'
-                }
-                response = requestx.post(self.config.baseUrl + route, data=f, headers=headers)
+                if isJSON:
+                    headers = {
+                        'Content-Type': 'application/json',
+                        'accept': 'application/json'
+                    }
+                    response = requestx.post(self.config.baseUrl + route, data=f, headers=headers)
+                else:
+                    files = {'logFile': f}
+                    response = requestx.post(self.config.baseUrl + route, files=files)
             if response.status_code == 200:
                 self.log(
                     msg='',
@@ -401,8 +411,10 @@ class Agent:
                             continue
 
                         self.log(msg=repo_url, tag="Successfully cloned", display=True)
-
-                    self.parseRepo(temp_dir, repo_name)
+                    try:
+                        self.parseRepo(temp_dir, repo_name)
+                    except Exception as e:
+                        self.log(msg=str(e))
 
                     os.chdir(curr_dir)
                     if not self.config.dry:
@@ -442,19 +454,19 @@ class Agent:
             # Check if AWS-CLI is installed
             if provider.provider == "aws" and self.checkDependency("aws", "AWS Command-line tool"):
                 aws_cost_file = runAws(
-                    targeted_account=provider["account"],
-                    start=provider["start"],
-                    end=provider["end"],
+                    targeted_account=provider.account,
+                    start=provider.start,
+                    end=provider.end,
                     path_to_output=self.config.output_dir
                 )
                 self.log(msg=aws_cost_file, tag="AWS Costs")
                 self.upload(
                     file=aws_cost_file,
-                    route="Costs",
+                    route="costs",
                     source="AWS"
                 )
                 aws_instance_file = get_aws_instances(
-                    sub_id=provider["account"],
+                    sub_id=provider.account,
                     path_to_output=self.config.output_dir
                 )
                 self.log(msg=aws_instance_file, tag="AWS Instances")
@@ -464,7 +476,7 @@ class Agent:
                     source="AWS"
                 )
                 aws_block_file = get_aws_blocks(
-                    sub_id=provider["account"],
+                    sub_id=provider.account,
                     path_to_output=self.config.output_dir
                 )
                 self.log(msg=aws_block_file, tag="AWS Storage")
@@ -477,19 +489,19 @@ class Agent:
             # Check if Azure CLI is installed
             if provider.provider == "azure" and self.checkDependency("az", "Azure Command-line tool"):
                 azure_cost_file = runAzure(
-                    subscription_id=provider["account"],
-                    start=provider["start"],
-                    end=provider["end"],
+                    subscription_id=provider.account,
+                    start=provider.start,
+                    end=provider.end,
                     path_to_output=self.config.output_dir
                 )
                 self.log(msg=azure_cost_file, tag="Azure Costs")
                 self.upload(
                     file=azure_cost_file,
-                    route="Costs",
+                    route="costs",
                     source="Azure"
                 )
                 azure_instance_file = get_az_instances(
-                    sub_id=provider["account"],
+                    sub_id=provider.account,
                     path_to_output=self.config.output_dir
                 )
                 self.log(msg=azure_instance_file, tag="Azure instances")
@@ -499,7 +511,7 @@ class Agent:
                     source="Azure"
                 )
                 azure_block_file = get_az_blocks(
-                    sub_id=provider["account"],
+                    sub_id=provider.account,
                     path_to_output=self.config.output_dir
                 )
                 self.log(msg=azure_block_file, tag="Azure Storage")
@@ -511,7 +523,7 @@ class Agent:
 
             if provider.provider == "gcp" and self.checkDependency("gcloud", "Google Command-line tool"):
                 gcp_instance_file = get_gcp_instances(
-                    sub_id=provider["account"],
+                    sub_id=provider.account,
                     path_to_output=self.config.output_dir
                 )
                 self.log(msg=gcp_instance_file, tag="GCP instances")
@@ -521,7 +533,7 @@ class Agent:
                     source="GCP"
                 )
                 gcp_block_file = get_gcp_blocks(
-                    sub_id=provider["account"],
+                    sub_id=provider.account,
                     path_to_output=self.config.output_dir
                 )
                 self.log(msg=gcp_block_file, tag="GCP Storage")
@@ -534,7 +546,24 @@ class Agent:
 
 def main():
     agent = Agent()
-    agent.scan()
+    try:
+        agent.scan()
+    except Exception as e:
+        if agent.config.upload_logs:
+            agent.log(msg=str(e))
+            agent.upload(route="logs", file=agent.config.output_dir+"/log.txt")
+        raise e
+    if agent.config.upload_logs:
+        agent.upload(route="logs", file=agent.config.output_dir+"/log.txt", source='logs', isJSON=False)
+        new_folder_name = (
+            str(today.year) + str(today.month) + str(today.day)
+        )
+        d = agent.directory
+        os.makedirs(f'{d}/{new_folder_name}/', exist_ok=True)
+        new_file_name = str(uuid4())+".txt"
+        fp = f'{d}/{new_folder_name}/{new_file_name}'
+        shutil.copy2(agent.config.output_dir+"/log.txt", fp)
+        os.unlink(agent.config.output_dir+"/log.txt")
 
 
 if __name__ == "__main__":

@@ -1,10 +1,13 @@
 import json
+from unittest.mock import patch
 import os
 from pathlib import Path
 from verinfast.agent import Agent
+import verinfast.user
 
 
-def test_scan():
+@patch('verinfast.user.__get_input__', return_value='y')
+def test_scan(self):
     file_path = Path(__file__)
     test_folder = file_path.parent
     repo_name = "test_tsx"
@@ -28,3 +31,13 @@ def test_scan():
         assert output is not None
 
     return True
+
+
+@patch('verinfast.user.__get_input__', return_value='y')
+def test_home(self):
+    assert verinfast.user.user_home is not None
+
+
+@patch('verinfast.user.__get_input__', return_value='y')
+def test_mock(self):
+    assert verinfast.user.__get_input__() == 'y'

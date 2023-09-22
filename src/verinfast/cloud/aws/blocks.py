@@ -21,7 +21,6 @@ def getBlocks(sub_id: str, path_to_output: str = "./"):
         s2 = boto3.Session(profile_name=profile)
         sts = s2.client('sts')
         id = sts.get_caller_identity()
-        print(id["Account"])
         if int(id['Account']) == int(sub_id):
             right_session = s2
             break
