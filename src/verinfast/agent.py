@@ -554,7 +554,7 @@ def main():
             agent.upload(route="logs", file=agent.config.output_dir+"/log.txt")
         raise e
     if agent.config.upload_logs:
-        agent.upload(route="logs", file=agent.config.output_dir+"/log.txt", isJSON=False)
+        agent.upload(route="logs", file=agent.config.output_dir+"/log.txt", source='logs', isJSON=False)
         new_folder_name = (
             str(today.year) + str(today.month) + str(today.day)
         )
