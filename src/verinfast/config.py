@@ -90,7 +90,7 @@ class UploadConfig(printable):
             prefix (str) : defaults to "/report" if not specified
     """
     uuid: bool = False
-    prefix: str | None = "/report"
+    prefix: str | None = "/report/"
     code_separator: str | None = "/CorsisCode"
     cost_separator: str | None = None
 

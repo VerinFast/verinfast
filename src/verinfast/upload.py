@@ -60,7 +60,7 @@ class Uploader:
         return_path = paths[path_type]
 
         if self.config.uuid:
-            return_path = "/uuid/" + return_path
+            return_path = "uuid/" + return_path
 
         if self.config.prefix is not None:
             return_path = self.config.prefix + return_path
