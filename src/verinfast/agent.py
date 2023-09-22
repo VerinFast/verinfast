@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+from datetime import date
 import json
 import platform
 import subprocess
@@ -7,6 +7,7 @@ import os
 import httpx
 import shutil
 import re
+from uuid import uuid4
 
 from pygments_tsx.tsx import patch_pygments
 
@@ -22,6 +23,7 @@ from verinfast.cloud.aws.blocks import getBlocks as get_aws_blocks
 from verinfast.cloud.azure.blocks import getBlocks as get_az_blocks
 from verinfast.cloud.gcp.blocks import getBlocks as get_gcp_blocks
 from verinfast.config import Config
+from verinfast.user import initial_prompt, save_path
 
 from verinfast.dependencies.walk import walk as dependency_walk
 
@@ -30,6 +32,8 @@ from verinfast.dependencies.walk import walk as dependency_walk
 # If we want to run modernmetric directly
 
 patch_pygments()
+
+today = date.today()
 
 requestx = httpx.Client(http2=True, timeout=None)
 uname = platform.uname()
@@ -49,9 +53,10 @@ class Agent:
         self.log(msg='', tag="Started")
         self.uploader = Uploader(self.config.upload_conf)
         self.up = self.uploader.make_upload_path
+        self.config.upload_logs = initial_prompt()
+        self.directory = save_path()
 
     def scan(self):
-        print(self.config)
         if self.config.modules is not None:
             if self.config.modules.code is not None:
                 # Check if Git is installed
@@ -401,8 +406,10 @@ class Agent:
                             continue
 
                         self.log(msg=repo_url, tag="Successfully cloned", display=True)
-
-                    self.parseRepo(temp_dir, repo_name)
+                    try:
+                        self.parseRepo(temp_dir, repo_name)
+                    except Exception as e:
+                        self.log(msg=str(e))
 
                     os.chdir(curr_dir)
                     if not self.config.dry:
@@ -534,7 +541,23 @@ class Agent:
 
 def main():
     agent = Agent()
-    agent.scan()
+    try:
+        agent.scan()
+    except Exception as e:
+        if agent.config.upload_logs:
+            agent.log(msg=str(e))
+            agent.upload(route="logs", file=agent.config.output_dir+"/log.txt")
+        raise e
+    if agent.config.upload_logs:
+        agent.upload(route="logs", file=agent.config.output_dir+"/log.txt")
+        new_folder_name = (
+            str(today.year) + str(today.month) + str(today.day)
+        )
+        d = agent.directory
+        new_file_name = str(uuid4())+".txt"
+        fp = f'{d}/{new_folder_name}/{new_file_name}'
+        shutil.copy2(agent.config.output_dir+"/log.txt", fp)
+        os.unlink(agent.config.output_dir+"/log.txt")
 
 
 if __name__ == "__main__":

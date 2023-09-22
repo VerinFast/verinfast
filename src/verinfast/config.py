@@ -169,6 +169,7 @@ class Config(printable):
     server_cost_separator: str | None = None
     shouldUpload: bool = False
     shouldManualFileScan: bool = True
+    upload_logs = False
     use_uuid = False
 
     def __init__(self) -> None:
