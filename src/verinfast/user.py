@@ -40,23 +40,22 @@ def initial_prompt():
         with open(f_path, "r") as f:
             conf = yaml.safe_load(f)
 
-    repeat_prompt = "(Y)/n"
+    repeat_prompt = "(Y)/n\n"
     if "upload_permission" not in conf:
         print(warning)
         resp = __get_input__(repeat_prompt)
-        print(resp)
+        print()
         if resp:
             resp_char = resp[0]
         else:
             resp_char = 'y'
         while resp_char.lower() not in ['y', 'n']:
             resp = __get_input__(repeat_prompt)
-            print(resp)
             if resp:
                 resp_char = resp[0]
             else:
                 resp_char = 'y'
-        if resp_char == 'y':
+        if resp_char.lower() == 'y':
             conf["upload_permission"] = True
             should_upload_log = True
         else:
