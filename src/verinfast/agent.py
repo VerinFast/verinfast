@@ -457,7 +457,7 @@ class Agent:
                 self.log(msg=aws_cost_file, tag="AWS Costs")
                 self.upload(
                     file=aws_cost_file,
-                    route="Costs",
+                    route="costs",
                     source="AWS"
                 )
                 aws_instance_file = get_aws_instances(
@@ -492,7 +492,7 @@ class Agent:
                 self.log(msg=azure_cost_file, tag="Azure Costs")
                 self.upload(
                     file=azure_cost_file,
-                    route="Costs",
+                    route="costs",
                     source="Azure"
                 )
                 azure_instance_file = get_az_instances(
