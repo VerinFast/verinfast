@@ -1,6 +1,5 @@
 import json
 from unittest.mock import patch
-# from mock import patch
 import os
 from pathlib import Path
 from verinfast.agent import Agent
