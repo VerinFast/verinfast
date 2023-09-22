@@ -144,7 +144,7 @@ def get_instances(sub_id: int, path_to_output: str = "./") -> str | None:
         s2 = boto3.Session(profile_name=profile)
         sts = s2.client('sts')
         id = sts.get_caller_identity()
-        if int(id['Account']) == sub_id:
+        if str(id['Account']) == str(sub_id):
             right_session = s2
             break
     if right_session is None:
