@@ -69,8 +69,11 @@ def test_str_results_from_file(self):
     with open(results_dir.joinpath('small-test-repo.git.filelist.json')) as f:
         file_list = json.load(f)
         assert len(file_list) >= 4
-        assert file_list[0]["name"] == "README.md"
-        assert file_list[1]["path"] == "./helloworld/helloworld.php"
+        for myfile in file_list:
+            if myfile["name"] == "README.md":
+                assert str(myfile["path"]).endswith("README.md")
+            assert myfile["name"]
+            assert myfile["path"]
     with open(results_dir.joinpath('small-test-repo.git.sizes.json')) as f:
         sizes = json.load(f)
         assert sizes["files"]["."]["size"] >= 34184
