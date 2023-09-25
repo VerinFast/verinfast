@@ -59,7 +59,8 @@ class Uploader:
 
         return_path = paths[path_type]
 
-        if self.config.uuid:
+        # logs never gets uuid prefix
+        if self.config.uuid and path_type != "logs":
             return_path = "uuid/" + return_path
 
         if self.config.prefix is not None:
