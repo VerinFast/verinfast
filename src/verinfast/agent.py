@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from datetime import date
 import json
+from pathlib import Path
 import platform
 import subprocess
 import os
@@ -426,12 +427,12 @@ class Agent:
             self.log(msg='', tag="No remote repos", display=True)
 
         # Loop over all local repositories from config file
-        print(self.config.config)
         if 'local_repos' in self.config.config:
             localrepos = self.config.config['local_repos']
             if localrepos:
                 for repo_path in localrepos:
-                    match = re.search(".*\/(.*)", repo_path)
+                    a = Path(repo_path).absolute()
+                    match = re.search(".*\/(.*)", str(a))
                     repo_name = match.group(1)
                     self.parseRepo(repo_path, repo_name)
             else:
