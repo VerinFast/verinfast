@@ -216,6 +216,7 @@ class Agent:
                     results = subprocess.run(command, shell=True, stdout=subprocess.PIPE)
                     log = results.stdout.decode()
             except subprocess.CalledProcessError:
+                self.log("Error getting log from git")
                 raise Exception("Error getting log from git.")
 
             if not self.config.dry:
