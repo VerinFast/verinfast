@@ -179,8 +179,11 @@ class Agent:
 
     def parseRepo(self, path: str, repo_name: str):
         self.log(msg='parseRepo')
+        self.log("SEAN LOOK HERE")
+        self.log(path)
         if not self.config.dry:
             os.chdir(path)
+            self.log('changed dirs')
         if self.config.runGit and self.checkDependency("git", "Git"):
             # Get Correct Branch
             # TODO Get a list of branches and use most recent if no main or master
@@ -215,6 +218,7 @@ class Agent:
                     results = subprocess.run(command, shell=True, stdout=subprocess.PIPE)
                     log = results.stdout.decode()
             except subprocess.CalledProcessError:
+                self.log("Error getting log from git")
                 raise Exception("Error getting log from git.")
 
             if not self.config.dry:

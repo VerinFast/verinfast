@@ -30,7 +30,7 @@ def test_scan(self):
         output = json.load(output_file)
         assert output is not None
 
-    return True
+    return None
 
 
 @patch('verinfast.user.__get_input__', return_value='y')
