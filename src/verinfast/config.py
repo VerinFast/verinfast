@@ -205,13 +205,22 @@ class Config(printable):
             self.handle_args(args)
         if self.config is FileNotFoundError:
             self.config = {}
+        """
+        If run with no arguments assume we want to scan the current directory.
+        If a scan target is not set by the command line or config we set the
+        target to be ["./"]
+        """
         if (
             "repos" not in self.config and
-            "localrepos" not in self.config
+            "localrepos" not in self.config and
+            "modules" not in self.config  # If cloud specified it's here.
         ):
             self.config["local_repos"] = [self.local_scan_path]
             gm = GitModule()
             cm = CodeModule(git=gm)
+            """
+                The line below previously overwrote existing modules.
+            """
             self.modules = ConfigModules(code=cm, cloud=[])
             self.runGit = False
         self.upload_conf = UploadConfig(
