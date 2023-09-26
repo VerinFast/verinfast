@@ -20,8 +20,8 @@ def runAws(targeted_account, start, end, path_to_output):
         profiles.append(line)
         cmd = f'aws sts get-caller-identity --profile={line}'
         results = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
-        text = results.stdout.decode()
-        identity = json.loads(text)
+        text2 = results.stdout.decode()
+        identity = json.loads(text2)
         account = identity["Account"]
         available_accounts.append(account)
         if str(account) == str(targeted_account):
