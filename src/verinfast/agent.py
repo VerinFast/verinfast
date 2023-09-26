@@ -185,11 +185,13 @@ class Agent:
         if self.config.runGit and self.checkDependency("git", "Git"):
             # Get Correct Branch
             # TODO Get a list of branches and use most recent if no main or master
-            branch = ""
+            branch = "main"
+            if "@" in repo_name:
+                branch = repo_name.split("@")[1]
+                repo_name = repo_name.split("@")[0]
             try:
                 if not self.config.dry:
-                    subprocess.check_call(["git", f"--work-tree={path}", "checkout", "main"])
-                    branch = "main"
+                    subprocess.check_call(["git", f"--work-tree={path}", "checkout", branch])
             except subprocess.CalledProcessError:
                 try:
                     if not self.config.dry:
@@ -397,6 +399,9 @@ class Agent:
                 for repo_url in repos:
                     match = re.search(".*\/(.*)", repo_url)
                     repo_name = match.group(1)
+                    if "@" in repo_name:
+                        repo_url = "@".join(repo_url.split("@")[0:2])
+
                     self.log(msg=repo_name, tag="Processing", display=True)
                     curr_dir = os.getcwd()
                     temp_dir = os.path.join(curr_dir, "temp_repo")
