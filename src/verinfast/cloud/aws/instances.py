@@ -75,7 +75,11 @@ def parse_multi(datapoint: dict | List[dict]) -> Datapoint:
     return my_datapoint
 
 
-def get_instance_utilization(instance_id: str, session, region: str) -> List[Datum]:
+def get_instance_utilization(
+            instance_id: str,
+            session,
+            region: str
+        ) -> List[Datum]:
     cpu_resp = get_metric_for_instance(
             metric='CPUUtilization',
             instance_id=instance_id,
