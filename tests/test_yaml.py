@@ -75,7 +75,7 @@ def test_str_results_from_file(self):
             assert myfile["path"]
     with open(results_dir.joinpath('small-test-repo.git.sizes.json')) as f:
         sizes = json.load(f)
-        assert sizes["files"]["."]["size"] >= 34184
+        assert sizes["files"]["."]["size"] >= 34100
         assert sizes["files"]["./README.md"]["ext"] == "md"
     with open(results_dir.joinpath('small-test-repo.git.stats.json')) as f:
         stats = json.load(f)

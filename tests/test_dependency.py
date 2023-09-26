@@ -12,18 +12,31 @@ test_folder = file_path.parent
 patch_pygments()
 
 
+def logger(msg, **kwargs):
+    print(msg)
+    print(kwargs)
+
+
 def test_walk():
-    output_path = walk(path=test_folder, output_file="./dependencies.json")
+    output_path = walk(
+        path=test_folder,
+        output_file="./dependencies.json",
+        logger=logger
+        )
     with open(output_path) as output_file:
         output = json.load(output_file)
         assert len(output) >= 1
         first_dep = output[0]
         assert first_dep['name'] == 'simple-test-package'
-    return True
+    return None
 
 
 def test_entity():
-    output_path = walk(path="./tests/", output_file="./dependencies.json")
+    output_path = walk(
+        path=test_folder,
+        output_file="./dependencies.json",
+        logger=logger
+    )
     with open(output_path) as output_file:
         output = json.load(output_file)
         assert len(output) >= 1
@@ -31,4 +44,4 @@ def test_entity():
         e = Entry(**first_dep)
         assert e.license == "ISC"
 
-    return True
+    return None
