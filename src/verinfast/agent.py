@@ -136,6 +136,7 @@ class Agent:
         print(file)
         if self.config.shouldUpload:
             orig_route = route
+
             route = self.up(
                 path_type=route,
                 report=self.config.reportId,
@@ -180,7 +181,7 @@ class Agent:
                     
                     self.upload(
                         file=err_path_str,
-                        route=err_route,
+                        route="err_"+orig_route,
                         source=source+" Error Logs",
                         isJSON=False
                     )
@@ -373,6 +374,8 @@ class Agent:
             )
 
         # Run SEMGrep
+        print(self.config.runScan)
+        print("self.config.runScan")
         if self.config.runScan:
             print("system.lower()")
             print(system.lower())
