@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 import subprocess
 from pathlib import Path
@@ -71,8 +70,6 @@ class NodeWalker(Walker):
                     self.entries.append(e)
         except Exception as error:
             # handle the exception
-            logging.exception(error)
-            pass
-
-
-nodeWalker = NodeWalker(manifest_type='json', manifest_files=["package.json"])
+            # logging.exception(error)
+            self.logger(f"error parsing {file}")
+            self.logger(error)

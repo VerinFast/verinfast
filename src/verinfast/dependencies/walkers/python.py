@@ -71,9 +71,3 @@ class PyWalker(Walker):
         for el in temp:
             el["source"] = "pip"
         self.entries = [Entry(**entry) for entry in temp]
-
-
-py_walker = PyWalker(
-    manifest_files=["requirements.txt", "requirements-dev.txt"],
-    manifest_type=["txt"]
-)

@@ -57,5 +57,3 @@ class NuGetWalker(Walker):
 
 # Example: https://github.com/umbraco/Umbraco-CMS/pull/13787/files
 c_sharp_matches = ["*.csproj"]
-
-nugetWalker = NuGetWalker(manifest_type='xml', manifest_files=c_sharp_matches)

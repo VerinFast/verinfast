@@ -54,17 +54,27 @@ class Walker():
     def __init__(
         self,
         manifest_type: str,  # "json",
-        manifest_files: List[str]  # ["package.json"]
+        manifest_files: List[str],  # ["package.json"]
+        logger
     ) -> None:
         self.files = []
         self.manifest_files = manifest_files
         self.manifest_type = manifest_type
         self.entries = []
         self.requestx = httpx.Client(http2=True, timeout=None)
+        self.loggerFunc = logger
 
     def initialize(self, command: str):
         if command:
             subprocess.call(args=command)
+
+    def log(self, msg, tag=None, display=False, timestamp=True):
+        self.loggerFunc(
+            msg,
+            tag=tag,
+            display=display,
+            timestamp=timestamp
+        )
 
     def getUrl(self, url: str, headers: dict = {}):
         return self.requestx.get(url=url, headers=headers)
