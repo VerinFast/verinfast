@@ -133,6 +133,7 @@ class Agent:
 
     def upload(self, file: str, route: str, source: str = '', isJSON=True):
         if self.config.shouldUpload:
+            orig_route = route
             route = self.up(
                 path_type=route,
                 report=self.config.reportId,
@@ -162,9 +163,10 @@ class Agent:
                     err_path_str = file.replace(".json", ".err")
                     err_path = Path(err_path_str)
                     if err_path.exists():
+                        err_route = self.up("err_"+orig_route)
                         self.upload(
                             file=err_path_str,
-                            route=route+"/err",
+                            route=err_route,
                             source=source+" Error Logs",
                             isJSON=False
                         )
