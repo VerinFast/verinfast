@@ -18,11 +18,12 @@ def get_metric_for_instance(
             metric: str,
             instance_id: str,
             session,
+            region: str,
             namespace: str = 'AWS/EC2',
             unit: str = 'Percent',
         ):
     try:
-        client = session.client('cloudwatch')
+        client = session.client('cloudwatch', region_name=region)
         response = client.get_metric_statistics(
             Namespace=namespace,
             MetricName=metric,
@@ -74,24 +75,27 @@ def parse_multi(datapoint: dict | List[dict]) -> Datapoint:
     return my_datapoint
 
 
-def get_instance_utilization(instance_id: str, session) -> List[Datum]:
+def get_instance_utilization(instance_id: str, session, region: str) -> List[Datum]:
     cpu_resp = get_metric_for_instance(
             metric='CPUUtilization',
             instance_id=instance_id,
-            session=session
+            session=session,
+            region=region
         )
     mem_resp = get_metric_for_instance(
             metric='mem_used_percent',
             instance_id=instance_id,
             namespace='CWAgent',
-            session=session
+            session=session,
+            region=region
         )
 
     hdd_resp = get_metric_for_instance(
             metric='disk_used_percent',
             instance_id=instance_id,
             namespace='CWAgent',
-            session=session
+            session=session,
+            region=region
         )
 
     cpu_stats: List[Datapoint] = []
@@ -165,7 +169,8 @@ def get_instances(sub_id: int, path_to_output: str = "./") -> str | None:
                         name = [t['Value'] for t in tags if t['Key'] == 'Name'][0]  # noqa: E501
                         m = get_instance_utilization(
                             instance_id=instance["InstanceId"],
-                            session=right_session
+                            session=right_session,
+                            region=region
                         )
                         d = {
                                 "id": instance["InstanceId"],
