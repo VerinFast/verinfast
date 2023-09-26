@@ -132,6 +132,8 @@ class Agent:
             return True
 
     def upload(self, file: str, route: str, source: str = '', isJSON=True):
+        print("file")
+        print(file)
         if self.config.shouldUpload:
             orig_route = route
             route = self.up(
@@ -159,19 +161,31 @@ class Agent:
                     tag=f"Successfully uploaded {file} for {source} to {self.config.baseUrl}{route}.",
                     display=True
                 )
-                try:
-                    err_path_str = file.replace(".json", ".err")
-                    err_path = Path(err_path_str)
-                    if err_path.exists():
-                        err_route = self.up("err_"+orig_route)
-                        self.upload(
-                            file=err_path_str,
-                            route=err_route,
-                            source=source+" Error Logs",
-                            isJSON=False
-                        )
-                except:
-                    pass
+                # try:
+                err_path_str = file[0:-5]+'.err'
+                err_path = Path(err_path_str)
+                print("err_path")
+                print(err_path)
+                print(err_path.exists())
+                if err_path.exists():
+                    print("here")
+                    err_route = self.up(
+                        "err_"+orig_route,
+                        report=self.config.reportId,
+                        code=self.corsisId,
+                        repo_name=source
+                    )
+                    print("err_route")
+                    print(err_route)
+                    
+                    self.upload(
+                        file=err_path_str,
+                        route=err_route,
+                        source=source+" Error Logs",
+                        isJSON=False
+                    )
+                # except:
+                #     pass
             else:
                 self.log(
                     msg=response.status_code,
@@ -360,6 +374,8 @@ class Agent:
 
         # Run SEMGrep
         if self.config.runScan:
+            print("system.lower()")
+            print(system.lower())
             if system.lower() == 'windows':
                 self.log("""
                 Windows does not support Semgrep.
