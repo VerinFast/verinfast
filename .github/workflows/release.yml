@@ -38,6 +38,12 @@ jobs:
         run: python make_version.py
       - name: install self
         run: pip install -e .
+      - name: Configure AWS
+        run: >-
+            aws --profile default configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws --profile default configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            aws --profile default configure set region "us-east-1"
+            aws sts get-caller-identity
       - name: Unit Tests
         run: pytest
       - name: Upload coverage to Codecov
