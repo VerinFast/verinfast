@@ -172,8 +172,10 @@ class Config(printable):
     upload_logs = False
     use_uuid = False
 
-    def __init__(self) -> None:
-        if 'pytest' not in sys.argv[0]:
+    def __init__(self, cfg_path: str = None) -> None:
+        if cfg_path is not None:
+            self.cfg_path = cfg_path
+        elif 'pytest' not in sys.argv[0]:
             parser = self.init_argparse()
             args = parser.parse_args()
             if "config" in args and args.config is not None:

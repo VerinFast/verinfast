@@ -61,7 +61,6 @@ def test_str_results_from_file(self):
         shutil.rmtree(results_dir)
     except Exception as e:
         print(e)
-    print(agent.config.output_dir)
     assert Path(results_dir).exists() is False
     os.makedirs(agent.config.output_dir, exist_ok=True)
     agent.scan()
