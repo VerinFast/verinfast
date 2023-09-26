@@ -50,6 +50,3 @@ class MavenWalker(Walker):
 
     def expand(self, file):
         raise Exception("No expansion for this Walker")
-
-
-mavenWalker = Walker(manifest_type="xml", manifest_files=["pom.xml"])

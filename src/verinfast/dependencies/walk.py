@@ -4,10 +4,10 @@ from typing import List
 
 import defusedxml
 
-from verinfast.dependencies.walkers.maven import mavenWalker
-from verinfast.dependencies.walkers.npm import nodeWalker
-from verinfast.dependencies.walkers.nuget import nugetWalker
-from verinfast.dependencies.walkers.python import py_walker
+from verinfast.dependencies.walkers.maven import MavenWalker
+from verinfast.dependencies.walkers.npm import NodeWalker
+from verinfast.dependencies.walkers.nuget import NuGetWalker, c_sharp_matches
+from verinfast.dependencies.walkers.python import PyWalker
 from verinfast.dependencies.walkers.classes import Entry
 
 defusedxml.defuse_stdlib()
@@ -26,7 +26,31 @@ rust_matches = ["Cargo.toml"]
 
 # Finds all manifests we can process in the repo
 # and stores their path in memory
-def walk(path: str = "./", output_file="./dependencies.json"):
+def walk(logger, path: str = "./", output_file="./dependencies.json"):
+    mavenWalker = MavenWalker(
+        manifest_type="xml",
+        manifest_files=["pom.xml"],
+        logger=logger
+    )
+
+    nodeWalker = NodeWalker(
+        manifest_type='json',
+        manifest_files=["package.json"],
+        logger=logger
+    )
+
+    nugetWalker = NuGetWalker(
+        manifest_type='xml',
+        manifest_files=c_sharp_matches,
+        logger=logger
+    )
+
+    py_walker = PyWalker(
+        manifest_files=["requirements.txt", "requirements-dev.txt"],
+        manifest_type="txt",
+        logger=logger
+    )
+
     path = str(Path(path).absolute())
     entries: List[Entry] = []
     mavenWalker.walk(path=path)

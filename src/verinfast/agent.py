@@ -158,6 +158,18 @@ class Agent:
                     tag=f"Successfully uploaded {file} for {source} to {self.config.baseUrl}{route}.",
                     display=True
                 )
+                try:
+                    err_path_str = file.replace(".json", ".err")
+                    err_path = Path(err_path_str)
+                    if err_path.exists():
+                        self.upload(
+                            file=err_path_str,
+                            route=route+"/err",
+                            source=source+" Error Logs",
+                            isJSON=False
+                        )
+                except:
+                    pass
             else:
                 self.log(
                     msg=response.status_code,
@@ -382,7 +394,7 @@ class Agent:
             dependencies_output_file = os.path.join(self.config.output_dir, repo_name + ".dependencies.json")
             self.log(msg=repo_name, tag="Scanning dependencies", display=True)
             if not self.config.dry:
-                dependencies_output_file = dependency_walk(output_file=dependencies_output_file)
+                dependencies_output_file = dependency_walk(output_file=dependencies_output_file, logger=self.log)
             self.log(msg=dependencies_output_file, tag="Dependency File", display=False)
             self.upload(
                 file=dependencies_output_file,
