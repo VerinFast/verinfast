@@ -18,7 +18,7 @@ def runAws(targeted_account, start, end, path_to_output):
     available_accounts = []
     for line in text.splitlines():
         profiles.append(line)
-        cmd = f'aws sts get-caller-identity --profile={line}'
+        cmd = f'aws sts get-caller-identity --profile={line} --output=json'
         results = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
         text2 = results.stdout.decode()
         identity = json.loads(text2)
@@ -31,7 +31,8 @@ def runAws(targeted_account, start, end, path_to_output):
                 --granularity=DAILY \
                 --metrics "BlendedCost" \
                 --group-by Type=DIMENSION,Key=SERVICE \
-                --profile={line} | cat
+                --profile={line} \
+                --output=json | cat
             '''
 
             try:
