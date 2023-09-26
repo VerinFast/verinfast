@@ -132,8 +132,6 @@ class Agent:
             return True
 
     def upload(self, file: str, route: str, source: str = '', isJSON=True):
-        print("file")
-        print(file)
         if self.config.shouldUpload:
             orig_route = route
 
@@ -162,31 +160,19 @@ class Agent:
                     tag=f"Successfully uploaded {file} for {source} to {self.config.baseUrl}{route}.",
                     display=True
                 )
-                # try:
-                err_path_str = file[0:-5]+'.err'
-                err_path = Path(err_path_str)
-                print("err_path")
-                print(err_path)
-                print(err_path.exists())
-                if err_path.exists():
-                    print("here")
-                    err_route = self.up(
-                        "err_"+orig_route,
-                        report=self.config.reportId,
-                        code=self.corsisId,
-                        repo_name=source
-                    )
-                    print("err_route")
-                    print(err_route)
-                    
-                    self.upload(
-                        file=err_path_str,
-                        route="err_"+orig_route,
-                        source=source+" Error Logs",
-                        isJSON=False
-                    )
-                # except:
-                #     pass
+                try:
+                    err_path_str = file[0:-5]+'.err'
+                    err_path = Path(err_path_str)
+
+                    if err_path.exists():
+                        self.upload(
+                            file=err_path_str,
+                            route="err_"+orig_route,
+                            source=source+" Error Logs",
+                            isJSON=False
+                        )
+                except:
+                    pass
             else:
                 self.log(
                     msg=response.status_code,
@@ -278,7 +264,7 @@ class Agent:
                 self.log(msg=truncate(finalArr), tag=f"{repo_name} Git Stats")
 
             git_output_file = os.path.join(self.config.output_dir, repo_name + ".git.log.json")
-            print(git_output_file)
+
             self.log(msg=git_output_file, display=True)
 
             if not self.config.dry:
@@ -374,11 +360,7 @@ class Agent:
             )
 
         # Run SEMGrep
-        print(self.config.runScan)
-        print("self.config.runScan")
         if self.config.runScan:
-            print("system.lower()")
-            print(system.lower())
             if system.lower() == 'windows':
                 self.log("""
                 Windows does not support Semgrep.

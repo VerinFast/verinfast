@@ -22,12 +22,9 @@ class Uploader:
             code (int | str) :
         """
 
-        print("here2?")
         code_sep = self.config.code_separator if self.config.code_separator else ''  # noqa: E501
         cost_sep = self.config.cost_separator if self.config.cost_separator else ''  # noqa: E501
 
-        print("path_type")
-        print(path_type)
         paths = {
             "git": f"{report}{code_sep}/{code}/{repo_name}/git",
             "sizes": f"{report}{code_sep}/{code}/{repo_name}/sizes",
