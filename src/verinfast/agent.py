@@ -134,6 +134,7 @@ class Agent:
     def upload(self, file: str, route: str, source: str = '', isJSON=True):
         if self.config.shouldUpload:
             orig_route = route
+
             route = self.up(
                 path_type=route,
                 report=self.config.reportId,
@@ -160,13 +161,13 @@ class Agent:
                     display=True
                 )
                 try:
-                    err_path_str = file.replace(".json", ".err")
+                    err_path_str = file[0:-5]+'.err'
                     err_path = Path(err_path_str)
+
                     if err_path.exists():
-                        err_route = self.up("err_"+orig_route)
                         self.upload(
                             file=err_path_str,
-                            route=err_route,
+                            route="err_"+orig_route,
                             source=source+" Error Logs",
                             isJSON=False
                         )
@@ -263,7 +264,7 @@ class Agent:
                 self.log(msg=truncate(finalArr), tag=f"{repo_name} Git Stats")
 
             git_output_file = os.path.join(self.config.output_dir, repo_name + ".git.log.json")
-            print(git_output_file)
+
             self.log(msg=git_output_file, display=True)
 
             if not self.config.dry:
