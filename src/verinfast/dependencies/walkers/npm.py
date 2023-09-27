@@ -70,6 +70,5 @@ class NodeWalker(Walker):
                     self.entries.append(e)
         except Exception as error:
             # handle the exception
-            # logging.exception(error)
-            self.logger(f"error parsing {file}")
-            self.logger(error)
+            self.log(f"error parsing {file}")
+            self.log(error)
