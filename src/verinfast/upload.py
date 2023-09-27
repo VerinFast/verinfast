@@ -34,6 +34,7 @@ class Uploader:
             "dependencies": f"{report}{code_sep}/{code}/{repo_name}/dependencies",  # noqa: E501
             "costs": f"{report}{cost_sep}/costs",
             "instances": f"{report}{cost_sep}/instances",
+            "utilization": f"{report}{cost_sep}/instance_utilization",
             "storage": f"{report}{cost_sep}/storage",
             "scan_id": f"{report}{code_sep}",
             "logs": f"{report}/agent_logs",

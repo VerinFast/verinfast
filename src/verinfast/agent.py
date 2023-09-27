@@ -497,6 +497,12 @@ class Agent:
                     route="instances",
                     source="AWS"
                 )
+                aws_utilization_file = aws_instance_file[:-5] + "-utilization.json"
+                self.upload(
+                    file=aws_utilization_file,
+                    route="utilization",
+                    source="AWS"
+                )
                 aws_block_file = get_aws_blocks(
                     sub_id=provider.account,
                     path_to_output=self.config.output_dir
@@ -532,6 +538,12 @@ class Agent:
                     route="instances",
                     source="Azure"
                 )
+                azure_utilization_file = azure_instance_file[:-5] + "-utilization.json"
+                self.upload(
+                    file=azure_utilization_file,
+                    route="utilization",
+                    source="AWS"
+                )
                 azure_block_file = get_az_blocks(
                     sub_id=provider.account,
                     path_to_output=self.config.output_dir
@@ -553,6 +565,12 @@ class Agent:
                     file=gcp_instance_file,
                     route="instances",
                     source="GCP"
+                )
+                gcp_utilization_file = gcp_instance_file[:-5] + "-utilization.json"
+                self.upload(
+                    file=gcp_utilization_file,
+                    route="utilization",
+                    source="AWS"
                 )
                 gcp_block_file = get_gcp_blocks(
                     sub_id=provider.account,
@@ -586,6 +604,8 @@ def main():
         fp = f'{d}/{new_folder_name}/{new_file_name}'
         shutil.copy2(agent.config.output_dir+"/log.txt", fp)
         os.unlink(agent.config.output_dir+"/log.txt")
+        print(f"""The log for this run has moved to:
+              {d}/{new_folder_name}/{new_file_name}""")
 
 
 if __name__ == "__main__":
