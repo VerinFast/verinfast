@@ -132,53 +132,61 @@ class Agent:
             return True
 
     def upload(self, file: str, route: str, source: str = '', isJSON=True):
-        if self.config.shouldUpload:
-            orig_route = route
-
-            route = self.up(
-                path_type=route,
-                report=self.config.reportId,
-                code=self.corsisId,
-                repo_name=source
+        if not self.config.shouldUpload:
+            self.log(
+                msg='Skipping Uploads',
+                tag=f"Skipping uploading {file} for {source} to {self.config.baseUrl}{route}.",
+                display=True
             )
+            return
 
-            with open(file, 'rb') as f:
-                self.log(msg=f"{self.config.baseUrl}{route}", tag="Uploading to")
+        orig_route = route
 
-                if isJSON:
-                    headers = {
-                        'Content-Type': 'application/json',
-                        'accept': 'application/json'
-                    }
-                    response = requestx.post(self.config.baseUrl + route, data=f, headers=headers)
-                else:
-                    files = {'logFile': f}
-                    response = requestx.post(self.config.baseUrl + route, files=files)
-            if response.status_code == 200:
-                self.log(
-                    msg='',
-                    tag=f"Successfully uploaded {file} for {source} to {self.config.baseUrl}{route}.",
-                    display=True
-                )
-                try:
-                    err_path_str = file[0:-5]+'.err'
-                    err_path = Path(err_path_str)
+        route = self.up(
+            path_type=route,
+            report=self.config.reportId,
+            code=self.corsisId,
+            repo_name=source
+        )
 
-                    if err_path.exists():
-                        self.upload(
-                            file=err_path_str,
-                            route="err_"+orig_route,
-                            source=source+" Error Logs",
-                            isJSON=False
-                        )
-                except:
-                    pass
+        with open(file, 'rb') as f:
+            self.log(msg=f"{self.config.baseUrl}{route}", tag="Uploading to")
+
+            if isJSON:
+                headers = {
+                    'Content-Type': 'application/json',
+                    'accept': 'application/json'
+                }
+                response = requestx.post(self.config.baseUrl + route, data=f, headers=headers)
             else:
-                self.log(
-                    msg=response.status_code,
-                    tag=f"Failed to upload {file} for {source} to {self.config.baseUrl}{route}",
-                    display=True
-                )
+                files = {'logFile': f}
+                response = requestx.post(self.config.baseUrl + route, files=files)
+
+        if response.status_code == 200:
+            self.log(
+                msg='',
+                tag=f"Successfully uploaded {file} for {source} to {self.config.baseUrl}{route}.",
+                display=True
+            )
+            try:
+                err_path_str = file[0:-5]+'.err'
+                err_path = Path(err_path_str)
+
+                if err_path.exists():
+                    self.upload(
+                        file=err_path_str,
+                        route="err_"+orig_route,
+                        source=source+" Error Logs",
+                        isJSON=False
+                    )
+            except:
+                pass
+        else:
+            self.log(
+                msg=response.status_code,
+                tag=f"Failed to upload {file} for {source} to {self.config.baseUrl}{route}",
+                display=True
+            )
 
     def formatGitHash(self, hash: str):
         message = std_exec(["git", "log", "-n1", "--pretty=format:%B", hash])
@@ -479,6 +487,7 @@ class Agent:
                     targeted_account=provider.account,
                     start=provider.start,
                     end=provider.end,
+                    profile=provider.profile,
                     path_to_output=self.config.output_dir
                 )
                 self.log(msg=aws_cost_file, tag="AWS Costs")
