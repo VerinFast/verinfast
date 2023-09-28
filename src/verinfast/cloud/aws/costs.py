@@ -23,8 +23,12 @@ def runAws(targeted_account, start, end, path_to_output,
             profiles.append(line)
             cmd = f"aws sts get-caller-identity --profile={line} --output=json"
             try:
-                results = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE,
-                                        check=True)
+                results = subprocess.run(
+                    cmd, 
+                    shell=True, 
+                    stdout=subprocess.PIPE,
+                    check=True
+                )
             except subprocess.CalledProcessError:
                 # TODO make some log message that makes sense
                 continue
