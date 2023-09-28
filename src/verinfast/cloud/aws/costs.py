@@ -24,8 +24,8 @@ def runAws(targeted_account, start, end, path_to_output,
             cmd = f"aws sts get-caller-identity --profile={line} --output=json"
             try:
                 results = subprocess.run(
-                    cmd, 
-                    shell=True, 
+                    cmd,
+                    shell=True,
                     stdout=subprocess.PIPE,
                     check=True
                 )
