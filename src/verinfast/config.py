@@ -3,7 +3,7 @@ import argparse
 from dataclasses import dataclass, field, is_dataclass, asdict
 from datetime import date
 import json
-from typing import List
+from typing import List, Optional
 import os
 from pathlib import Path
 import sys
@@ -53,6 +53,8 @@ class printable:
                     d[key] = asdict(x)
                 elif isinstance(x, date):
                     d[key] = x.strftime('%Y-%mm-%dd')
+                elif x is None:
+                    d[key] = None
                 else:
                     d[key] = x.__str__()
 
@@ -119,12 +121,14 @@ class CloudProvider(printable):
         provider (str): A string representing a provider.
                         Today either 'aws','gcp', or 'azure'.
         account (str | int): The account identifier for the provider.
+        profile (str): Profile credentials to use.
         start (str): A date in the format 'YYYY-MM-DD'
         end (str): A date in the format 'YYYY-MM-DD'
 
     """
     provider: str
     account: str | int
+    profile: Optional[str] = None
     start: str = default_start
     end: str = default_end
 
@@ -423,12 +427,7 @@ class Config(printable):
                 if "cloud" in m:
                     c = m["cloud"]
                     for row in c:
-                        provider = CloudProvider(
-                            provider=row["provider"],
-                            account=row["account"],
-                            start=row["start"],
-                            end=row["end"]
-                        )
+                        provider = CloudProvider(**row)
                         cloud_modules.append(provider)
                 self.modules = ConfigModules(
                     code=code_modules,
