@@ -326,8 +326,8 @@ class Config(printable):
         )
 
         parser.add_argument(
-            "--noGit", "-g",
-            type=bool,
+            "--should_git", "-g",
+            action="store_true",
             dest="should_git",
             help="""Used to skip contributions and only run a
             code quality scan."""
@@ -362,7 +362,7 @@ class Config(printable):
             self.local_scan_path = args.local_scan_path
 
         if "should_git" in args and args.should_git is not None:
-            self.runGit = False
+            self.runGit = args.should_git
 
     def is_path_remote(self) -> bool:
         s = self.cfg_path
