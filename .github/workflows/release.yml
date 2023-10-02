@@ -21,6 +21,9 @@ on:
         - debug
 jobs:
   unit-tests:
+    permissions:
+      contents: 'read'
+      id-token: 'write'
     strategy:
         matrix:
             os: [ubuntu-latest, macos-latest]
