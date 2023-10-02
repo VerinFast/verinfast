@@ -30,12 +30,14 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_DEFAULT_REGION: 'us-east-1'
     steps:
+      - uses: actions/checkout@v3
+      
       - id: 'auth'
         uses: 'google-github-actions/auth@v1'
         with:
           workload_identity_provider: 'projects/501851565537/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
           service_account: 'sos-two@startupos-328814.iam.gserviceaccount.com'
-      - uses: actions/checkout@v3
+      
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
