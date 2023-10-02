@@ -1,3 +1,4 @@
+import glob
 import json
 import subprocess
 from pathlib import Path
@@ -55,10 +56,16 @@ class Walker():
         self,
         manifest_type: str,  # "json",
         manifest_files: List[str],  # ["package.json"]
-        logger
+        logger,
+        root_dir: str = "./"
     ) -> None:
         self.files = []
         self.manifest_files = manifest_files
+        for f in self.manifest_files:
+            if "*" in f:
+                expanded = glob.glob(f, root_dir=root_dir)
+                self.manifest_files.remove(f)
+                self.manifest_files += expanded
         self.manifest_type = manifest_type
         self.entries = []
         self.requestx = httpx.Client(http2=True, timeout=None)

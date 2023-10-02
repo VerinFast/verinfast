@@ -19,21 +19,44 @@ class NuGetWalker(Walker):
             return super().initialize(command)
 
     def get_license(self, name: str, version: str) -> str:
-        resp = json.loads(
-            self.getUrl(f"{self.registrationUrl}{name}/{version}.json")
+        resp = None
+        name2 = name.lower()
+        try:
+            license_resp = (
+                self.getUrl(f"{self.registrationUrl}{name}/{version}.json")
                 .content
-                .decode('utf-8')
+                .decode('utf-8-sig')
+                )
+            resp = json.loads(license_resp)
+        except Exception as e:
+            self.log(e, display=False)
+            try:
+                license_resp = (
+                    self
+                    .getUrl(f"{self.registrationUrl}{name2}/{version}.json")
+                    .content
+                    .decode('utf-8-sig')
+                )
+                resp = json.loads(license_resp)
+            except Exception as e2:
+                self.log(
+                    f"License not found for: {name}@{version}",
+                    display=True
+                )
+                self.log(e2, display=False)
+        if resp is not None:
+            catalog_entry_url = resp["catalogEntry"]
+            catalog_entry = json.loads(
+                self.getUrl(catalog_entry_url)
+                    .content
+                    .decode("utf-8")
             )
-        catalog_entry_url = resp["catalogEntry"]
-        catalog_entry = json.loads(
-            self.getUrl(catalog_entry_url)
-                .content
-                .decode("utf-8")
-        )
-        if "licenseExpression" in catalog_entry:
-            return catalog_entry["licenseExpression"]
-        elif "licenseUrl" in catalog_entry:
-            return catalog_entry["licenseUrl"]
+            if "licenseExpression" in catalog_entry:
+                return catalog_entry["licenseExpression"]
+            elif "licenseUrl" in catalog_entry:
+                return catalog_entry["licenseUrl"]
+            else:
+                return ""
         else:
             return ""
 
@@ -43,8 +66,8 @@ class NuGetWalker(Walker):
         x_path = "ItemGroup/PackageReference"
         dependencies = tree.findall(x_path)
         for d in dependencies:
-            v = d["Version"]
-            n = d["Include"]
+            v = d.attrib["Version"]
+            n = d.attrib["Include"]
             lic = self.get_license(name=n, version=v)
             e = Entry(
                 source="nuget",

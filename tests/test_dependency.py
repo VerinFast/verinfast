@@ -43,5 +43,11 @@ def test_entity():
         first_dep = output[0]
         e = Entry(**first_dep)
         assert e.license == "ISC"
+        found_Cosmos = False
+        for d in output:
+            if d["name"] == "Microsoft.Azure.Cosmos":
+                found_Cosmos = True
+                assert d["license"] == "https://aka.ms/netcoregaeula"
+        assert found_Cosmos
 
     return None

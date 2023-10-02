@@ -30,25 +30,29 @@ def walk(logger, path: str = "./", output_file="./dependencies.json"):
     mavenWalker = MavenWalker(
         manifest_type="xml",
         manifest_files=["pom.xml"],
-        logger=logger
+        logger=logger,
+        root_dir=path
     )
 
     nodeWalker = NodeWalker(
         manifest_type='json',
         manifest_files=["package.json"],
-        logger=logger
+        logger=logger,
+        root_dir=path
     )
 
     nugetWalker = NuGetWalker(
         manifest_type='xml',
         manifest_files=c_sharp_matches,
-        logger=logger
+        logger=logger,
+        root_dir=path
     )
 
     py_walker = PyWalker(
         manifest_files=["requirements.txt", "requirements-dev.txt"],
         manifest_type="txt",
-        logger=logger
+        logger=logger,
+        root_dir=path
     )
 
     path = str(Path(path).absolute())
