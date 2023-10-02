@@ -75,7 +75,7 @@ def chunks(lst, n):
 
 
 class DebugLog:
-    def __init__(self, path: str, debug: bool = True):
+    def __init__(self, path: str, debug: bool = False):
         self.path = path
         self.logFile = os.path.join(path, "log.txt")
         self.debug = debug
