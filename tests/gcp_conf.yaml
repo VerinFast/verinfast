@@ -1,0 +1,6 @@
+modules:
+    cloud:
+      - provider: gcp
+        account: startupos-328814
+        start: "2023-05-01"
+        end: "2023-09-01"

@@ -228,6 +228,7 @@ class Agent:
             branch = branch.strip()
 
         # Git Stats
+        git_output_file = os.path.join(self.config.output_dir, repo_name + ".git.log.json")
         if self.config.runGit:
             self.log(msg=repo_name, tag="Gathering source code statistics for", display=True)
             command = f'''git log \
@@ -271,21 +272,21 @@ class Agent:
 
                 self.log(msg=truncate(finalArr), tag=f"{repo_name} Git Stats")
 
-            git_output_file = os.path.join(self.config.output_dir, repo_name + ".git.log.json")
-
             self.log(msg=git_output_file, display=True)
 
-            if not self.config.dry:
-                with open(git_output_file, 'w') as f:
-                    f.write(json.dumps(finalArr, indent=4))
+            with open(git_output_file, 'w') as f:
+                f.write(json.dumps(finalArr, indent=4))
+            # End if not self.config.dry:
 
-            self.upload(
-                file=git_output_file,
-                route="git",
-                source=repo_name
-            )
+        self.upload(
+            file=git_output_file,
+            route="git",
+            source=repo_name
+        )
 
         # Manual File Sizes and Info
+        sizes_output_file = os.path.join(self.config.output_dir, repo_name + ".sizes.json")
+
         if not self.config.dry:
             self.log(msg=repo_name, tag="Gathering file sizes for", display=True)
             # Sizes for writing to output file
@@ -333,16 +334,15 @@ class Agent:
                             sizes["files"][fp] = file
                         filelist.append({"name": name, "path": fp})
 
-            sizes_output_file = os.path.join(self.config.output_dir, repo_name + ".sizes.json")
+            with open(sizes_output_file, 'w') as f:
+                f.write(json.dumps(sizes, indent=4))
+            # End if not self.config.dry:
 
-            if not self.config.dry:
-                with open(sizes_output_file, 'w') as f:
-                    f.write(json.dumps(sizes, indent=4))
-            self.upload(
-                file=sizes_output_file,
-                route="sizes",
-                source=repo_name
-            )
+        self.upload(
+            file=sizes_output_file,
+            route="sizes",
+            source=repo_name
+        )
 
         # Run Modernmetric
         if self.config.runStats:

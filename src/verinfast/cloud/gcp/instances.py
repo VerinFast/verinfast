@@ -139,13 +139,13 @@ def get_instances(sub_id: str, path_to_output: str = "./"):
                 instance_name=name
             )
             d = {
-                    "id": instance.id,
+                    "id": str(instance.id),
                     "metrics": [metric.dict for metric in m]
                 }
             metrics.append(d)
 
             my_instance = {
-                "id": instance.id,
+                "id": str(instance.id),
                 "name": name,
                 "type": hw.split("/")[-1],
                 "state": state,
