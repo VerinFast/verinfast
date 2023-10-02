@@ -50,6 +50,7 @@ def test_str_results_from_file(self):
     config.cfg_path = str(test_folder.joinpath("str_conf.yaml").absolute())
     config.__init__()
     config.output_dir = str(results_dir)
+    assert config.runGit
     config.runGit = True
     agent.config = config
     agent.debug = DebugLog(path=agent.config.output_dir, debug=False)
