@@ -46,11 +46,9 @@ def test_str_results_from_file(self):
     test_folder = file_path.parent.absolute()
     results_dir = test_folder.joinpath("results").absolute()
     agent = Agent()
-    config = Config()
-    config.cfg_path = str(test_folder.joinpath("str_conf.yaml").absolute())
-    config.__init__()
+    config = Config(str(test_folder.joinpath("str_conf.yaml").absolute()))
     config.output_dir = str(results_dir)
-    config.runGit = True
+    assert config.runGit
     agent.config = config
     agent.debug = DebugLog(path=agent.config.output_dir, debug=False)
     agent.log = agent.debug.log

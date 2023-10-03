@@ -229,6 +229,13 @@ class Config(printable):
             """
             self.modules = ConfigModules(code=cm, cloud=[])
             self.runGit = False
+        elif (
+            "repos" in self.config and
+            "modules" in self.config and
+            "code" in self.config["modules"] and
+            "git" in self.config["modules"]["code"]
+        ):
+            self.runGit = True
         self.upload_conf = UploadConfig(
             uuid=self.use_uuid
         )
