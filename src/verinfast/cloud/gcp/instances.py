@@ -104,9 +104,18 @@ def get_metrics_for_instance(sub_id: str, instance_name: str) -> List[Datum]:
         for k in p:
             if k != "t":
                 t2 = {}
-                t2["Average"] = p[k]["mean"]
-                t2["Maximum"] = p[k]["max"]
-                t2["Minimum"] = p[k]["min"]
+                if "mean" in p[k]:
+                    t2["Average"] = p[k]["mean"]
+                else:
+                    t2["Average"] = 0
+                if "max" in p[k]:
+                    t2["Maximum"] = p[k]["max"]
+                else:
+                    t2["Maximum"] = 0
+                if "min" in p[k]:
+                    t2["Minimum"] = p[k]["min"]
+                else:
+                    t2["Minimum"] = 0
                 my_datapoint = Datapoint(**t2)
                 temp[k] = my_datapoint
         temp["Timestamp"] = p["t"]
