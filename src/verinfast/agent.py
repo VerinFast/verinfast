@@ -277,12 +277,12 @@ class Agent:
             with open(git_output_file, 'w') as f:
                 f.write(json.dumps(finalArr, indent=4))
             # End if not self.config.dry:
-
-        self.upload(
-            file=git_output_file,
-            route="git",
-            source=repo_name
-        )
+        if Path(git_output_file).exists():
+            self.upload(
+                file=git_output_file,
+                route="git",
+                source=repo_name
+            )
 
         # Manual File Sizes and Info
         sizes_output_file = os.path.join(self.config.output_dir, repo_name + ".sizes.json")
