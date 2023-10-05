@@ -422,8 +422,8 @@ class Agent:
             repos = self.config.config["repos"]
             if repos:
                 for repo_url in repos:
-                    match = repo_url.partition("/")
-                    repo_name = match[2]
+                    match = re.search("([^/]*\.git.*)", repo_url)
+                    repo_name = match.group(1)
                     if "@" in repo_name:
                         repo_url = "@".join(repo_url.split("@")[0:2])
 
@@ -463,8 +463,8 @@ class Agent:
             if localrepos:
                 for repo_path in localrepos:
                     a = Path(repo_path).absolute()
-                    match = str(a).partition("/")
-                    repo_name = match[2]
+                    match = re.search("([^/]*\.git.*)", str(a))
+                    repo_name = match.group(1)
                     self.parseRepo(repo_path, repo_name)
             else:
                 self.log(msg='', tag="No local repos", display=True)
