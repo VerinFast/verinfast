@@ -274,11 +274,12 @@ class Agent:
 
                 self.log(msg=truncate(finalArr), tag=f"{repo_name} Git Stats")
 
-            self.log(msg=git_output_file, display=True)
+                self.log(msg=git_output_file, display=True)
 
-            with open(git_output_file, 'w') as f:
-                f.write(json.dumps(finalArr, indent=4))
-            # End if not self.config.dry:
+                with open(git_output_file, 'w') as f:
+                    f.write(json.dumps(finalArr, indent=4))
+                # End if not self.config.dry:
+        
         if Path(git_output_file).exists():
             self.upload(
                 file=git_output_file,
