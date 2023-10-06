@@ -274,11 +274,12 @@ class Agent:
 
                 self.log(msg=truncate(finalArr), tag=f"{repo_name} Git Stats")
 
-            self.log(msg=git_output_file, display=True)
+                self.log(msg=git_output_file, display=True)
 
-            with open(git_output_file, 'w') as f:
-                f.write(json.dumps(finalArr, indent=4))
-            # End if not self.config.dry:
+                with open(git_output_file, 'w') as f:
+                    f.write(json.dumps(finalArr, indent=4))
+                # End if not self.config.dry:
+
         if Path(git_output_file).exists():
             self.upload(
                 file=git_output_file,
@@ -446,7 +447,7 @@ class Agent:
                     try:
                         self.parseRepo(temp_dir, repo_name)
                     except Exception as e:
-                        self.log(msg=str(e))
+                        self.log(msg=str(e), tag="parseRepo Error Caught")
 
                     os.chdir(curr_dir)
                     if not self.config.dry:
@@ -600,8 +601,8 @@ def main():
     try:
         agent.scan()
     except Exception as e:
+        agent.log(msg=str(e), tag="Main Scan Error Caught")
         if agent.config.upload_logs:
-            agent.log(msg=str(e))
             agent.upload(route="logs", file=agent.config.output_dir+"/log.txt")
         raise e
     if agent.config.upload_logs:
