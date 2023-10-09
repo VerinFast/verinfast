@@ -173,6 +173,8 @@ class Config(printable):
     server_cost_separator: str | None = None
     shouldUpload: bool = False
     shouldManualFileScan: bool = True
+    truncate_findings = False
+    truncate_findings_length = 30
     upload_logs = False
     use_uuid = False
 
@@ -283,6 +285,20 @@ class Config(printable):
         )
 
         parser.add_argument(
+            "-t", "--truncate", "--truncate_findings",
+            dest="truncate_findings",
+            type=int,
+            default=-1,
+            help="""This flag will further enhance privacy by capping
+            The length of security warnings. It defaults to unlimited,
+            but can be set to any level you feel comfortable with.
+
+            <0 = unlimited
+            We recommend 30 as good balance between privacy and utility
+            """
+        )
+
+        parser.add_argument(
             "-d", "--dry",
             dest="dry",
             action="store_true",
@@ -370,6 +386,13 @@ class Config(printable):
 
         if "should_git" in args and args.should_git is not None:
             self.runGit = args.should_git
+
+        if "truncate_findings" in args and args.truncate_findings is not None:
+            if args.truncate_findings > 0:
+                self.truncate_findings = True
+                self.truncate_findings_length = args.truncate_findings
+            else:
+                self.truncate_findings = False
 
     def is_path_remote(self) -> bool:
         s = self.cfg_path

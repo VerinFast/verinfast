@@ -12,7 +12,7 @@ from uuid import uuid4
 
 from pygments_tsx.tsx import patch_pygments
 
-from verinfast.utils.utils import DebugLog, std_exec, trimLineBreaks, escapeChars, truncate
+from verinfast.utils.utils import DebugLog, std_exec, trimLineBreaks, escapeChars, truncate, truncate_children
 from verinfast.upload import Uploader
 
 from verinfast.cloud.aws.costs import runAws
@@ -397,6 +397,18 @@ class Agent:
                     except subprocess.CalledProcessError as e:
                         output = e.output
                         self.log(msg=output, tag="Scanning repository return", display=True)
+                if self.config.truncate_findings:
+                    findings = {}
+                    with open(findings_output_file) as f:
+                        findings = json.load(f)
+                        findings = truncate_children(
+                            findings,
+                            self.log,
+                            max_length=self.config.truncate_findings_length
+                        )
+                    with open(findings_output_file, mode="w") as f2:
+                        json.dump(findings, f2, indent=4, sort_keys=True)
+
                 self.upload(
                     file=findings_output_file,
                     route="findings",
