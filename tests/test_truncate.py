@@ -12,6 +12,7 @@ from verinfast.utils.utils import DebugLog
 
 file_path = Path(__file__)
 test_folder = file_path.parent.absolute()
+str_path = str(test_folder.joinpath('str_conf.yaml').absolute())
 results_dir = test_folder.joinpath("results").absolute()
 saw_message = False
 MAX_RECURSION_DEPTH = 10
@@ -84,7 +85,7 @@ def test_no_truncate(self):
         pass
     os.makedirs(results_dir, exist_ok=True)
     agent = Agent()
-    config = Config('./str_conf.yaml')
+    config = Config(str_path)
     config.output_dir = results_dir
     agent.config = config
     agent.config.dry = False
@@ -129,7 +130,7 @@ def test_truncate(self):
         pass
     os.makedirs(results_dir, exist_ok=True)
     agent = Agent()
-    config = Config('./str_conf.yaml')
+    config = Config(str_path)
     config.output_dir = results_dir
     assert config.runGit is True
     assert config.runScan is True
@@ -165,7 +166,7 @@ def test_truncate_from_args(self):
         pass
     os.makedirs(results_dir, exist_ok=True)
     agent = Agent()
-    config = Config('./str_conf.yaml')
+    config = Config(str_path)
     parser = config.init_argparse()
     args = parser.parse_args(['--truncate_findings=30'])
     assert args.truncate_findings == 30

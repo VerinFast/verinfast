@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 from verinfast.config import Config
 """
@@ -9,6 +10,9 @@ from verinfast.config import Config
     path
     noGit
 """
+
+file_path = Path(__file__)
+test_folder = file_path.parent.absolute()
 
 
 def test_arg_dry():
@@ -53,7 +57,8 @@ def test_config_to_json():
 
 
 def test_should_git_with_args():
-    config = Config('./str_conf.yaml')
+    conf_path = test_folder.joinpath('str_conf.yaml').absolute()
+    config = Config(str(conf_path))
     parser = config.init_argparse()
     args = parser.parse_args(['--truncate_findings=30'])
     assert args.truncate_findings == 30
