@@ -384,7 +384,7 @@ class Config(printable):
         if "local_scan_path" in args and args.local_scan_path is not None:
             self.local_scan_path = args.local_scan_path
 
-        if "should_git" in args and args.should_git is not None:
+        if "should_git" in args and args.should_git is True:
             self.runGit = args.should_git
 
         if "truncate_findings" in args and args.truncate_findings is not None:

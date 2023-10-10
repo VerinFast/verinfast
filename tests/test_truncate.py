@@ -35,6 +35,13 @@ def check_children(
                 except Exception as e:
                     print(k)
                     raise e
+        elif isinstance(i, list):
+            for k in i:
+                try:
+                    check_children(k, recursion_depth=recursion_depth+1)
+                except Exception as e:
+                    print(k)
+                    raise e
 
 
 @patch('verinfast.user.__get_input__', return_value='y')
@@ -59,6 +66,7 @@ def test_no_truncate(self):
     with open(findings_file_path) as f:
         d = json.load(f)
         r = d["results"]
+        assert r[0]["check_id"] == "bash.curl.security.curl-eval.curl-eval"
         for k in r:
             with pytest.raises(AssertionError):
                 check_children(k, excludes=[])
@@ -88,6 +96,7 @@ def test_truncate(self):
     with open(findings_file_path) as f:
         d = json.load(f)
         r = d["results"]
+        assert r[0]["check_id"] == "bash.curl.security.curl-eval.curl-eval"
         for k in r:
             check_children(k)
 
@@ -106,10 +115,14 @@ def test_truncate_from_args(self):
     args = parser.parse_args(['--truncate_findings=30'])
     assert args.truncate_findings == 30
     config.handle_args(args)
+    assert config.runGit is True
+    assert config.runScan is True
     assert config.truncate_findings is True
     assert config.truncate_findings_length == 30
     config.output_dir = results_dir
     agent.config = config
+    assert agent.config.truncate_findings is True
+    assert agent.config.truncate_findings_length == 30
     agent.config.dry = False
     agent.config.shouldUpload = False
     agent.debug = DebugLog(path=agent.config.output_dir, debug=False)
@@ -120,5 +133,6 @@ def test_truncate_from_args(self):
     with open(findings_file_path) as f:
         d = json.load(f)
         r = d["results"]
+        assert r[0]["check_id"] == "bash.curl.security.curl-eval.curl-eval"
         for k in r:
             check_children(k)

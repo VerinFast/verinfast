@@ -76,10 +76,10 @@ def truncate_children(
         ):
     if isinstance(obj, dict):
         for k in obj:
-            if k in excludes:
-                return obj
             v = obj[k]
-            if isinstance(v, str):
+            if k in excludes:
+                pass
+            elif isinstance(v, str):
                 obj[k] = v[0:max_length]
             else:
                 obj[k] = truncate_children(

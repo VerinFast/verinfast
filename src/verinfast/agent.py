@@ -397,18 +397,16 @@ class Agent:
                     except subprocess.CalledProcessError as e:
                         output = e.output
                         self.log(msg=output, tag="Scanning repository return", display=True)
-                if self.config.truncate_findings:
-                    findings = {}
-                    with open(findings_output_file) as f:
-                        findings = json.load(f)
+                with open(findings_output_file) as f:
+                    findings = json.load(f)
+                    if self.config.truncate_findings:
                         findings = truncate_children(
                             findings,
                             self.log,
                             excludes=["cwe", "path", "check_id"],
                             max_length=self.config.truncate_findings_length
                         )
-                    with open(findings_output_file, mode="w") as f2:
-                        json.dump(findings, f2, indent=4, sort_keys=True)
+                    json.dump(findings, f, indent=4, sort_keys=True)
 
                 self.upload(
                     file=findings_output_file,

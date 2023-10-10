@@ -50,3 +50,21 @@ def test_config_to_json():
     s = str(c)
     d = json.loads(s)
     assert d["cfg_path"] is not None
+
+
+def test_should_git_with_args():
+    config = Config('./str_conf.yaml')
+    parser = config.init_argparse()
+    args = parser.parse_args(['--truncate_findings=30'])
+    assert args.truncate_findings == 30
+    config.handle_args(args)
+    assert config.runGit is True
+
+
+def test_should_git_with_args_set():
+    config = Config()
+    parser = config.init_argparse()
+    args = parser.parse_args(['-g'])
+    assert args.should_git is True
+    config.handle_args(args)
+    assert config.runGit is True
