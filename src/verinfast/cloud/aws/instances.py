@@ -7,9 +7,10 @@ import boto3
 import botocore
 
 import verinfast.cloud.aws.regions as r
-from verinfast.cloud.cloud_dataclass import \
-    Utilization_Datapoint as Datapoint,  \
+from verinfast.cloud.cloud_dataclass import (
+    Utilization_Datapoint as Datapoint,
     Utilization_Datum as Datum
+)
 
 regions = r.regions
 
@@ -181,14 +182,24 @@ def get_instances(sub_id: int, path_to_output: str = "./") -> str | None:
                                 "metrics": [metric.dict for metric in m]
                             }
                         metrics.append(d)
+                        region = None
+                        subnet_id = None
+                        zone = None
+                        if 'SubnetId' in instance:
+                            subnet_id = instance['SubnetId']
+                        if 'Placement' in instance:
+                            placement = instance['Placement']
+                            if 'AvailabilityZone' in placement:
+                                zone = placement['AvailabilityZone']
+                                region = zone[0:-1]
                         result = {
                             "id": instance["InstanceId"],
                             "name": name,
                             "state": instance["State"]["Name"],
                             "type": instance['InstanceType'],
-                            "zone": instance['Placement']['AvailabilityZone'],
-                            "region": instance['Placement']['AvailabilityZone'][0:-1],  # noqa: E501
-                            "subnet": instance['SubnetId'],
+                            "zone": zone,
+                            "region": region,
+                            "subnet": subnet_id,
                             "architecture": instance['Architecture'],
                             "vpc": instance['VpcId'],
                         }
@@ -199,8 +210,10 @@ def get_instances(sub_id: int, path_to_output: str = "./") -> str | None:
                         ni = instance["NetworkInterfaces"]
                         for interface in ni:
                             if 'Association' in interface:
-                                if 'PublicIp' in interface['Association']:
-                                    result["publicIp"] = interface['Association']['PublicIp']  # noqa: E501
+                                association = interface['Association']
+                                if 'PublicIp' in association:
+                                    public_ip = association['PublicIp']
+                                    result["publicIp"] = public_ip
                         my_instances.append(result)
         except botocore.exceptions.ClientError:
             pass
