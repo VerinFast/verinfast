@@ -7,13 +7,10 @@ import boto3
 
 import verinfast.cloud.aws.regions as r
 
-from verinfast.utils.utils import DebugLog
-debugLog = DebugLog(os.getcwd())
-
 regions = r.regions
 
 
-def getBlocks(sub_id: str, path_to_output: str = "./"):
+def getBlocks(sub_id: str, log, path_to_output: str = "./"):
     session = boto3.Session()
     profiles = session.available_profiles
     right_session = None
@@ -36,6 +33,7 @@ def getBlocks(sub_id: str, path_to_output: str = "./"):
         resp = s3.get_bucket_location(Bucket=bucket_name)
 
         permissions = []
+        public = False
         try:
             policy_status_resp = s3.get_bucket_policy_status(Bucket=bucket_name)
             public = policy_status_resp["PolicyStatus"]["IsPublic"]
@@ -48,7 +46,7 @@ def getBlocks(sub_id: str, path_to_output: str = "./"):
                 permissions = [json.dumps(s) for s in statements]
                 # print(s2)
         except s3.exceptions.from_code('NoSuchBucketPolicy'):
-            debugLog.log(msg=bucket_name, tag="No Bucket Policy for bucket")
+            log(msg=bucket_name, tag="No Bucket Policy for bucket")
 
         versioning = None
         try:
@@ -57,7 +55,7 @@ def getBlocks(sub_id: str, path_to_output: str = "./"):
                 versioning = versioning_response["Status"]
 
         except s3.exceptions.from_code('NoSuchBucketStatus'):
-            debugLog.log(msg=bucket_name, tag="No Bucket Status for bucket")
+            log(msg=bucket_name, tag="No Bucket Status for bucket")
 
         region = resp['LocationConstraint']
         # print(region)

@@ -565,7 +565,8 @@ class Agent:
                     )
                     aws_block_file = get_aws_blocks(
                         sub_id=provider.account,
-                        path_to_output=self.config.output_dir
+                        path_to_output=self.config.output_dir,
+                        log=self.log
                     )
                     self.log(msg=aws_block_file, tag="AWS Storage")
                     self.upload(
