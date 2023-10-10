@@ -530,117 +530,130 @@ class Agent:
 
         if cloud_config is None:
             return
-
         for provider in cloud_config:
-            # Check if AWS-CLI is installed
-            if provider.provider == "aws" and self.checkDependency("aws", "AWS Command-line tool"):
-                aws_cost_file = runAws(
-                    targeted_account=provider.account,
-                    start=provider.start,
-                    end=provider.end,
-                    profile=provider.profile,
-                    path_to_output=self.config.output_dir
-                )
-                self.log(msg=aws_cost_file, tag="AWS Costs")
-                self.upload(
-                    file=aws_cost_file,
-                    route="costs",
-                    source="AWS"
-                )
-                aws_instance_file = get_aws_instances(
-                    sub_id=provider.account,
-                    path_to_output=self.config.output_dir
-                )
-                self.log(msg=aws_instance_file, tag="AWS Instances")
-                self.upload(
-                    file=aws_instance_file,
-                    route="instances",
-                    source="AWS"
-                )
-                aws_utilization_file = aws_instance_file[:-5] + "-utilization.json"
-                self.upload(
-                    file=aws_utilization_file,
-                    route="utilization",
-                    source="AWS"
-                )
-                aws_block_file = get_aws_blocks(
-                    sub_id=provider.account,
-                    path_to_output=self.config.output_dir
-                )
-                self.log(msg=aws_block_file, tag="AWS Storage")
-                self.upload(
-                    file=aws_block_file,
-                    route="storage",
-                    source="AWS"
-                )
+            try:
+                # Check if AWS-CLI is installed
+                if provider.provider == "aws" and self.checkDependency("aws", "AWS Command-line tool"):
+                    aws_cost_file = runAws(
+                        targeted_account=provider.account,
+                        start=provider.start,
+                        end=provider.end,
+                        profile=provider.profile,
+                        path_to_output=self.config.output_dir
+                    )
+                    self.log(msg=aws_cost_file, tag="AWS Costs")
+                    self.upload(
+                        file=aws_cost_file,
+                        route="costs",
+                        source="AWS"
+                    )
+                    aws_instance_file = get_aws_instances(
+                        sub_id=provider.account,
+                        path_to_output=self.config.output_dir
+                    )
+                    self.log(msg=aws_instance_file, tag="AWS Instances")
+                    self.upload(
+                        file=aws_instance_file,
+                        route="instances",
+                        source="AWS"
+                    )
+                    aws_utilization_file = aws_instance_file[:-5] + "-utilization.json"
+                    self.upload(
+                        file=aws_utilization_file,
+                        route="utilization",
+                        source="AWS"
+                    )
+                    aws_block_file = get_aws_blocks(
+                        sub_id=provider.account,
+                        path_to_output=self.config.output_dir,
+                        log=self.log
+                    )
+                    self.log(msg=aws_block_file, tag="AWS Storage")
+                    self.upload(
+                        file=aws_block_file,
+                        route="storage",
+                        source="AWS"
+                    )
 
-            # Check if Azure CLI is installed
-            if provider.provider == "azure" and self.checkDependency("az", "Azure Command-line tool"):
-                azure_cost_file = runAzure(
-                    subscription_id=provider.account,
-                    start=provider.start,
-                    end=provider.end,
-                    path_to_output=self.config.output_dir
-                )
-                self.log(msg=azure_cost_file, tag="Azure Costs")
-                self.upload(
-                    file=azure_cost_file,
-                    route="costs",
-                    source="Azure"
-                )
-                azure_instance_file = get_az_instances(
-                    sub_id=provider.account,
-                    path_to_output=self.config.output_dir
-                )
-                self.log(msg=azure_instance_file, tag="Azure instances")
-                self.upload(
-                    file=azure_instance_file,
-                    route="instances",
-                    source="Azure"
-                )
-                azure_utilization_file = azure_instance_file[:-5] + "-utilization.json"
-                self.upload(
-                    file=azure_utilization_file,
-                    route="utilization",
-                    source="AWS"
-                )
-                azure_block_file = get_az_blocks(
-                    sub_id=provider.account,
-                    path_to_output=self.config.output_dir
-                )
-                self.log(msg=azure_block_file, tag="Azure Storage")
-                self.upload(
-                    file=azure_block_file,
-                    route="storage",
-                    source="Azure"
-                )
+                # Check if Azure CLI is installed
+                if provider.provider == "azure" and self.checkDependency("az", "Azure Command-line tool"):
+                    azure_cost_file = runAzure(
+                        subscription_id=provider.account,
+                        start=provider.start,
+                        end=provider.end,
+                        path_to_output=self.config.output_dir
+                    )
+                    self.log(msg=azure_cost_file, tag="Azure Costs")
+                    self.upload(
+                        file=azure_cost_file,
+                        route="costs",
+                        source="Azure"
+                    )
+                    azure_instance_file = get_az_instances(
+                        sub_id=provider.account,
+                        path_to_output=self.config.output_dir
+                    )
+                    self.log(msg=azure_instance_file, tag="Azure instances")
+                    self.upload(
+                        file=azure_instance_file,
+                        route="instances",
+                        source="Azure"
+                    )
+                    azure_utilization_file = azure_instance_file[:-5] + "-utilization.json"
+                    self.upload(
+                        file=azure_utilization_file,
+                        route="utilization",
+                        source="AWS"
+                    )
+                    azure_block_file = get_az_blocks(
+                        sub_id=provider.account,
+                        path_to_output=self.config.output_dir
+                    )
+                    self.log(msg=azure_block_file, tag="Azure Storage")
+                    self.upload(
+                        file=azure_block_file,
+                        route="storage",
+                        source="Azure"
+                    )
 
-            if provider.provider == "gcp" and self.checkDependency("gcloud", "Google Command-line tool"):
-                gcp_instance_file = get_gcp_instances(
-                    sub_id=provider.account,
-                    path_to_output=self.config.output_dir
+                if provider.provider == "gcp" and self.checkDependency("gcloud", "Google Command-line tool"):
+                    gcp_instance_file = get_gcp_instances(
+                        sub_id=provider.account,
+                        path_to_output=self.config.output_dir
+                    )
+                    self.log(msg=gcp_instance_file, tag="GCP instances")
+                    self.upload(
+                        file=gcp_instance_file,
+                        route="instances",
+                        source="GCP"
+                    )
+                    gcp_utilization_file = gcp_instance_file[:-5] + "-utilization.json"
+                    self.upload(
+                        file=gcp_utilization_file,
+                        route="utilization",
+                        source="AWS"
+                    )
+                    gcp_block_file = get_gcp_blocks(
+                        sub_id=provider.account,
+                        path_to_output=self.config.output_dir
+                    )
+                    self.log(msg=gcp_block_file, tag="GCP Storage")
+                    self.upload(
+                        file=gcp_block_file,
+                        route="storage",
+                        source="GCP"
+                    )
+            except Exception as e:
+                self.log(tag="ERROR", msg="Error processing provider", display=True)
+                self.log(
+                    tag="ERROR PROVIDER",
+                    msg=json.dumps(provider, indent=4),
+                    display=True
                 )
-                self.log(msg=gcp_instance_file, tag="GCP instances")
-                self.upload(
-                    file=gcp_instance_file,
-                    route="instances",
-                    source="GCP"
-                )
-                gcp_utilization_file = gcp_instance_file[:-5] + "-utilization.json"
-                self.upload(
-                    file=gcp_utilization_file,
-                    route="utilization",
-                    source="AWS"
-                )
-                gcp_block_file = get_gcp_blocks(
-                    sub_id=provider.account,
-                    path_to_output=self.config.output_dir
-                )
-                self.log(msg=gcp_block_file, tag="GCP Storage")
-                self.upload(
-                    file=gcp_block_file,
-                    route="storage",
-                    source="GCP"
+                self.log(tag="ERROR", msg=e, display=True)
+                self.log(
+                    tag="ERROR STACK",
+                    msg=traceback.format_exc()
                 )
 
 
@@ -653,8 +666,9 @@ def main():
         if agent.config.upload_logs:
             agent.upload(route="logs", file=agent.config.output_dir+"/log.txt")
         raise e
-    if agent.config.upload_logs:
+    if agent.config.shouldUpload or agent.config.upload_logs:
         agent.upload(route="logs", file=agent.config.output_dir+"/log.txt", source='logs', isJSON=False)
+    if agent.config.upload_logs:
         new_folder_name = (
             str(today.year) + str(today.month) + str(today.day)
         )
