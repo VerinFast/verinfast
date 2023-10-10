@@ -404,6 +404,7 @@ class Agent:
                         findings = truncate_children(
                             findings,
                             self.log,
+                            excludes=["cwe", "path", "check_id"],
                             max_length=self.config.truncate_findings_length
                         )
                     with open(findings_output_file, mode="w") as f2:

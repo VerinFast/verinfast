@@ -15,7 +15,12 @@ test_folder = file_path.parent.absolute()
 results_dir = test_folder.joinpath("results").absolute()
 
 
-def check_children(i: str | dict, max_length=30, recursion_depth=0):
+def check_children(
+            i: str | dict,
+            max_length=30,
+            recursion_depth=0,
+            excludes=["cwe", "path", "check_id"]
+        ):
     if isinstance(i, str):
         if len(i) > max_length:
             print(i)
@@ -23,6 +28,8 @@ def check_children(i: str | dict, max_length=30, recursion_depth=0):
     else:
         if isinstance(i, dict):
             for k in i:
+                if k in excludes:
+                    return
                 try:
                     check_children(i[k], recursion_depth=recursion_depth+1)
                 except Exception as e:
@@ -54,7 +61,7 @@ def test_no_truncate(self):
         r = d["results"]
         for k in r:
             with pytest.raises(AssertionError):
-                check_children(k)
+                check_children(k, excludes=[])
 
 
 @patch('verinfast.user.__get_input__', return_value='y')

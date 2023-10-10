@@ -67,9 +67,17 @@ def truncate(text, length=100):
     return ((testStr[:length] + '..') if len(testStr) > length else testStr)
 
 
-def truncate_children(obj: dict, log, max_length=30, recursion_depth=0):
+def truncate_children(
+            obj: dict,
+            log,
+            excludes=[],
+            max_length=30,
+            recursion_depth=0
+        ):
     if isinstance(obj, dict):
         for k in obj:
+            if k in excludes:
+                return obj
             v = obj[k]
             if isinstance(v, str):
                 obj[k] = v[0:max_length]
