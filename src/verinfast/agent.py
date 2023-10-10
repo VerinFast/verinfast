@@ -398,41 +398,52 @@ class Agent:
                     except subprocess.CalledProcessError as e:
                         output = e.output
                         self.log(msg=output, tag="Scanning repository return", display=True)
-                with open(findings_output_file) as f:
-                    findings = json.load(f)
+                try:
+                    with open(findings_output_file) as f:
+                        findings = json.load(f)
 
-                # This is on purpose. If you try to read same pointer
-                # twice, it dies.
-                with open(findings_output_file) as f:
-                    original_findings = json.load(f)
+                    # This is on purpose. If you try to read same pointer
+                    # twice, it dies.
+                    with open(findings_output_file) as f:
+                        original_findings = json.load(f)
 
-                if self.config.truncate_findings:
-                    truncation_exclusion = ["cwe", "path", "check_id", "license"]
-                    self.log(
-                        tag="TRUNCATING",
-                        msg=f"excluding: {truncation_exclusion}"
-                    )
-                    try:
-                        findings = truncate_children(
-                            findings,
-                            self.log,
-                            excludes=truncation_exclusion,
-                            max_length=self.config.truncate_findings_length
-                        )
-                    except Exception as e:
-                        self.log(tag="ERROR", msg="Error in Truncation")
-                        self.log(e)
+                    if self.config.truncate_findings:
+                        truncation_exclusion = ["cwe", "path", "check_id", "license"]
                         self.log(
-                            json.dumps(
-                                original_findings,
-                                indent=4,
-                                sort_keys=True
-                            )
+                            tag="TRUNCATING",
+                            msg=f"excluding: {truncation_exclusion}"
                         )
-                with open(findings_output_file, "w") as f2:
-                    f2.write(json.dumps(
-                        findings, indent=4, sort_keys=True
-                    ))
+                        try:
+                            findings = truncate_children(
+                                findings,
+                                self.log,
+                                excludes=truncation_exclusion,
+                                max_length=self.config.truncate_findings_length
+                            )
+                        except Exception as e:
+                            self.log(tag="ERROR", msg="Error in Truncation")
+                            self.log(e)
+                            self.log(
+                                json.dumps(
+                                    original_findings,
+                                    indent=4,
+                                    sort_keys=True
+                                )
+                            )
+                    with open(findings_output_file, "w") as f2:
+                        f2.write(json.dumps(
+                            findings, indent=4, sort_keys=True
+                        ))
+                except Exception as e:
+                    if not self.config.dry:
+                        raise e
+                    else:
+                        self.log(
+                            msg=f'''
+                                Attempted to format/truncate non existent file
+                                {findings_output_file}
+                            '''
+                        )
                 self.upload(
                     file=findings_output_file,
                     route="findings",
