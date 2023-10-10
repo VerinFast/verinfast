@@ -10,6 +10,7 @@ from verinfast.utils.utils import DebugLog
 file_path = Path(__file__)
 test_folder = file_path.parent.absolute()
 results_dir = test_folder.joinpath("results").absolute()
+str_path = str(test_folder.joinpath('str_conf.yaml').absolute())
 
 
 @patch('verinfast.user.__get_input__', return_value='y')
@@ -21,7 +22,7 @@ def test_no_config(self):
         pass
     os.makedirs(results_dir, exist_ok=True)
     agent = Agent()
-    config = Config('./str_conf.yaml')
+    config = Config(str_path)
     config.output_dir = results_dir
     print(agent.config.output_dir)
     agent.config = config
