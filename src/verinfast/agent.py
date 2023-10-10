@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 from datetime import date
 import json
+import os
 from pathlib import Path
 import platform
-import subprocess
-import os
-import httpx
-import shutil
 import re
+import shutil
+import subprocess
+import traceback
 from uuid import uuid4
 
+import httpx
 from pygments_tsx.tsx import patch_pygments
 
 from verinfast.utils.utils import DebugLog, std_exec, trimLineBreaks, escapeChars, truncate, truncate_children
@@ -399,15 +400,39 @@ class Agent:
                         self.log(msg=output, tag="Scanning repository return", display=True)
                 with open(findings_output_file) as f:
                     findings = json.load(f)
-                    if self.config.truncate_findings:
+
+                # This is on purpose. If you try to read same pointer
+                # twice, it dies.
+                with open(findings_output_file) as f:
+                    original_findings = json.load(f)
+
+                if self.config.truncate_findings:
+                    truncation_exclusion = ["cwe", "path", "check_id", "license"]
+                    self.log(
+                        tag="TRUNCATING",
+                        msg=f"excluding: {truncation_exclusion}"
+                    )
+                    try:
                         findings = truncate_children(
                             findings,
                             self.log,
-                            excludes=["cwe", "path", "check_id"],
+                            excludes=truncation_exclusion,
                             max_length=self.config.truncate_findings_length
                         )
-                    json.dump(findings, f, indent=4, sort_keys=True)
-
+                    except Exception as e:
+                        self.log(tag="ERROR", msg="Error in Truncation")
+                        self.log(e)
+                        self.log(
+                            json.dumps(
+                                original_findings,
+                                indent=4,
+                                sort_keys=True
+                            )
+                        )
+                with open(findings_output_file, "w") as f2:
+                    f2.write(json.dumps(
+                        findings, indent=4, sort_keys=True
+                    ))
                 self.upload(
                     file=findings_output_file,
                     route="findings",
@@ -459,6 +484,7 @@ class Agent:
                         self.parseRepo(temp_dir, repo_name)
                     except Exception as e:
                         self.log(msg=str(e), tag="parseRepo Error Caught")
+                        self.log(tag="", msg=traceback.format_exc())
 
                     os.chdir(curr_dir)
                     if not self.config.dry:

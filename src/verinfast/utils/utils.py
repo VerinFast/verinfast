@@ -68,7 +68,7 @@ def truncate(text, length=100):
 
 
 def truncate_children(
-            obj: dict,
+            obj: dict | list,
             log,
             excludes=[],
             max_length=30,
@@ -78,26 +78,41 @@ def truncate_children(
         for k in obj:
             v = obj[k]
             if k in excludes:
-                pass
+                log(msg=f"Excluding key: {k}")
             elif isinstance(v, str):
                 obj[k] = v[0:max_length]
+            elif (
+                isinstance(v, int) or
+                isinstance(v, float) or
+                isinstance(v, bool)
+            ):
+                pass
             else:
+                print(f"key={k}")
                 obj[k] = truncate_children(
-                    v,
+                    obj[k],
                     log,
-                    max_length,
-                    recursion_depth + 1
+                    excludes=excludes,
+                    max_length=max_length,
+                    recursion_depth=recursion_depth + 1
                 )
     elif isinstance(obj, list):
         for i, v in enumerate(obj):
             if isinstance(v, str):
                 obj[i] = v[0:max_length]
+            elif (
+                isinstance(v, int) or
+                isinstance(v, float) or
+                isinstance(v, bool)
+            ):
+                pass
             else:
                 obj[i] = truncate_children(
-                    v,
+                    obj[i],
                     log,
-                    max_length,
-                    recursion_depth + 1
+                    excludes=excludes,
+                    max_length=max_length,
+                    recursion_depth=recursion_depth + 1
                 )
 
     return obj
