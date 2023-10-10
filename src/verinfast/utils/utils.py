@@ -78,7 +78,7 @@ def truncate_children(
         for k in obj:
             v = obj[k]
             if k in excludes:
-                log(msg=f"Excluding key: {k}")
+                pass
             elif isinstance(v, str):
                 obj[k] = v[0:max_length]
             elif (
@@ -88,7 +88,6 @@ def truncate_children(
             ):
                 pass
             else:
-                print(f"key={k}")
                 obj[k] = truncate_children(
                     obj[k],
                     log,
