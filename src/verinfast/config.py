@@ -423,6 +423,9 @@ class Config(printable):
             if "should_upload" in self.config:
                 self.shouldUpload = self.config["should_upload"]
 
+            if "run_git" in self.config:
+                self.runGit = self.config["run_git"]
+
             if "server" in self.config:
                 s = self.config["server"]
                 if "prefix" in s:
