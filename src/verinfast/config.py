@@ -220,7 +220,7 @@ class Config(printable):
         """
         if (
             "repos" not in self.config and
-            "localrepos" not in self.config and
+            "local_repos" not in self.config and
             "modules" not in self.config  # If cloud specified it's here.
         ):
             self.config["local_repos"] = [self.local_scan_path]
@@ -423,14 +423,17 @@ class Config(printable):
             if "should_upload" in self.config:
                 self.shouldUpload = self.config["should_upload"]
 
+            if "run_git" in self.config:
+                self.runGit = self.config["run_git"]
+
             if "server" in self.config:
                 s = self.config["server"]
                 if "prefix" in s:
-                    self.config.server_prefix = s["prefix"]
+                    self.server_prefix = s["prefix"]
                 if "code_separator" in s:
-                    self.config.server_code_separator = s["code_separator"]
+                    self.server_code_separator = s["code_separator"]
                 if "cost_separator" in s:
-                    self.config.server_cost_separator = s["cost_separator"]
+                    self.server_cost_separator = s["cost_separator"]
 
             if "report" in self.config:
                 if "uuid" in self.config["report"]:
