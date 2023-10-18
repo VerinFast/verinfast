@@ -220,7 +220,7 @@ class Config(printable):
         """
         if (
             "repos" not in self.config and
-            "localrepos" not in self.config and
+            "local_repos" not in self.config and
             "modules" not in self.config  # If cloud specified it's here.
         ):
             self.config["local_repos"] = [self.local_scan_path]
