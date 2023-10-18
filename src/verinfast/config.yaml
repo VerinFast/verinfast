@@ -16,7 +16,7 @@ modules:
     dependencies: true
   cloud:
   - provider: azure
-    account: 12345678
+    account: 80dc7a6b-df94-44be-a235-7e7ade335a3c
     start: "2023-05-01"
     end: "2023-09-01"
   - provider: aws
@@ -29,5 +29,5 @@ modules:
     end: "2023-09-01"
 repos:
  - git@github.com:StartupOS/small-test-repo.git@verinfast
-localrepos:
+local_repos:
  - /home/sean/localrepocopy # Full path to local repos to scan
