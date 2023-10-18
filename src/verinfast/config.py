@@ -429,11 +429,11 @@ class Config(printable):
             if "server" in self.config:
                 s = self.config["server"]
                 if "prefix" in s:
-                    self.config.server_prefix = s["prefix"]
+                    self.server_prefix = s["prefix"]
                 if "code_separator" in s:
-                    self.config.server_code_separator = s["code_separator"]
+                    self.server_code_separator = s["code_separator"]
                 if "cost_separator" in s:
-                    self.config.server_cost_separator = s["cost_separator"]
+                    self.server_cost_separator = s["cost_separator"]
 
             if "report" in self.config:
                 if "uuid" in self.config["report"]:
