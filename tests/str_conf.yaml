@@ -1,5 +1,5 @@
 # This is a sample config for test runs
-
+baseurl: https://beta.startupos.dev/api/v2
 modules:
   code:
     git:
@@ -9,3 +9,4 @@ modules:
 repos:
   - https://github.com/StartupOS/small-test-repo.git
   - https://github.com/StartupOS/small-test-repo.git@test/slashes/inbranch
+  - git@github.com:StartupOS/small-test-repo.git@test/slashes/inbranch

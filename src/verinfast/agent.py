@@ -424,9 +424,10 @@ class Agent:
                 for repo_url in repos:
                     match = re.search("([^/]*\.git.*)", repo_url)
                     repo_name = match.group(1)
-                    if "@" in repo_name:
+                    if "@" in repo_name and re.search("^.*@.*\..*:", repo_url):
                         repo_url = "@".join(repo_url.split("@")[0:2])
-
+                    elif "@" in repo_name:
+                        repo_url = "@".join(repo_url.split("@")[0])
                     self.log(msg=repo_name, tag="Processing", display=True)
                     curr_dir = os.getcwd()
                     temp_dir = os.path.join(curr_dir, "temp_repo")
