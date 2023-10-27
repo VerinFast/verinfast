@@ -325,6 +325,7 @@ class Agent:
                 # print(subdirs)
                 for name in list:
                     fp = os.path.join(filepath, name)
+                    fp = str(Path(fp).absolute())
                     extRe = re.search("^[^\.]*\.(.*)", name)
                     ext = extRe.group(1) if extRe else ''
                     if self.allowfile(path=fp):
