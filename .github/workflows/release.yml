@@ -59,7 +59,7 @@ jobs:
         run: >-
           python3 -m
           pip install
-          build hatchling
+          build hatchling setuptools
           --user
       - name: Make VERSION
         run: python make_version.py
