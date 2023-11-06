@@ -72,7 +72,7 @@ jobs:
             aws --profile default configure set region "us-east-1"
             aws sts get-caller-identity
       - name: Unit Tests
-        run: >-
+        run: |
             mv ~/.ssh/id_rsa ~/.ssh/id_rsa2 &> /dev/null
             echo "${{ secrets.STR_PRIVATE_KEY }}" > ~/.ssh/id_rsa
             pytest
