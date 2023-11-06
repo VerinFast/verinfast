@@ -1,4 +1,4 @@
-azure-identity~=1.14.0
+azure-identity~=1.15.0
 azure-mgmt-compute~=30.3.0
 azure-mgmt-monitor~=6.0.2
 azure-mgmt-network~=25.1.0
@@ -16,12 +16,11 @@ google-cloud-monitoring>=2.15.0
 httpx[http2]~=0.25.0
 johnnydep~=1.20.3
 modernmetric>=1.0.2
-protobuf~=4.24.3
+protobuf~=4.25.0
 pygments-tsx>=1.0.1
-pytest~=7.4.2
+pytest~=7.4.3
 pytest-cov~=4.1.0
 pytest-xdist~=3.3.0
 pyyaml~=6.0.0
 semgrep~=1.43.0
 windows-curses~=2.3.0; sys.platform == 'win32'
-

@@ -173,6 +173,8 @@ class Config(printable):
     server_cost_separator: str | None = None
     shouldUpload: bool = False
     shouldManualFileScan: bool = True
+    truncate_findings = False
+    truncate_findings_length = 30
     upload_logs = False
     use_uuid = False
 
@@ -218,7 +220,7 @@ class Config(printable):
         """
         if (
             "repos" not in self.config and
-            "localrepos" not in self.config and
+            "local_repos" not in self.config and
             "modules" not in self.config  # If cloud specified it's here.
         ):
             self.config["local_repos"] = [self.local_scan_path]
@@ -280,6 +282,20 @@ class Config(printable):
         parser.add_argument(
             "-o", "--output", "--output_dir",
             dest="output_dir"
+        )
+
+        parser.add_argument(
+            "-t", "--truncate", "--truncate_findings",
+            dest="truncate_findings",
+            type=int,
+            default=-1,
+            help="""This flag will further enhance privacy by capping
+            The length of security warnings. It defaults to unlimited,
+            but can be set to any level you feel comfortable with.
+
+            <0 = unlimited
+            We recommend 30 as good balance between privacy and utility
+            """
         )
 
         parser.add_argument(
@@ -368,8 +384,15 @@ class Config(printable):
         if "local_scan_path" in args and args.local_scan_path is not None:
             self.local_scan_path = args.local_scan_path
 
-        if "should_git" in args and args.should_git is not None:
+        if "should_git" in args and args.should_git is True:
             self.runGit = args.should_git
+
+        if "truncate_findings" in args and args.truncate_findings is not None:
+            if args.truncate_findings > 0:
+                self.truncate_findings = True
+                self.truncate_findings_length = args.truncate_findings
+            else:
+                self.truncate_findings = False
 
     def is_path_remote(self) -> bool:
         s = self.cfg_path
@@ -400,14 +423,17 @@ class Config(printable):
             if "should_upload" in self.config:
                 self.shouldUpload = self.config["should_upload"]
 
+            if "run_git" in self.config:
+                self.runGit = self.config["run_git"]
+
             if "server" in self.config:
                 s = self.config["server"]
                 if "prefix" in s:
-                    self.config.server_prefix = s["prefix"]
+                    self.server_prefix = s["prefix"]
                 if "code_separator" in s:
-                    self.config.server_code_separator = s["code_separator"]
+                    self.server_code_separator = s["code_separator"]
                 if "cost_separator" in s:
-                    self.config.server_cost_separator = s["cost_separator"]
+                    self.server_cost_separator = s["cost_separator"]
 
             if "report" in self.config:
                 if "uuid" in self.config["report"]:

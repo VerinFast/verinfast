@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 from datetime import date
 import json
+import os
 from pathlib import Path
 import platform
-import subprocess
-import os
-import httpx
-import shutil
 import re
+import shutil
+import subprocess
+import traceback
 from uuid import uuid4
 
+import httpx
 from pygments_tsx.tsx import patch_pygments
 
-from verinfast.utils.utils import DebugLog, std_exec, trimLineBreaks, escapeChars, truncate
+from verinfast.utils.utils import DebugLog, std_exec, trimLineBreaks, escapeChars, truncate, truncate_children
 from verinfast.upload import Uploader
 
 from verinfast.cloud.aws.costs import runAws
@@ -279,11 +280,12 @@ class Agent:
 
                 self.log(msg=truncate(finalArr), tag=f"{repo_name} Git Stats")
 
-            self.log(msg=git_output_file, display=True)
+                self.log(msg=git_output_file, display=True)
 
-            with open(git_output_file, 'w') as f:
-                f.write(json.dumps(finalArr, indent=4))
-            # End if not self.config.dry:
+                with open(git_output_file, 'w') as f:
+                    f.write(json.dumps(finalArr, indent=4))
+                # End if not self.config.dry:
+
         if Path(git_output_file).exists():
             self.upload(
                 file=git_output_file,
@@ -401,6 +403,52 @@ class Agent:
                     except subprocess.CalledProcessError as e:
                         output = e.output
                         self.log(msg=output, tag="Scanning repository return", display=True)
+                try:
+                    with open(findings_output_file) as f:
+                        findings = json.load(f)
+
+                    # This is on purpose. If you try to read same pointer
+                    # twice, it dies.
+                    with open(findings_output_file) as f:
+                        original_findings = json.load(f)
+
+                    if self.config.truncate_findings:
+                        truncation_exclusion = ["cwe", "path", "check_id", "license"]
+                        self.log(
+                            tag="TRUNCATING",
+                            msg=f"excluding: {truncation_exclusion}"
+                        )
+                        try:
+                            findings = truncate_children(
+                                findings,
+                                self.log,
+                                excludes=truncation_exclusion,
+                                max_length=self.config.truncate_findings_length
+                            )
+                        except Exception as e:
+                            self.log(tag="ERROR", msg="Error in Truncation")
+                            self.log(e)
+                            self.log(
+                                json.dumps(
+                                    original_findings,
+                                    indent=4,
+                                    sort_keys=True
+                                )
+                            )
+                    with open(findings_output_file, "w") as f2:
+                        f2.write(json.dumps(
+                            findings, indent=4, sort_keys=True
+                        ))
+                except Exception as e:
+                    if not self.config.dry:
+                        raise e
+                    else:
+                        self.log(
+                            msg=f'''
+                                Attempted to format/truncate non existent file
+                                {findings_output_file}
+                            '''
+                        )
                 self.upload(
                     file=findings_output_file,
                     route="findings",
@@ -452,7 +500,8 @@ class Agent:
                     try:
                         self.parseRepo(temp_dir, repo_name)
                     except Exception as e:
-                        self.log(msg=str(e))
+                        self.log(msg=str(e), tag="parseRepo Error Caught")
+                        self.log(tag="", msg=traceback.format_exc())
 
                     os.chdir(curr_dir)
                     if not self.config.dry:
@@ -487,117 +536,130 @@ class Agent:
 
         if cloud_config is None:
             return
-
         for provider in cloud_config:
-            # Check if AWS-CLI is installed
-            if provider.provider == "aws" and self.checkDependency("aws", "AWS Command-line tool"):
-                aws_cost_file = runAws(
-                    targeted_account=provider.account,
-                    start=provider.start,
-                    end=provider.end,
-                    profile=provider.profile,
-                    path_to_output=self.config.output_dir
-                )
-                self.log(msg=aws_cost_file, tag="AWS Costs")
-                self.upload(
-                    file=aws_cost_file,
-                    route="costs",
-                    source="AWS"
-                )
-                aws_instance_file = get_aws_instances(
-                    sub_id=provider.account,
-                    path_to_output=self.config.output_dir
-                )
-                self.log(msg=aws_instance_file, tag="AWS Instances")
-                self.upload(
-                    file=aws_instance_file,
-                    route="instances",
-                    source="AWS"
-                )
-                aws_utilization_file = aws_instance_file[:-5] + "-utilization.json"
-                self.upload(
-                    file=aws_utilization_file,
-                    route="utilization",
-                    source="AWS"
-                )
-                aws_block_file = get_aws_blocks(
-                    sub_id=provider.account,
-                    path_to_output=self.config.output_dir
-                )
-                self.log(msg=aws_block_file, tag="AWS Storage")
-                self.upload(
-                    file=aws_block_file,
-                    route="storage",
-                    source="AWS"
-                )
+            try:
+                # Check if AWS-CLI is installed
+                if provider.provider == "aws" and self.checkDependency("aws", "AWS Command-line tool"):
+                    aws_cost_file = runAws(
+                        targeted_account=provider.account,
+                        start=provider.start,
+                        end=provider.end,
+                        profile=provider.profile,
+                        path_to_output=self.config.output_dir
+                    )
+                    self.log(msg=aws_cost_file, tag="AWS Costs")
+                    self.upload(
+                        file=aws_cost_file,
+                        route="costs",
+                        source="AWS"
+                    )
+                    aws_instance_file = get_aws_instances(
+                        sub_id=provider.account,
+                        path_to_output=self.config.output_dir
+                    )
+                    self.log(msg=aws_instance_file, tag="AWS Instances")
+                    self.upload(
+                        file=aws_instance_file,
+                        route="instances",
+                        source="AWS"
+                    )
+                    aws_utilization_file = aws_instance_file[:-5] + "-utilization.json"
+                    self.upload(
+                        file=aws_utilization_file,
+                        route="utilization",
+                        source="AWS"
+                    )
+                    aws_block_file = get_aws_blocks(
+                        sub_id=provider.account,
+                        path_to_output=self.config.output_dir,
+                        log=self.log
+                    )
+                    self.log(msg=aws_block_file, tag="AWS Storage")
+                    self.upload(
+                        file=aws_block_file,
+                        route="storage",
+                        source="AWS"
+                    )
 
-            # Check if Azure CLI is installed
-            if provider.provider == "azure" and self.checkDependency("az", "Azure Command-line tool"):
-                azure_cost_file = runAzure(
-                    subscription_id=provider.account,
-                    start=provider.start,
-                    end=provider.end,
-                    path_to_output=self.config.output_dir
-                )
-                self.log(msg=azure_cost_file, tag="Azure Costs")
-                self.upload(
-                    file=azure_cost_file,
-                    route="costs",
-                    source="Azure"
-                )
-                azure_instance_file = get_az_instances(
-                    sub_id=provider.account,
-                    path_to_output=self.config.output_dir
-                )
-                self.log(msg=azure_instance_file, tag="Azure instances")
-                self.upload(
-                    file=azure_instance_file,
-                    route="instances",
-                    source="Azure"
-                )
-                azure_utilization_file = azure_instance_file[:-5] + "-utilization.json"
-                self.upload(
-                    file=azure_utilization_file,
-                    route="utilization",
-                    source="AWS"
-                )
-                azure_block_file = get_az_blocks(
-                    sub_id=provider.account,
-                    path_to_output=self.config.output_dir
-                )
-                self.log(msg=azure_block_file, tag="Azure Storage")
-                self.upload(
-                    file=azure_block_file,
-                    route="storage",
-                    source="Azure"
-                )
+                # Check if Azure CLI is installed
+                if provider.provider == "azure" and self.checkDependency("az", "Azure Command-line tool"):
+                    azure_cost_file = runAzure(
+                        subscription_id=provider.account,
+                        start=provider.start,
+                        end=provider.end,
+                        path_to_output=self.config.output_dir
+                    )
+                    self.log(msg=azure_cost_file, tag="Azure Costs")
+                    self.upload(
+                        file=azure_cost_file,
+                        route="costs",
+                        source="Azure"
+                    )
+                    azure_instance_file = get_az_instances(
+                        sub_id=provider.account,
+                        path_to_output=self.config.output_dir
+                    )
+                    self.log(msg=azure_instance_file, tag="Azure instances")
+                    self.upload(
+                        file=azure_instance_file,
+                        route="instances",
+                        source="Azure"
+                    )
+                    azure_utilization_file = azure_instance_file[:-5] + "-utilization.json"
+                    self.upload(
+                        file=azure_utilization_file,
+                        route="utilization",
+                        source="AWS"
+                    )
+                    azure_block_file = get_az_blocks(
+                        sub_id=provider.account,
+                        path_to_output=self.config.output_dir
+                    )
+                    self.log(msg=azure_block_file, tag="Azure Storage")
+                    self.upload(
+                        file=azure_block_file,
+                        route="storage",
+                        source="Azure"
+                    )
 
-            if provider.provider == "gcp" and self.checkDependency("gcloud", "Google Command-line tool"):
-                gcp_instance_file = get_gcp_instances(
-                    sub_id=provider.account,
-                    path_to_output=self.config.output_dir
+                if provider.provider == "gcp" and self.checkDependency("gcloud", "Google Command-line tool"):
+                    gcp_instance_file = get_gcp_instances(
+                        sub_id=provider.account,
+                        path_to_output=self.config.output_dir
+                    )
+                    self.log(msg=gcp_instance_file, tag="GCP instances")
+                    self.upload(
+                        file=gcp_instance_file,
+                        route="instances",
+                        source="GCP"
+                    )
+                    gcp_utilization_file = gcp_instance_file[:-5] + "-utilization.json"
+                    self.upload(
+                        file=gcp_utilization_file,
+                        route="utilization",
+                        source="AWS"
+                    )
+                    gcp_block_file = get_gcp_blocks(
+                        sub_id=provider.account,
+                        path_to_output=self.config.output_dir
+                    )
+                    self.log(msg=gcp_block_file, tag="GCP Storage")
+                    self.upload(
+                        file=gcp_block_file,
+                        route="storage",
+                        source="GCP"
+                    )
+            except Exception as e:
+                self.log(tag="ERROR", msg="Error processing provider", display=True)
+                self.log(
+                    tag="ERROR PROVIDER",
+                    msg=json.dumps(provider, indent=4),
+                    display=True
                 )
-                self.log(msg=gcp_instance_file, tag="GCP instances")
-                self.upload(
-                    file=gcp_instance_file,
-                    route="instances",
-                    source="GCP"
-                )
-                gcp_utilization_file = gcp_instance_file[:-5] + "-utilization.json"
-                self.upload(
-                    file=gcp_utilization_file,
-                    route="utilization",
-                    source="AWS"
-                )
-                gcp_block_file = get_gcp_blocks(
-                    sub_id=provider.account,
-                    path_to_output=self.config.output_dir
-                )
-                self.log(msg=gcp_block_file, tag="GCP Storage")
-                self.upload(
-                    file=gcp_block_file,
-                    route="storage",
-                    source="GCP"
+                self.log(tag="ERROR", msg=e, display=True)
+                self.log(
+                    tag="ERROR STACK",
+                    msg=traceback.format_exc()
                 )
 
 
@@ -606,12 +668,13 @@ def main():
     try:
         agent.scan()
     except Exception as e:
+        agent.log(msg=str(e), tag="Main Scan Error Caught")
         if agent.config.upload_logs:
-            agent.log(msg=str(e))
             agent.upload(route="logs", file=agent.config.output_dir+"/log.txt")
         raise e
-    if agent.config.upload_logs:
+    if agent.config.shouldUpload or agent.config.upload_logs:
         agent.upload(route="logs", file=agent.config.output_dir+"/log.txt", source='logs', isJSON=False)
+    if agent.config.upload_logs:
         new_folder_name = (
             str(today.year) + str(today.month) + str(today.day)
         )

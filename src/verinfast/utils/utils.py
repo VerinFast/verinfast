@@ -67,6 +67,56 @@ def truncate(text, length=100):
     return ((testStr[:length] + '..') if len(testStr) > length else testStr)
 
 
+def truncate_children(
+            obj: dict | list,
+            log,
+            excludes=[],
+            max_length=30,
+            recursion_depth=0
+        ):
+    if isinstance(obj, dict):
+        for k in obj:
+            v = obj[k]
+            if k in excludes:
+                pass
+            elif isinstance(v, str):
+                obj[k] = v[0:max_length]
+            elif (
+                isinstance(v, int) or
+                isinstance(v, float) or
+                isinstance(v, bool)
+            ):
+                pass
+            else:
+                obj[k] = truncate_children(
+                    obj[k],
+                    log,
+                    excludes=excludes,
+                    max_length=max_length,
+                    recursion_depth=recursion_depth + 1
+                )
+    elif isinstance(obj, list):
+        for i, v in enumerate(obj):
+            if isinstance(v, str):
+                obj[i] = v[0:max_length]
+            elif (
+                isinstance(v, int) or
+                isinstance(v, float) or
+                isinstance(v, bool)
+            ):
+                pass
+            else:
+                obj[i] = truncate_children(
+                    obj[i],
+                    log,
+                    excludes=excludes,
+                    max_length=max_length,
+                    recursion_depth=recursion_depth + 1
+                )
+
+    return obj
+
+
 # Chunk a list
 def chunks(lst, n):
     """Yield successive n-sized chunks from lst."""
