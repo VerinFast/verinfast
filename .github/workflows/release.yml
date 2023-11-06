@@ -82,6 +82,8 @@ jobs:
             echo "${{ vars.STR_PUB_KEY }}" > ~/.ssh/id_rsa.pub
             echo "Key set"
             echo "Restarting Agent"
+            eval "$(ssh-agent)"
+            eval "$(ssh-agent -s)"
             ssh-agent -k
             eval "$(ssh-agent)"
             echo "Attempting PyTest"
