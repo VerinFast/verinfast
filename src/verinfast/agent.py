@@ -139,9 +139,12 @@ class Agent:
                 tag=f"Skipping uploading {file} for {source} to {self.config.baseUrl}{route}.",
                 display=True
             )
-            return
+            return True
         if not Path(file).exists():
-            return
+            self.log(
+                msg=f"File does not exist: {file}"
+            )
+            return False
 
         orig_route = route
 
@@ -184,12 +187,14 @@ class Agent:
                     )
             except:
                 pass
+            return True
         else:
             self.log(
                 msg=response.status_code,
                 tag=f"Failed to upload {file} for {source} to {self.config.baseUrl}{route}",
                 display=True
             )
+            return False
 
     def formatGitHash(self, hash: str):
         message = std_exec(["git", "log", "-n1", "--pretty=format:%B", hash])
@@ -470,11 +475,12 @@ class Agent:
             repos = self.config.config["repos"]
             if repos:
                 for repo_url in repos:
-                    match = re.search(".*\/(.*)", repo_url)
+                    match = re.search("([^/]*\.git.*)", repo_url)
                     repo_name = match.group(1)
-                    if "@" in repo_name:
+                    if "@" in repo_name and re.search("^.*@.*\..*:", repo_url):
                         repo_url = "@".join(repo_url.split("@")[0:2])
-
+                    elif "@" in repo_name:
+                        repo_url = repo_url.split("@")[0]
                     self.log(msg=repo_name, tag="Processing", display=True)
                     curr_dir = os.getcwd()
                     temp_dir = os.path.join(curr_dir, "temp_repo")
@@ -512,7 +518,7 @@ class Agent:
             if localrepos:
                 for repo_path in localrepos:
                     a = Path(repo_path).absolute()
-                    match = re.search(".*\/(.*)", str(a))
+                    match = re.search("([^/]*\.git.*)", str(a))
                     repo_name = match.group(1)
                     self.parseRepo(repo_path, repo_name)
             else:

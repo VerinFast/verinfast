@@ -27,11 +27,15 @@ def test_no_config(self):
     print(agent.config.output_dir)
     agent.config = config
     agent.config.dry = True
-    agent.config.shouldUpload = False
+    agent.config.shouldUpload = True
     agent.debug = DebugLog(path=agent.config.output_dir, debug=False)
     agent.log = agent.debug.log
     print(agent.debug.logFile)
     agent.scan()
+    assert Path(results_dir).exists()
+    files = os.listdir(results_dir)
+    assert len(files) == 1
     with open(agent.debug.logFile) as f:
         logText = f.read()
         assert "Error" not in logText
+        assert "File does not exist:" in logText

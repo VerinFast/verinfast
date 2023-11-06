@@ -46,7 +46,7 @@ jobs:
           version: '>= 363.0.0'
       - name: 'Use gcloud CLI'
         run: 'gcloud info'
-        
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -59,7 +59,7 @@ jobs:
         run: >-
           python3 -m
           pip install
-          build hatchling
+          build hatchling setuptools
           --user
       - name: Make VERSION
         run: python make_version.py
@@ -72,7 +72,26 @@ jobs:
             aws --profile default configure set region "us-east-1"
             aws sts get-caller-identity
       - name: Unit Tests
-        run: pytest
+        run: |
+            [ -f "~/.ssh/id_rsa" ] && mv ~/.ssh/id_rsa ~/.ssh/id_rsa2 || echo "No id_rsa"
+            [ -f "~/.ssh/id_rsa" ] && mv ~/.ssh/id_rsa.pub ~/.ssh/id_rsa2.pub || echo "No id_rsa"
+            echo "Attempting to set key"
+            mkdir -p ~/.ssh
+            echo "IdentityFile ~/.ssh/id_rsa" > ~/.ssh/config
+            echo "${{ secrets.STR_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+            chmod 600 ~/.ssh/id_rsa
+            echo "${{ vars.STR_PUB_KEY }}" > ~/.ssh/id_rsa.pub
+            echo "Key set"
+            echo "Restarting Agent"
+            eval "$(ssh-agent)"
+            eval "$(ssh-agent -s)"
+            ssh-agent -k
+            eval "$(ssh-agent)"
+            echo "Attempting PyTest"
+            pytest
+            echo "Attempting to restore old key"
+            [ -f "~/.ssh/id_rsa2" ] && mv ~/.ssh/id_rsa2 ~/.ssh/id_rsa || echo "No old key"
+            [ -f "~/.ssh/id_rsa2" ] && mv ~/.ssh/id_rsa2.pub ~/.ssh/id_rsa.pub || echo "No old key"
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3.1.1
         with:
