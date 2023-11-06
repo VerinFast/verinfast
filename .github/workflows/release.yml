@@ -79,7 +79,7 @@ jobs:
             echo "Key set"
             echo "Attempting PyTest"
             pytest
-            "Attempting to restore old key"
+            echo "Attempting to restore old key"
             [ -f "~/.ssh/id_rsa2" ] && mv ~/.ssh/id_rsa2 ~/.ssh/id_rsa || echo "No old key"
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3.1.1
