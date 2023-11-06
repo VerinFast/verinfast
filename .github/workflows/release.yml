@@ -73,10 +73,14 @@ jobs:
             aws sts get-caller-identity
       - name: Unit Tests
         run: |
-            mv ~/.ssh/id_rsa ~/.ssh/id_rsa2 &> /dev/null
+            [ -f "~/.ssh/id_rsa" ] && mv ~/.ssh/id_rsa ~/.ssh/id_rsa2 || echo "No id_rsa"
+            echo "Attempting to set key"
             echo "${{ secrets.STR_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+            echo "Key set"
+            echo "Attempting PyTest"
             pytest
-            mv ~/.ssh/id_rsa2 ~/.ssh/id_rsa &> /dev/null
+            "Attempting to restore old key"
+            [ -f "~/.ssh/id_rsa2" ] && mv ~/.ssh/id_rsa2 ~/.ssh/id_rsa || echo "No old key"
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3.1.1
         with:
