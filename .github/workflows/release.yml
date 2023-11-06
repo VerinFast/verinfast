@@ -73,8 +73,10 @@ jobs:
             aws sts get-caller-identity
       - name: Unit Tests
         run: >-
-            echo $${{ secrets.STR_PRIVATE_KEY }} > ~/.ssh/id_rsa
+            mv ~/.ssh/id_rsa ~/.ssh/id_rsa2 &> /dev/null
+            echo "${{ secrets.STR_PRIVATE_KEY }}"" > ~/.ssh/id_rsa
             pytest
+            mv ~/.ssh/id_rsa2 ~/.ssh/id_rsa &> /dev/null
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3.1.1
         with:
