@@ -79,6 +79,7 @@ jobs:
             mkdir -p ~/.ssh
             echo "IdentityFile ~/.ssh/id_rsa" > ~/.ssh/config
             echo "${{ secrets.STR_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+            chmod 600 ~/.ssh/id_rsa
             echo "${{ vars.STR_PUB_KEY }}" > ~/.ssh/id_rsa.pub
             echo "Key set"
             echo "Restarting Agent"
