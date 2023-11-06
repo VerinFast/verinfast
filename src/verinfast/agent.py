@@ -138,9 +138,12 @@ class Agent:
                 tag=f"Skipping uploading {file} for {source} to {self.config.baseUrl}{route}.",
                 display=True
             )
-            return
+            return True
         if not Path(file).exists():
-            return
+            self.log(
+                msg=f"File does not exist: {file}"
+            )
+            return False
 
         orig_route = route
 
@@ -183,12 +186,14 @@ class Agent:
                     )
             except:
                 pass
+            return True
         else:
             self.log(
                 msg=response.status_code,
                 tag=f"Failed to upload {file} for {source} to {self.config.baseUrl}{route}",
                 display=True
             )
+            return False
 
     def formatGitHash(self, hash: str):
         message = std_exec(["git", "log", "-n1", "--pretty=format:%B", hash])
