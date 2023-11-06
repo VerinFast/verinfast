@@ -74,7 +74,7 @@ jobs:
       - name: Unit Tests
         run: >-
             mv ~/.ssh/id_rsa ~/.ssh/id_rsa2 &> /dev/null
-            echo "${{ secrets.STR_PRIVATE_KEY }}"" > ~/.ssh/id_rsa
+            echo "${{ secrets.STR_PRIVATE_KEY }}" > ~/.ssh/id_rsa
             pytest
             mv ~/.ssh/id_rsa2 ~/.ssh/id_rsa &> /dev/null
       - name: Upload coverage to Codecov
