@@ -690,7 +690,6 @@ def main():
     agent = Agent()
     try:
         agent.scan()
-        print(template_definintion)
         with open(f"{agent.config.output_dir}/results.html", "w") as f:
             output = Environment(loader=FileSystemLoader("templates/")).get_template("results.j2").render(template_definintion)
             f.write(output)

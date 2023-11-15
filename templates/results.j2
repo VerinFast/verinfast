@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <head>
+    <body>
+        <table class="table table-striped">
+        <tr>
+            <th>Name</th>
+            <th>Path</th>
+        </tr>
+        {% for file in filelist%}
+            <tr>
+                <td>{{file.name|escape}}</td>
+                <td>{{file.path|escape}}</td>
+            </tr>
+        {% endfor %}
+        </table>
+        <table class="table table-striped">
+        <tr>
+            <th>Message</th>
+            <th>Author</th>
+            <th>Commit</th>
+            <th>Date</th>
+        </tr>
+        {% for commit in gitlog%}
+            <tr>
+                <td>{{commit.message|escape}}</td>
+                <td>{{commit.author|escape}}</td>
+                <td>{{commit.commit|escape}}</td>
+                <td>{{commit.date|escape}}</td>
+            </tr>
+        {% endfor %}
+        </table>
+        <h3>Findings</h3>
+        <table class="table table-striped">
+        <tr>
+            <th>Paths Scanned</th>
+        </tr>
+        {% if gitfindings %}
+        {% for path_scanned in gitfindings.paths%}
+            <tr>
+                <td>{{path_scanned|escape}}</td>
+            </tr>
+        {% endfor %}
+        </table>
+        <table class="table table-striped">
+        <tr>
+            <th>Message</th>
+            <th>Author</th>
+            <th>Commit</th>
+            <th>Date</th>
+        </tr>
+        {% for result in gitfindings.results%}
+            <tr>
+                <td>{{result|escape}}</td>
+            </tr>
+        {% endfor %}
+        </table>
+        {% else %}
+        {% endif %}
+    </body>
+</html>
