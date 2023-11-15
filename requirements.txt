@@ -21,6 +21,6 @@ pygments-tsx>=1.0.1
 pytest~=7.4.3
 pytest-cov~=4.1.0
 pytest-xdist~=3.4.0
-pyyaml~=6.0.0
+pyyaml~=6.0.1
 semgrep~=1.48.0
 windows-curses~=2.3.0; sys.platform == 'win32'
