@@ -17,13 +17,18 @@ class NodeWalker(Walker):
             if p.name in self.manifest_files:
                 self.install_points.append(p)
         for p in self.install_points:
+            print('p')
+            print(p)
             target_dir = Path(p).parent
             os.chdir(target_dir)
-            subprocess.run(
-                "npm install --production",
-                capture_output=True,
-                shell=True
-            )
+            try:
+                subprocess.run(
+                    "npm install --production",
+                    capture_output=True,
+                    shell=True
+                )
+            except:
+                
             self.walk('node_modules')
             os.chdir(root_path)
 

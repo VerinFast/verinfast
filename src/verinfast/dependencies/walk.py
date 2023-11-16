@@ -27,6 +27,8 @@ rust_matches = ["Cargo.toml"]
 # Finds all manifests we can process in the repo
 # and stores their path in memory
 def walk(logger, path: str = "./", output_file="./dependencies.json"):
+    
+    print(f"Walking {path}")
     mavenWalker = MavenWalker(
         manifest_type="xml",
         manifest_files=["pom.xml"],
