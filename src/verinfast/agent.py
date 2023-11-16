@@ -376,7 +376,7 @@ class Agent:
                 with open(stats_output_file, 'w') as f:
                     with open(stats_error_file, 'w') as e:
                         subprocess.check_call(["modernmetric", f"--file={stats_input_file}"], stdout=f, stderr=e, encoding='utf-8')
-                template["stats"] = json.load(stats_output_file)
+                template_definintion["stats"] = json.load(stats_output_file)
             self.upload(
                 file=stats_output_file,
                 route="stats",

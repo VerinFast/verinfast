@@ -5,57 +5,87 @@
     <head>
     <body>
         <table class="table table-striped">
-        <tr>
-            <th>Name</th>
-            <th>Path</th>
-        </tr>
-        {% for file in filelist%}
             <tr>
-                <td>{{file.name|escape}}</td>
-                <td>{{file.path|escape}}</td>
+                <th>Name</th>
+                <th>Path</th>
             </tr>
-        {% endfor %}
+            {% for file in filelist%}
+                <tr>
+                    <td>{{file.name|escape}}</td>
+                    <td>{{file.path|escape}}</td>
+                </tr>
+            {% endfor %}
         </table>
         <table class="table table-striped">
-        <tr>
-            <th>Message</th>
-            <th>Author</th>
-            <th>Commit</th>
-            <th>Date</th>
-        </tr>
-        {% for commit in gitlog%}
             <tr>
-                <td>{{commit.message|escape}}</td>
-                <td>{{commit.author|escape}}</td>
-                <td>{{commit.commit|escape}}</td>
-                <td>{{commit.date|escape}}</td>
+                <th>Message</th>
+                <th>Author</th>
+                <th>Commit</th>
+                <th>Date</th>
             </tr>
-        {% endfor %}
+            {% for commit in gitlog%}
+                <tr>
+                    <td>{{commit.message|escape}}</td>
+                    <td>{{commit.author|escape}}</td>
+                    <td>{{commit.commit|escape}}</td>
+                    <td>{{commit.date|escape}}</td>
+                </tr>
+            {% endfor %}
         </table>
+        {% if gitfindings %}
         <h3>Findings</h3>
         <table class="table table-striped">
-        <tr>
-            <th>Paths Scanned</th>
-        </tr>
-        {% if gitfindings %}
-        {% for path_scanned in gitfindings.paths%}
             <tr>
-                <td>{{path_scanned|escape}}</td>
+                <th>Paths Scanned</th>
             </tr>
-        {% endfor %}
+                {% for path_scanned in gitfindings.paths%}
+                    <tr>
+                        <td>{{path_scanned|escape}}</td>
+                    </tr>
+                {% endfor %}
         </table>
         <table class="table table-striped">
-        <tr>
-            <th>Message</th>
-            <th>Author</th>
-            <th>Commit</th>
-            <th>Date</th>
-        </tr>
-        {% for result in gitfindings.results%}
             <tr>
-                <td>{{result|escape}}</td>
+                <th>Message</th>
+                <th>Author</th>
+                <th>Commit</th>
+                <th>Date</th>
             </tr>
-        {% endfor %}
+            {% for result in gitfindings.results%}
+                <tr>
+                    <td>{{result|escape}}</td>
+                </tr>
+            {% endfor %}
+        </table>
+        {% else %}
+        {% endif %}
+        {% if stats %}
+        <table class="table table-striped">
+            <tr>
+                <th>File</th>
+                <th>Data</th>
+            </tr>
+            {% for k, v in stats.files.items()%}
+                <tr>
+                    <td>{{k|escape}}</td>
+                    <td>{{v|escape}}</td>
+                </tr>
+            {% endfor %}
+        </table>
+        {% else %}
+        {% endif %}
+        {% if sizes %}
+        <table class="table table-striped">
+            <tr>
+                <th>File</th>
+                <th>Size</th>
+            </tr>
+            {% for k,v in sizes.files.items()%}
+                <tr>
+                    <td>{{k|escape}}</td>
+                    <td>{{v|escape}}</td>
+                </tr>
+            {% endfor %}
         </table>
         {% else %}
         {% endif %}
