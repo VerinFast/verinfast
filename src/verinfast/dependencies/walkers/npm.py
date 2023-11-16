@@ -17,19 +17,18 @@ class NodeWalker(Walker):
             if p.name in self.manifest_files:
                 self.install_points.append(p)
         for p in self.install_points:
-            print('p')
-            print(p)
             target_dir = Path(p).parent
             os.chdir(target_dir)
             try:
                 subprocess.run(
-                    "npm install --production",
+                    "npm install --production --silent --yes",
                     capture_output=True,
                     shell=True
                 )
-            except:
-                
-            self.walk('node_modules')
+            except Exception as error:
+                self.log(f'Error with npm install: {error}')
+            else:
+                self.walk('node_modules')
             os.chdir(root_path)
 
     def parse(self, file: str, expand=False):
