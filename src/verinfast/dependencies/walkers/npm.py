@@ -40,6 +40,8 @@ class NodeWalker(Walker):
                     entry["specifier"] = "==" + d["version"]
                     if "license" in d and isinstance(d["license"], dict):
                         license[key] = d["license"]["type"]
+                    elif "license" in d and isinstance(d["license"], list):
+                        license[key] = ' '.d["license"]
                     elif "license" in d:
                         license[key] = d["license"]
                     else:
