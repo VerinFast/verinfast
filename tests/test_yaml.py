@@ -88,3 +88,16 @@ def test_str_results_from_file(self):
             p = str(finding["path"])
             if p.endswith("semgrep/error.sh"):
                 assert finding["start"]["line"] in [5, 10, 16, 19]
+
+    # Test Azure Dev Ops repo results
+    with open(results_dir.joinpath('Small%20Test%20Repo%20ADO.sizes.json')) as f:  # noqa: E50
+        sizes = json.load(f)
+        assert sizes["files"]["."]["size"] >= 26988
+        assert sizes["files"]["./helloworld/helloworld.tsx"]["ext"] == "tsx"
+    with open(results_dir.joinpath('Small%20Test%20Repo%20ADO.git.stats.json')) as f:  # noqa: E50
+        stats = json.load(f)
+        for file_name in stats["files"]:
+            file_name = str(file_name)
+            if file_name.endswith("/helloworld/helloworld.tsx"):
+                my_file = stats["files"][file_name]
+                assert my_file["lang"][0] == "TypeScriptX"
