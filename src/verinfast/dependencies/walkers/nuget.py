@@ -8,7 +8,7 @@ class NuGetWalker(Walker):
     def initialize(self, command: str = None):
         discoveryUrl = 'https://api.nuget.org/v3/index.json'
         uselessList = json.loads(
-            self.getUrl(discoveryUrl).content.decode('utf-8')
+            self.getUrl(discoveryUrl)
         )
         for r in uselessList["resources"]:
             if "Catalog" in r["@type"]:
@@ -22,11 +22,7 @@ class NuGetWalker(Walker):
         resp = None
         name2 = name.lower()
         try:
-            license_resp = (
-                self.getUrl(f"{self.registrationUrl}{name}/{version}.json")
-                .content
-                .decode('utf-8-sig')
-                )
+            license_resp = self.getUrl(f"{self.registrationUrl}{name}/{version}.json")  # NOQA:E501
             resp = json.loads(license_resp)
         except Exception as e:
             self.log(e, display=False)
@@ -34,8 +30,6 @@ class NuGetWalker(Walker):
                 license_resp = (
                     self
                     .getUrl(f"{self.registrationUrl}{name2}/{version}.json")
-                    .content
-                    .decode('utf-8-sig')
                 )
                 resp = json.loads(license_resp)
             except Exception as e2:
@@ -46,11 +40,7 @@ class NuGetWalker(Walker):
                 self.log(e2, display=False)
         if resp is not None:
             catalog_entry_url = resp["catalogEntry"]
-            catalog_entry = json.loads(
-                self.getUrl(catalog_entry_url)
-                    .content
-                    .decode("utf-8")
-            )
+            catalog_entry = json.loads(self.getUrl(catalog_entry_url))
             if "licenseExpression" in catalog_entry:
                 return catalog_entry["licenseExpression"]
             elif "licenseUrl" in catalog_entry:

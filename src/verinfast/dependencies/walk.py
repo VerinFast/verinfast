@@ -6,6 +6,7 @@ import defusedxml
 
 from verinfast.dependencies.walkers.maven import MavenWalker
 from verinfast.dependencies.walkers.npm import NodeWalker
+from verinfast.dependencies.walkers.gemwalker import GemWalker
 from verinfast.dependencies.walkers.nuget import NuGetWalker, c_sharp_matches
 from verinfast.dependencies.walkers.python import PyWalker
 from verinfast.dependencies.walkers.classes import Entry
@@ -54,6 +55,12 @@ def walk(logger, path: str = "./", output_file="./dependencies.json"):
         logger=logger,
         root_dir=path
     )
+    gem_walker = GemWalker(
+        manifest_files=["gemfile", "Gemfile"],
+        manifest_type="ruby",
+        logger=logger,
+        root_dir=path
+    )
 
     path = str(Path(path).absolute())
     entries: List[Entry] = []
@@ -66,6 +73,8 @@ def walk(logger, path: str = "./", output_file="./dependencies.json"):
     entries += nugetWalker.entries
     py_walker.walk(path=path)
     entries += py_walker.entries
+    gem_walker.walk(path=path)
+    entries += gem_walker.entries
 
     with open(output_file, 'w') as outfile:
         dicts = [entry.to_json() for entry in entries]
