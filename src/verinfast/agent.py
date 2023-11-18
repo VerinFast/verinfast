@@ -46,7 +46,7 @@ release = uname.release
 version = uname.version
 machine = uname.machine
 
-template_definintion = {}
+template_definition = {}
 
 
 class Agent:
@@ -288,7 +288,7 @@ class Agent:
                 with open(git_output_file, 'w') as f:
                     f.write(json.dumps(finalArr, indent=4))
                 
-                template_definintion["gitlog"] = finalArr
+                template_definition["gitlog"] = finalArr
                 # End if not self.config.dry:
 
         if Path(git_output_file).exists():
@@ -350,7 +350,7 @@ class Agent:
 
             with open(sizes_output_file, 'w') as f:
                 f.write(json.dumps(sizes, indent=4))
-            template_definintion["sizes"] = sizes
+            template_definition["sizes"] = sizes
             # End if not self.config.dry:
 
         self.upload(
@@ -370,13 +370,13 @@ class Agent:
                 with open(stats_input_file, 'w') as f:
                     f.write(json.dumps(filelist, indent=4))
 
-                template_definintion["filelist"] = filelist
+                template_definition["filelist"] = filelist
                 # Calling modernmetric with subprocess works, but we might want to call
                 # Modernmetric directly, ala lines 91-110 from modernmetric main
                 with open(stats_output_file, 'w') as f:
                     with open(stats_error_file, 'w') as e:
                         subprocess.check_call(["modernmetric", f"--file={stats_input_file}"], stdout=f, stderr=e, encoding='utf-8')
-                template_definintion["stats"] = json.load(stats_output_file)
+                template_definition["stats"] = json.load(stats_output_file)
             self.upload(
                 file=stats_output_file,
                 route="stats",
@@ -456,7 +456,7 @@ class Agent:
                                 {findings_output_file}
                             '''
                         )
-                template_definintion["gitfindings"] = json.load(findings_output_file)
+                template_definition["gitfindings"] = json.load(findings_output_file)
                 self.upload(
                     file=findings_output_file,
                     route="findings",
@@ -470,7 +470,7 @@ class Agent:
             if not self.config.dry:
                 dependencies_output_file = dependency_walk(output_file=dependencies_output_file, logger=self.log)
             self.log(msg=dependencies_output_file, tag="Dependency File", display=False)
-            template_definintion["dependencies"] = json.load(dependencies_output_file)
+            template_definition["dependencies"] = json.load(dependencies_output_file)
             self.upload(
                 file=dependencies_output_file,
                 route="dependencies",
@@ -679,7 +679,7 @@ def main():
         with open(f"{agent.config.output_dir}/results.html", "w") as f:
             jinja_env = Environment(loader=FileSystemLoader("templates/"))
             jinja_env.globals.update(zip=zip)
-            output = jinja_env.get_template("results.j2").render(template_definintion)
+            output = jinja_env.get_template("results.j2").render(template_definition)
             f.write(output)
     except Exception as e:
         agent.log(msg=str(e), tag="Main Scan Error Caught")

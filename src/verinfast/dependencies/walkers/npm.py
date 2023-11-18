@@ -19,12 +19,16 @@ class NodeWalker(Walker):
         for p in self.install_points:
             target_dir = Path(p).parent
             os.chdir(target_dir)
-            subprocess.run(
-                "npm install --production",
-                capture_output=True,
-                shell=True
-            )
-            self.walk('node_modules')
+            try:
+                subprocess.run(
+                    "npm install --production --silent --yes",
+                    capture_output=True,
+                    shell=True
+                )
+            except Exception as error:
+                self.log(f'Error with npm install: {error}')
+            else:
+                self.walk('node_modules')
             os.chdir(root_path)
 
     def parse(self, file: str, expand=False):
@@ -40,6 +44,8 @@ class NodeWalker(Walker):
                     entry["specifier"] = "==" + d["version"]
                     if "license" in d and isinstance(d["license"], dict):
                         license[key] = d["license"]["type"]
+                    elif "license" in d and isinstance(d["license"], list):
+                        license[key] = ' '.join(d["license"])
                     elif "license" in d:
                         license[key] = d["license"]
                     else:
