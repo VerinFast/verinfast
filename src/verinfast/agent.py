@@ -677,7 +677,9 @@ def main():
     try:
         agent.scan()
         with open(f"{agent.config.output_dir}/results.html", "w") as f:
-            output = Environment(loader=FileSystemLoader("templates/")).get_template("results.j2").render(template_definintion)
+            jinja_env = Environment(loader=FileSystemLoader("templates/"))
+            jinja_env.globals.update(zip=zip)
+            output = jinja_env.get_template("results.j2").render(template_definintion)
             f.write(output)
     except Exception as e:
         agent.log(msg=str(e), tag="Main Scan Error Caught")
