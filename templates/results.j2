@@ -9,10 +9,15 @@
                 <th>Name</th>
                 <th>Path</th>
             </tr>
-            {% for file in filelist%}
+            <tr>
+                <td>Current directory data</td>
+                <td>{{sizes.files.pop(".")|escape}}</td>
+            </tr>
+            {% for (file, file_size_data) in zip(filelist, sizes.files.values())%}
                 <tr>
                     <td>{{file.name|escape}}</td>
-                    <td>{{file.path|escape}}</td>
+                    <td>{{file_size_data|escape}}</td>
+                    {#<td>{{file_stat_data|escape}}</td>#}
                 </tr>
             {% endfor %}
         </table>
@@ -23,7 +28,7 @@
                 <th>Commit</th>
                 <th>Date</th>
             </tr>
-            {% for commit in gitlog%}
+            {% for commit in gitlog[:100]%}
                 <tr>
                     <td>{{commit.message|escape}}</td>
                     <td>{{commit.author|escape}}</td>
@@ -38,52 +43,19 @@
             <tr>
                 <th>Paths Scanned</th>
             </tr>
-                {% for path_scanned in gitfindings.paths%}
-                    <tr>
-                        <td>{{path_scanned|escape}}</td>
-                    </tr>
-                {% endfor %}
+            {% for path_scanned in gitfindings.paths%}
+                <tr>
+                    <td>{{path_scanned|escape}}</td>
+                </tr>
+            {% endfor %}
         </table>
         <table class="table table-striped">
             <tr>
-                <th>Message</th>
-                <th>Author</th>
-                <th>Commit</th>
-                <th>Date</th>
+                <th>Result</th>
             </tr>
             {% for result in gitfindings.results%}
                 <tr>
                     <td>{{result|escape}}</td>
-                </tr>
-            {% endfor %}
-        </table>
-        {% else %}
-        {% endif %}
-        {% if stats %}
-        <table class="table table-striped">
-            <tr>
-                <th>File</th>
-                <th>Data</th>
-            </tr>
-            {% for k, v in stats.files.items()%}
-                <tr>
-                    <td>{{k|escape}}</td>
-                    <td>{{v|escape}}</td>
-                </tr>
-            {% endfor %}
-        </table>
-        {% else %}
-        {% endif %}
-        {% if sizes %}
-        <table class="table table-striped">
-            <tr>
-                <th>File</th>
-                <th>Size</th>
-            </tr>
-            {% for k,v in sizes.files.items()%}
-                <tr>
-                    <td>{{k|escape}}</td>
-                    <td>{{v|escape}}</td>
                 </tr>
             {% endfor %}
         </table>
