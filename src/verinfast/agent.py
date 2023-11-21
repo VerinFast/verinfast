@@ -229,10 +229,15 @@ class Agent:
                         subprocess.check_call(["git", "checkout", "master"])
                         branch = "master"
                 except subprocess.CalledProcessError:
-                    if self.config.runGit:
-                        raise Exception("Error checking out branch from git.")
-                    else:
-                        self.log("Error checking out branch from git.")
+                    try:
+                        cmd = "git for-each-ref --count=1 --sort=-committerdate refs/heads/ --format='%(refname:short)'"
+                        branch = std_exec(cmd.split(" "))
+                        subprocess.check_call(["git", "checkout", branch])
+                    except subprocess.CalledProcessError:
+                        if self.config.runGit:
+                            raise Exception("Error checking out branch from git.")
+                        else:
+                            self.log("Error checking out branch from git.")
             branch = branch.strip()
 
         # Git Stats
