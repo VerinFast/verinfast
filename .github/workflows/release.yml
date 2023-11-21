@@ -87,6 +87,7 @@ jobs:
             eval "$(ssh-agent -s)"
             ssh-agent -k
             eval "$(ssh-agent)"
+            ssh-keyscan -H ssh.dev.azure.com >> ~/.ssh/known_hosts
             echo "Attempting PyTest"
             pytest
             echo "Attempting to restore old key"
