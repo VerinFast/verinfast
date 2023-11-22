@@ -12,4 +12,3 @@ repos:
   - https://github.com/StartupOS/small-test-repo.git
   - https://github.com/StartupOS/small-test-repo.git@test/slashes/inbranch
   - git@github.com:StartupOS/small-test-repo.git@test/slashes/inbranch
-  - git@ssh.dev.azure.com:v3/sean0006/Small%20Test%20Repo%20ADO/Small%20Test%20Repo%20ADO

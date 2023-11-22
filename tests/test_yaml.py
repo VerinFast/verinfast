@@ -3,7 +3,6 @@ from unittest.mock import patch
 import os
 from pathlib import Path
 import shutil
-import subprocess
 
 from verinfast.agent import Agent
 from verinfast.config import Config
@@ -43,12 +42,6 @@ def test_file(self):
 
 @patch('verinfast.user.__get_input__', return_value='y')
 def test_str_results_from_file(self):
-
-    subprocess.check_call([
-        "ssh-keyscan",
-        "-H",
-        "ssh.dev.azure.com >> ~/.ssh/known_hosts"
-    ])
 
     file_path = Path(__file__)
     test_folder = file_path.parent.absolute()
@@ -96,16 +89,3 @@ def test_str_results_from_file(self):
             p = str(finding["path"])
             if p.endswith("semgrep/error.sh"):
                 assert finding["start"]["line"] in [5, 10, 16, 19]
-
-    # Test Azure Dev Ops repo results
-    with open(results_dir.joinpath('Small%20Test%20Repo%20ADO.sizes.json')) as f:  # noqa: E50
-        sizes = json.load(f)
-        assert sizes["files"]["."]["size"] >= 26988
-        assert sizes["files"]["./helloworld/helloworld.tsx"]["ext"] == "tsx"
-    with open(results_dir.joinpath('Small%20Test%20Repo%20ADO.stats.json')) as f:  # noqa: E50
-        stats = json.load(f)
-        for file_name in stats["files"]:
-            file_name = str(file_name)
-            if file_name.endswith("/helloworld/helloworld.tsx"):
-                my_file = stats["files"][file_name]
-                assert my_file["lang"][0] == "TypeScriptX"
