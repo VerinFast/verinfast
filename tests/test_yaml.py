@@ -102,7 +102,7 @@ def test_str_results_from_file(self):
         sizes = json.load(f)
         assert sizes["files"]["."]["size"] >= 26988
         assert sizes["files"]["./helloworld/helloworld.tsx"]["ext"] == "tsx"
-    with open(results_dir.joinpath('Small%20Test%20Repo%20ADO.git.stats.json')) as f:  # noqa: E50
+    with open(results_dir.joinpath('Small%20Test%20Repo%20ADO.stats.json')) as f:  # noqa: E50
         stats = json.load(f)
         for file_name in stats["files"]:
             file_name = str(file_name)
