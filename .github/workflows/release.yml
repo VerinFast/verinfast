@@ -82,6 +82,7 @@ jobs:
             chmod 600 ~/.ssh/id_rsa
             echo "${{ vars.STR_PUB_KEY }}" > ~/.ssh/id_rsa.pub
             echo "Key set"
+            ssh-keyscan -H ssh.dev.azure.com >> ~/.ssh/known_hosts
             echo "Restarting Agent"
             eval "$(ssh-agent)"
             eval "$(ssh-agent -s)"
