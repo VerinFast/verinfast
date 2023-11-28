@@ -42,6 +42,7 @@ def test_file(self):
 
 @patch('verinfast.user.__get_input__', return_value='y')
 def test_str_results_from_file(self):
+
     file_path = Path(__file__)
     test_folder = file_path.parent.absolute()
     results_dir = test_folder.joinpath("results").absolute()

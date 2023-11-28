@@ -48,6 +48,8 @@ class Entry(dict):
             d["license"] = self.license
         if self.summary:
             d["summary"] = self.summary
+        if self.required_by:
+            d["required_by"] = self.required_by
         return d
 
 
@@ -84,11 +86,25 @@ class Walker():
         )
 
     def getUrl(self, url: str, headers: dict = {}):
-        return self.requestx.get(url=url, headers=headers)
+        return  (  # noqa: E271
+                    self
+                        .requestx  # NOQA: E131
+                        .get(url=url, headers=headers)
+                        .content
+                        .decode('utf-8-sig')
+                )
 
-    def walk(self, path: str = "./", parse: bool = True, expand: bool = False):
-        for p in Path(path).rglob('**/*.*'):
+    def walk(self,
+             path: str = "./",
+             parse: bool = True,
+             expand: bool = False,
+             debug: int = 0):
+        for p in Path(path).rglob('**/*'):
+            if debug > 1:
+                self.log(F"EVALUATING: {p}", display=(debug > 2))
             if p.name in self.manifest_files:
+                if debug > 0:
+                    self.log(f"FOUND: {p.name}", display=True)
                 self.files.append(p)
                 if parse:
                     self.parse(file=str(p.absolute()), expand=expand)
