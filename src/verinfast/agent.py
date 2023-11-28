@@ -48,6 +48,11 @@ machine = uname.machine
 
 template_definition = {}
 
+file_path = Path(__file__)
+parent_folder = file_path.parent.absolute()
+templates_folder = str(parent_folder.joinpath("templates"))
+# str_path = str(parent_folder.joinpath('str_conf.yaml').absolute())
+
 
 class Agent:
     def __init__(self):
@@ -677,7 +682,7 @@ def main():
     try:
         agent.scan()
         with open(f"{agent.config.output_dir}/results.html", "w") as f:
-            jinja_env = Environment(loader=FileSystemLoader("templates/"))
+            jinja_env = Environment(loader=FileSystemLoader(templates_folder))
             jinja_env.globals.update(zip=zip)
             output = jinja_env.get_template("results.j2").render(template_definition)
             f.write(output)
