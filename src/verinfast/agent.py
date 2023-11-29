@@ -246,10 +246,15 @@ class Agent:
                         subprocess.check_call(["git", "checkout", "master"])
                         branch = "master"
                 except subprocess.CalledProcessError:
-                    if self.config.runGit:
-                        raise Exception("Error checking out branch from git.")
-                    else:
-                        self.log("Error checking out branch from git.")
+                    try:
+                        cmd = "git for-each-ref --count=1 --sort=-committerdate refs/heads/ --format='%(refname:short)'"
+                        branch = std_exec(cmd.split(" "))
+                        subprocess.check_call(["git", "checkout", branch])
+                    except subprocess.CalledProcessError:
+                        if self.config.runGit:
+                            raise Exception("Error checking out branch from git.")
+                        else:
+                            self.log("Error checking out branch from git.")
             branch = branch.strip()
 
         # Git Stats
@@ -502,7 +507,10 @@ class Agent:
             if repos:
                 for repo_url in repos:
                     match = re.search("([^/]*\.git.*)", repo_url)
-                    repo_name = match.group(1)
+                    if match:
+                        repo_name = match.group(1)
+                    else:
+                        repo_name = repo_url.rsplit('/', 1)[-1]
                     if "@" in repo_name and re.search("^.*@.*\..*:", repo_url):
                         repo_url = "@".join(repo_url.split("@")[0:2])
                     elif "@" in repo_name:
@@ -545,7 +553,10 @@ class Agent:
                 for repo_path in localrepos:
                     a = Path(repo_path).absolute()
                     match = re.search("([^/]*\.git.*)", str(a))
-                    repo_name = match.group(1)
+                    if match:
+                        repo_name = match.group(1)
+                    else:
+                        repo_name = os.path.basename(os.path.normpath(repo_path))
                     self.parseRepo(repo_path, repo_name)
             else:
                 self.log(msg='', tag="No local repos", display=True)

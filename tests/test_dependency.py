@@ -51,3 +51,25 @@ def test_entity():
         assert found_Cosmos
 
     return None
+
+
+def test_ruby():
+    output_path = walk(
+        path=test_folder,
+        output_file="./dependencies.json",
+        logger=logger
+    )
+    with open(output_path) as output_file:
+        output = json.load(output_file)
+        assert len(output) >= 1
+        first_dep = output[0]
+        e = Entry(**first_dep)
+        assert e.license == "ISC"
+        found_rubocop = False
+        for d in output:
+            if d["name"] == "rubocop-ast":
+                found_rubocop = True
+                assert d["specifier"] == "*"
+        assert found_rubocop
+
+    return None
