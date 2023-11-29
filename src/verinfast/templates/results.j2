@@ -22,6 +22,9 @@
                 </tr>
             {% endfor %}
         </table>
+        {% else %}
+        {% endif %}
+        {% if gitlog %}
         <table class="table table-striped">
             <tr>
                 <th>Message</th>
@@ -38,6 +41,8 @@
                 </tr>
             {% endfor %}
         </table>
+        {% else %}
+        {% endif %}
         {% if gitfindings %}
         <h3>Findings</h3>
         <table class="table table-striped">
