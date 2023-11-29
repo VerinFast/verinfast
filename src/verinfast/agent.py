@@ -66,6 +66,13 @@ class Agent:
         self.config.upload_logs = initial_prompt()
         self.directory = save_path()
 
+    def create_template(self):
+        with open(f"{self.config.output_dir}/results.html", "w") as f:
+            jinja_env = Environment(loader=FileSystemLoader(templates_folder))
+            jinja_env.globals.update(zip=zip, sorted=sorted)
+            output = jinja_env.get_template("results.j2").render(template_definition)
+            f.write(output)
+
     def scan(self):
         if self.config.modules is not None:
             if self.config.modules.code is not None:
@@ -88,9 +95,11 @@ class Agent:
                 else:
                     print("ID only fetched for upload")
                 self.scanRepos()
+                print(template_definition)
+                self.create_template()
             if self.config.modules and self.config.modules.cloud and len(self.config.modules.cloud):
                 self.scanCloud()
-
+                self.create_template()
         self.log(msg='', tag="Finished")
 
     # Excludes files in .git directories. Takes path of full path with filename
@@ -297,7 +306,7 @@ class Agent:
 
                 with open(git_output_file, 'w') as f:
                     f.write(json.dumps(finalArr, indent=4))
-                
+
                 template_definintion["gitlog"] = finalArr
                 # End if not self.config.dry:
 
@@ -361,7 +370,8 @@ class Agent:
 
             with open(sizes_output_file, 'w') as f:
                 f.write(json.dumps(sizes, indent=4))
-            template_definintion["sizes"] = sizes
+            template_definition["current_dir_size"] = sizes["files"].pop(".")
+            template_definition["sizes"] = sizes
             # End if not self.config.dry:
 
         self.upload(
@@ -387,7 +397,8 @@ class Agent:
                 with open(stats_output_file, 'w') as f:
                     with open(stats_error_file, 'w') as e:
                         subprocess.check_call(["modernmetric", f"--file={stats_input_file}"], stdout=f, stderr=e, encoding='utf-8')
-                template_definintion["stats"] = json.load(stats_output_file)
+                with open(stats_output_file, 'r') as f:
+                    template_definition["stats"] = json.load(f)
             self.upload(
                 file=stats_output_file,
                 route="stats",
@@ -457,6 +468,7 @@ class Agent:
                         f2.write(json.dumps(
                             findings, indent=4, sort_keys=True
                         ))
+                    template_definition["gitfindings"] = findings
                 except Exception as e:
                     if not self.config.dry:
                         raise e
@@ -467,7 +479,6 @@ class Agent:
                                 {findings_output_file}
                             '''
                         )
-                template_definintion["gitfindings"] = json.load(findings_output_file)
                 self.upload(
                     file=findings_output_file,
                     route="findings",

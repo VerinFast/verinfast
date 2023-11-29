@@ -7,13 +7,14 @@
         <table class="table table-striped">
             <tr>
                 <th>Name</th>
-                <th>Path</th>
+                <th>File sizes</th>
+                <th>File stats</th>
             </tr>
             <tr>
                 <td>Current directory data</td>
-                <td>{{sizes.files.pop(".")|escape}}</td>
+                <td>{{current_dir_size}}</td>
             </tr>
-            {% for (file, file_size_data) in zip(filelist, sizes.files.values())%}
+            {% for (file, file_size_data, file_stat_data) in zip(filelist|sort(attribute='path', case_sensitive=true), sizes.files.keys()|sort(case_sensitive=true), stats.files.values())%}
                 <tr>
                     <td>{{file.name|escape}}</td>
                     <td>{{file_size_data|escape}}</td>
@@ -43,7 +44,7 @@
             <tr>
                 <th>Paths Scanned</th>
             </tr>
-            {% for path_scanned in gitfindings.paths%}
+            {% for path_scanned in gitfindings.paths.scanned%}
                 <tr>
                     <td>{{path_scanned|escape}}</td>
                 </tr>
@@ -51,7 +52,7 @@
         </table>
         <table class="table table-striped">
             <tr>
-                <th>Result</th>
+                <th>Results</th>
             </tr>
             {% for result in gitfindings.results%}
                 <tr>
