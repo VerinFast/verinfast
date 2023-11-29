@@ -15,6 +15,7 @@ google-cloud-compute>=1.14.0
 google-cloud-storage>=2.10.0
 google-cloud-monitoring>=2.15.0
 httpx[http2]~=0.25.2
+Jinja2==3.1.2
 johnnydep~=1.20.3
 modernmetric>=1.4.6
 protobuf~=4.25.1

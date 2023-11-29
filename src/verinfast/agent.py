@@ -11,6 +11,7 @@ import traceback
 from uuid import uuid4
 
 import httpx
+from jinja2 import Environment, FileSystemLoader
 from pygments_tsx.tsx import patch_pygments
 
 from verinfast.utils.utils import DebugLog, std_exec, trimLineBreaks, escapeChars, truncate, truncate_children
@@ -45,6 +46,13 @@ release = uname.release
 version = uname.version
 machine = uname.machine
 
+template_definition = {}
+
+file_path = Path(__file__)
+parent_folder = file_path.parent.absolute()
+templates_folder = str(parent_folder.joinpath("templates"))
+# str_path = str(parent_folder.joinpath('str_conf.yaml').absolute())
+
 
 class Agent:
     def __init__(self):
@@ -57,6 +65,13 @@ class Agent:
         self.up = self.uploader.make_upload_path
         self.config.upload_logs = initial_prompt()
         self.directory = save_path()
+
+    def create_template(self):
+        with open(f"{self.config.output_dir}/results.html", "w") as f:
+            jinja_env = Environment(loader=FileSystemLoader(templates_folder))
+            jinja_env.globals.update(zip=zip, sorted=sorted)
+            output = jinja_env.get_template("results.j2").render(template_definition)
+            f.write(output)
 
     def scan(self):
         if self.config.modules is not None:
@@ -80,9 +95,11 @@ class Agent:
                 else:
                     print("ID only fetched for upload")
                 self.scanRepos()
+                print(template_definition)
+                self.create_template()
             if self.config.modules and self.config.modules.cloud and len(self.config.modules.cloud):
                 self.scanCloud()
-
+                self.create_template()
         self.log(msg='', tag="Finished")
 
     # Excludes files in .git directories. Takes path of full path with filename
@@ -289,6 +306,8 @@ class Agent:
 
                 with open(git_output_file, 'w') as f:
                     f.write(json.dumps(finalArr, indent=4))
+                
+                template_definition["gitlog"] = finalArr
                 # End if not self.config.dry:
 
         if Path(git_output_file).exists():
@@ -350,6 +369,8 @@ class Agent:
 
             with open(sizes_output_file, 'w') as f:
                 f.write(json.dumps(sizes, indent=4))
+            template_definition["current_dir_size"] = sizes["files"].pop(".")
+            template_definition["sizes"] = sizes
             # End if not self.config.dry:
 
         self.upload(
@@ -369,12 +390,14 @@ class Agent:
                 with open(stats_input_file, 'w') as f:
                     f.write(json.dumps(filelist, indent=4))
 
+                template_definition["filelist"] = filelist
                 # Calling modernmetric with subprocess works, but we might want to call
                 # Modernmetric directly, ala lines 91-110 from modernmetric main
                 with open(stats_output_file, 'w') as f:
                     with open(stats_error_file, 'w') as e:
                         subprocess.check_call(["modernmetric", f"--file={stats_input_file}"], stdout=f, stderr=e, encoding='utf-8')
-
+                with open(stats_output_file, 'r') as f: 
+                    template_definition["stats"] = json.load(f)
             self.upload(
                 file=stats_output_file,
                 route="stats",
@@ -444,6 +467,7 @@ class Agent:
                         f2.write(json.dumps(
                             findings, indent=4, sort_keys=True
                         ))
+                    template_definition["gitfindings"] = findings
                 except Exception as e:
                     if not self.config.dry:
                         raise e
@@ -467,6 +491,8 @@ class Agent:
             if not self.config.dry:
                 dependencies_output_file = dependency_walk(output_file=dependencies_output_file, logger=self.log)
             self.log(msg=dependencies_output_file, tag="Dependency File", display=False)
+            with open(dependencies_output_file, "r") as f:
+                template_definition["dependencies"] = json.load(f)
             self.upload(
                 file=dependencies_output_file,
                 route="dependencies",
@@ -678,6 +704,11 @@ def main():
     agent = Agent()
     try:
         agent.scan()
+        with open(f"{agent.config.output_dir}/results.html", "w") as f:
+            jinja_env = Environment(loader=FileSystemLoader(templates_folder))
+            jinja_env.globals.update(zip=zip)
+            output = jinja_env.get_template("results.j2").render(template_definition)
+            f.write(output)
     except Exception as e:
         agent.log(msg=str(e), tag="Main Scan Error Caught")
         if agent.config.upload_logs:
