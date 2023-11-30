@@ -3,45 +3,12 @@ import os
 import subprocess
 
 from verinfast.utils.utils import DebugLog
+from verinfast.cloud.aws.get_profile import find_profile
 debugLog = DebugLog(os.getcwd())
 
 
 def runAws(targeted_account, start, end, path_to_output,
-           profile=None):
-
-    def _find_profile():
-        profiles = []
-        available_accounts = []
-        results = subprocess.run(
-            "aws configure list-profiles",
-            shell=True,
-            stdout=subprocess.PIPE
-        )
-        text = results.stdout.decode()
-
-        for line in text.splitlines():
-            profiles.append(line)
-            cmd = f"aws sts get-caller-identity --profile={line} --output=json"
-            try:
-                results = subprocess.run(
-                    cmd,
-                    shell=True,
-                    stdout=subprocess.PIPE,
-                    check=True
-                )
-            except subprocess.CalledProcessError:
-                # TODO make some log message that makes sense
-                continue
-            text = results.stdout.decode()
-            identity = json.loads(text)
-            account = identity["Account"]
-            available_accounts.append(account)
-
-            if str(account) == str(targeted_account):
-                return line
-
-        debugLog.log(msg=profiles, tag="AWS Profiles")
-        debugLog.log(msg=available_accounts, tag="AWS Available Accounts")
+           profile=None, log=debugLog.log):
 
     def _get_costs_and_usage(profile: str):
         cmd = f'''
@@ -96,12 +63,11 @@ def runAws(targeted_account, start, end, path_to_output,
         return aws_output_file
 
     if profile is None:
-        profile = _find_profile()
+        profile = find_profile(targeted_account=targeted_account, log=log)
 
     if profile is None:
-        debugLog.log(msg="No matching profiles found",
-                     tag="AWS Available Accounts")
-        return
+        log(msg="No matching profiles found",
+            tag="AWS Available Accounts")
 
     output_file = _get_costs_and_usage(profile)
     return output_file
