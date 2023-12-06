@@ -155,7 +155,7 @@ class Config(printable):
     baseUrl: str = ''
     cfg_path: str = ".verinfast.yaml"
     config = FileNotFoundError
-    corsisId: int = 0
+    scanId: int = 0
     delete_config_after = False
     # Flag to not run scans, just upload files (if shouldUpload==True)
     dry: bool = False
@@ -417,14 +417,13 @@ class Config(printable):
             with open(self.cfg_path) as f:
                 self.config = yaml.safe_load(f)
 
+            # Global Configuration
             if "baseurl" in self.config:
                 self.baseUrl = self.config["baseurl"]
-
             if "should_upload" in self.config:
                 self.shouldUpload = self.config["should_upload"]
-
-            if "run_git" in self.config:
-                self.runGit = self.config["run_git"]
+            if "dry" in self.config:
+                self.dry = self.config["dry"]
 
             if "server" in self.config:
                 s = self.config["server"]
@@ -442,18 +441,25 @@ class Config(printable):
                 elif "id" in self.config["report"]:
                     self.reportId = self.config["report"]["id"]
 
+            # Module specific configuration
             if "modules" in self.config:
                 m = self.config["modules"]
                 gm = GitModule()
                 code_modules = CodeModule(git=gm)
                 if "code" in m:
                     c = m["code"]
+                    if "run_git" in c:
+                        self.runGit = c["run_git"]
+                    if "run_scan" in c:
+                        self.runScan = c["run_scan"]
+                    if "run_sizes" in c:
+                        self.runSizes = c["run_sizes"]
+                    if "run_stats" in c:
+                        self.runStats = c["run_stats"]
                     if "git" in c:
                         g = ["git"]
                         if "start" in g:
                             gm.start = g["start"]
-                    if "dry" in c:
-                        self.dry = c["dry"]
                     if "dependencies" in c:
                         self.runDependencies = c["dependencies"]
                 cloud_modules = []
