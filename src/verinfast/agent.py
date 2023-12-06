@@ -505,7 +505,7 @@ class Agent:
         if 'repos' in self.config.config:
             repos = self.config.config["repos"]
             if repos:
-                for repo_url in repos:
+                for repo_url in [r for r in repos if len(r) > 0]:       # ignore blank lines from server
                     match = re.search("([^/]*\.git.*)", repo_url)
                     if match:
                         repo_name = match.group(1)
@@ -577,12 +577,14 @@ class Agent:
             try:
                 # Check if AWS-CLI is installed
                 if provider.provider == "aws" and self.checkDependency("aws", "AWS Command-line tool"):
+                    account_id = str(provider.account).replace('-', '')
                     aws_cost_file = runAws(
-                        targeted_account=provider.account,
+                        targeted_account=account_id,
                         start=provider.start,
                         end=provider.end,
                         profile=provider.profile,
-                        path_to_output=self.config.output_dir
+                        path_to_output=self.config.output_dir,
+                        log=self.log
                     )
                     self.log(msg=aws_cost_file, tag="AWS Costs")
                     self.upload(
@@ -591,7 +593,7 @@ class Agent:
                         source="AWS"
                     )
                     aws_instance_file = get_aws_instances(
-                        sub_id=provider.account,
+                        sub_id=account_id,
                         path_to_output=self.config.output_dir
                     )
                     self.log(msg=aws_instance_file, tag="AWS Instances")
@@ -607,7 +609,7 @@ class Agent:
                         source="AWS"
                     )
                     aws_block_file = get_aws_blocks(
-                        sub_id=provider.account,
+                        sub_id=account_id,
                         path_to_output=self.config.output_dir,
                         log=self.log
                     )
@@ -690,7 +692,7 @@ class Agent:
                 self.log(tag="ERROR", msg="Error processing provider", display=True)
                 self.log(
                     tag="ERROR PROVIDER",
-                    msg=json.dumps(provider, indent=4),
+                    msg=str(provider),
                     display=True
                 )
                 self.log(tag="ERROR", msg=e, display=True)
