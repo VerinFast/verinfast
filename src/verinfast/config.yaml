@@ -3,17 +3,20 @@
 baseurl: https://beta.startupos.dev/api/v2
 # baseurl: http://localhost:4000
 should_upload: true # Optional parameter to turn upload off or on. Default is true
-run_git: false # Optional parameter to turn git scan off or on. Default is true
+dry: true # Flag to just reupload files
+
 report:
   id: 541                         # ID to match to server records - Deprecated
   uuid: pswdofjpasodjfpoasdjfpojs # UUID to match to server records
 modules:
   code:
-    provider: corsis
     git:
       start: 2023-02-09
-    dry: true # Flag to just reupload files
     dependencies: true
+    run_git: false # Optional parameter to turn git scan off or on. Default is true
+    run_scan: false
+    run_sizes: false
+    run_stats: false
   cloud:
   - provider: azure
     account: 80dc7a6b-df94-44be-a235-7e7ade335a3c
