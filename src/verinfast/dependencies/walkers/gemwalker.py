@@ -134,6 +134,8 @@ class GemWalker(Walker):
                 self.entries.append(e)
 
     def get_license(self, name: str) -> str:
+        if name not in self.real_dependencies:
+            return ""
         version = self.real_dependencies[name]
         license = ""
         try:
