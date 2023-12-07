@@ -72,11 +72,11 @@ class Agent:
                     get_url = self.uploader.make_upload_path("scan_id", report=self.config.reportId)
                     self.log(msg=f"{self.config.baseUrl}{get_url}", tag="Report Run Id Fetch", display=True)
                     response = requestx.get(f"{self.config.baseUrl}{get_url}", headers=headers)
-                    self.corsisId = response.text.replace("'", "").replace('"', '')
-                    if self.corsisId and self.corsisId != '':
-                        self.log(msg=self.corsisId, tag="Report Run Id", display=True)
+                    self.scanId = response.text.replace("'", "").replace('"', '')
+                    if self.scanId and self.scanId != '':
+                        self.log(msg=self.scanId, tag="Report Run Id", display=True)
                     else:
-                        raise Exception(f"{self.corsisId} returned for failed report Id fetch.")
+                        raise Exception(f"{self.scanId} returned for failed report Id fetch.")
                 else:
                     print("ID only fetched for upload")
                 self.scanRepos()
@@ -151,7 +151,7 @@ class Agent:
         route = self.up(
             path_type=route,
             report=self.config.reportId,
-            code=self.corsisId,
+            code=self.scanId,
             repo_name=source
         )
 
