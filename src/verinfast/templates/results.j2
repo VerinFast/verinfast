@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <head>
+    <body>
+        {% if sizes and stats and filelist%}
+        <meta>This table shows the files scanned by the agent and the data collected.</meta>
+        <table class="table table-striped">
+            <tr>
+                <th>Name</th>
+                <th>File sizes</th>
+                <th>File stats</th>
+            </tr>
+            <tr>
+                <td>Current directory data</td>
+                <td>{{current_dir_size}}</td>
+            </tr>
+            {% for (file, file_size_data, file_stat_data) in zip(filelist|sort(attribute='path', case_sensitive=true), sizes.files.keys()|sort(case_sensitive=true), stats.files.values())%}
+                <tr>
+                    <td>{{file.name|escape}}</td>
+                    <td>{{file_size_data|escape}}</td>
+                    <td>{{file_stat_data|escape}}</td>
+                </tr>
+            {% endfor %}
+        </table>
+        {% else %}
+        {% endif %}
+        {% if gitlog %}
+        <table class="table table-striped">
+            <tr>
+                <th>Message</th>
+                <th>Author</th>
+                <th>Commit</th>
+                <th>Date</th>
+            </tr>
+            {% for commit in gitlog[:100]%}
+                <tr>
+                    <td>{{commit.message|escape}}</td>
+                    <td>{{commit.author|escape}}</td>
+                    <td>{{commit.commit|escape}}</td>
+                    <td>{{commit.date|escape}}</td>
+                </tr>
+            {% endfor %}
+        </table>
+        {% else %}
+        {% endif %}
+        {% if gitfindings %}
+        <h3>Findings</h3>
+        <table class="table table-striped">
+            <tr>
+                <th>Paths Scanned</th>
+            </tr>
+            {% for path_scanned in gitfindings.paths.scanned%}
+                <tr>
+                    <td>{{path_scanned|escape}}</td>
+                </tr>
+            {% endfor %}
+        </table>
+        <table class="table table-striped">
+            <tr>
+                <th>Results</th>
+            </tr>
+            {% for result in gitfindings.results%}
+                <tr>
+                    <td>{{result|escape}}</td>
+                </tr>
+            {% endfor %}
+        </table>
+        {% else %}
+        {% endif %}
+        {% if dependencies %}
+        <table class="table table-striped">
+            <tr>
+                <th>Name</th>
+                <th>Source</th>
+                <th>Specifier</th>
+                <th>License</th>
+                <th>Summary</th>
+            </tr>
+            {% for dependency in dependencies %}
+                <tr>
+                    <td>{{dependency.name|escape}}</td>
+                    <td>{{dependency.source|escape}}</td>
+                    <td>{{dependency.specifier|escape}}</td>
+                    <td>{{dependency.licnese|escape}}</td>
+                    <td>{{dependency.summary|escape}}</td>
+                </tr>
+            {% endfor %}
+        </table>
+        {% else %}
+        {% endif %}
+    </body>
+</html>
