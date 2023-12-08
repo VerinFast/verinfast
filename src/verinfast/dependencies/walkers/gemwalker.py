@@ -17,23 +17,27 @@ from verinfast.dependencies.walkers.classes import Walker, Entry
 class GemWalker(Walker):
     def parse(self, file: str, expand=False):
         command = f"gem install -r --explain --no-user-install --install-dir gems -g {file}"
-        results = subprocess.run(command, shell=True, stdout=subprocess.PIPE)
-        log = results.stdout.decode()
-        self.real_dependencies = {}
-        for line in log.splitlines():
-            line = line.strip()
-            if line == "Gems to install:":
-                pass
-            else:
-                split_position = line.rindex('-')
-                gem_name = line[0:split_position]
-                gem_version = line[split_position+1:]
-                self.real_dependencies[gem_name] = gem_version
+        try:
+            results = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            self.loggerFunc(msg=results.stderr.decode())
 
-        with open(file, "r") as manifest:
-            self.loggerFunc(msg=file)
-            contents = manifest.read()
-            self.loggerFunc(msg=contents+"\n\n\n")
+            log = results.stdout.decode()
+            self.real_dependencies = {}
+            for line in log.splitlines():
+                line = line.strip()
+                if line == "Gems to install:":
+                    pass
+                else:
+                    split_position = line.rindex('-')
+                    gem_name = line[0:split_position]
+                    gem_version = line[split_position+1:]
+                    self.real_dependencies[gem_name] = gem_version
+        except:  # noqa:E722
+            with open(file, "r") as manifest:
+                self.loggerFunc(msg=file)
+                contents = manifest.read()
+                self.loggerFunc(msg=contents+"\n\n\n")
+            return
 
         # Yes this is necessary
         with open(file, "r") as manifest:
@@ -56,12 +60,14 @@ class GemWalker(Walker):
                         })
                         first_source = True
                     if not first_source:
-                        raise Exception("Invalid gemfile")
+                        self.loggerFunc(msg=manifest.read() + '\n\n\n')
+                        self.loggerFunc(msg=f"Invalid gemfile {file}")
+                        return
                     if line == 'end':
                         last_source = sources[-1]
                         if do_nest == last_source["layer"]:
                             sources.pop()
-                            source = sources[-1]
+                            source = sources[-1] if sources else None
                         do_nest -= 1
 
                     if line.startswith("gem"):
@@ -108,8 +114,7 @@ class GemWalker(Walker):
                                     self.get_license(dep.name)
                                 deps.append(dep)
                     else:
-                        self.log("BAD LINE")
-                        self.log(line)
+                        pass
 
         for dep in deps:
             license = self.get_license(getattr(dep, "name"))
