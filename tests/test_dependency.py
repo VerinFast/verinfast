@@ -71,5 +71,11 @@ def test_ruby():
                 found_rubocop = True
                 assert d["specifier"] == "*"
         assert found_rubocop
+        found_aasm = False
+        for d in output:
+            if d["name"] == "aasm":
+                found_aasm = True
+                assert d["specifier"] == "*"
+        assert found_aasm
 
     return None

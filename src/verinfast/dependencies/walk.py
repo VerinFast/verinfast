@@ -25,6 +25,12 @@ ruby_matches = ["Gemfile"]
 rust_matches = ["Cargo.toml"]
 
 
+def write_file(output_file: str, entries):
+    with open(output_file, 'w') as outfile:
+        dicts = [entry.to_json() for entry in entries]
+        outfile.write(json.dumps(dicts, indent=4))
+
+
 # Finds all manifests we can process in the repo
 # and stores their path in memory
 def walk(logger, path: str = "./", output_file="./dependencies.json"):
@@ -65,18 +71,25 @@ def walk(logger, path: str = "./", output_file="./dependencies.json"):
     path = str(Path(path).absolute())
     entries: List[Entry] = []
     mavenWalker.walk(path=path)
+    logger(msg="Dependency Scan 10%", display=True)
     entries += mavenWalker.entries
+    write_file(output_file=output_file, entries=entries)
     nodeWalker.initialize(root_path=path)
+    logger(msg="Dependency Scan 25%", display=True)
     entries += nodeWalker.entries
+    write_file(output_file=output_file, entries=entries)
     nugetWalker.initialize()
+    logger(msg="Dependency Scan 40%", display=True)
     nugetWalker.walk(path=path)
     entries += nugetWalker.entries
+    write_file(output_file=output_file, entries=entries)
     py_walker.walk(path=path)
+    logger(msg="Dependency Scan 60%", display=True)
     entries += py_walker.entries
     gem_walker.walk(path=path)
+    logger(msg="Dependency Scan 80%", display=True)
     entries += gem_walker.entries
+    write_file(output_file=output_file, entries=entries)
+    logger(msg="Dependency Scan 100%", display=True)
 
-    with open(output_file, 'w') as outfile:
-        dicts = [entry.to_json() for entry in entries]
-        outfile.write(json.dumps(dicts, indent=4))
     return output_file

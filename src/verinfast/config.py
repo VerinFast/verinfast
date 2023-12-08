@@ -157,6 +157,7 @@ class Config(printable):
     config = FileNotFoundError
     scanId: int = 0
     delete_config_after = False
+    delete_temp = True
     # Flag to not run scans, just upload files (if shouldUpload==True)
     dry: bool = False
     local_scan_path: str = "./"
@@ -424,6 +425,8 @@ class Config(printable):
                 self.shouldUpload = self.config["should_upload"]
             if "dry" in self.config:
                 self.dry = self.config["dry"]
+            if "delete_temp" in self.config:
+                self.delete_temp = self.config["delete_temp"]
 
             if "server" in self.config:
                 s = self.config["server"]
