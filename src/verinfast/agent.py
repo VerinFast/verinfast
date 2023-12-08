@@ -153,7 +153,7 @@ class Agent:
         if not self.config.shouldUpload:
             self.log(
                 msg='Skipping Uploads',
-                tag=f"Skipping uploading {file} for {source} to {self.config.baseUrl}{route}.",
+                tag=f"Skipping uploading {file} for {source} to {self.config.baseUrl}/{route}.",
                 display=True
             )
             return True
@@ -540,7 +540,7 @@ class Agent:
                         self.log(tag="", msg=traceback.format_exc())
 
                     os.chdir(curr_dir)
-                    if not self.config.dry:
+                    if not self.config.dry and self.config.delete_temp:
                         shutil.rmtree(temp_dir)
             else:
                 self.log(msg='', tag="No remote repos", display=True)
