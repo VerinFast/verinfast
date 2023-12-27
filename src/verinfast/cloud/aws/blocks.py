@@ -4,7 +4,7 @@ import json
 import os
 
 import boto3
-import botocore
+import botocore.exceptions
 
 import verinfast.cloud.aws.regions as r
 
@@ -14,8 +14,6 @@ regions = r.regions
 def getBlocks(sub_id: str, log, path_to_output: str = "./"):
     session = boto3.Session()
     profiles = session.available_profiles
-    import botocore.exceptions
-
     right_session = None
     for profile in profiles:
         s2 = boto3.Session(profile_name=profile)
