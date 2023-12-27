@@ -4,6 +4,7 @@ import json
 import os
 
 import boto3
+import botocore
 
 import verinfast.cloud.aws.regions as r
 
@@ -13,11 +14,16 @@ regions = r.regions
 def getBlocks(sub_id: str, log, path_to_output: str = "./"):
     session = boto3.Session()
     profiles = session.available_profiles
+    import botocore.exceptions
+
     right_session = None
     for profile in profiles:
         s2 = boto3.Session(profile_name=profile)
         sts = s2.client('sts')
-        id = sts.get_caller_identity()
+        try:
+            id = sts.get_caller_identity()
+        except botocore.exceptions.ClientError:
+            continue
         if int(id['Account']) == int(sub_id):
             right_session = s2
             break
