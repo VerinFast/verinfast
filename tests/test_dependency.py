@@ -79,3 +79,18 @@ def test_ruby():
         assert found_aasm
 
     return None
+
+def test_python():
+    output_path = walk(
+        path=test_folder,
+        output_file="./dependencies.json",
+        logger=logger
+    )
+    with open(output_path) as output_file:
+        output = json.load(output_file)
+        assert len(output) >= 1
+        first_dep = output[0]
+        print(f"First dependency is: {first_dep}")
+
+    return None
+
