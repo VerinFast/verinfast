@@ -65,18 +65,18 @@ def test_ruby():
         first_dep = output[0]
         e = Entry(**first_dep)
         assert e.license == "ISC"
-        found_rubocop = False
+        found_azure_identity = False
         for d in output:
             if d["name"] == "rubocop-ast":
-                found_rubocop = True
+                found_azure_identity = True
                 assert d["specifier"] == "*"
-        assert found_rubocop
-        found_aasm = False
+        assert found_azure_identity
+        found_azure_core = False
         for d in output:
             if d["name"] == "aasm":
-                found_aasm = True
+                found_azure_core = True
                 assert d["specifier"] == "*"
-        assert found_aasm
+        assert found_azure_core
 
     return None
 
@@ -90,7 +90,20 @@ def test_python():
         output = json.load(output_file)
         assert len(output) >= 1
         first_dep = output[0]
-        print(f"First dependency is: {first_dep}")
+        e = Entry(**first_dep)
+        assert e.license == "ISC"
+        found_azure_identity= False
+        for d in output:
+            if d["name"] == "azure-identity":
+                found_azure_identity = True
+                assert d["source"] == "pip"
+        assert found_azure_identity
+        found_azure_core = False
+        for d in output:
+            if d["name"] == "azure-core":
+                found_azure_core = True
+                assert d["source"] == "pip"
+        assert found_azure_core
 
     return None
 

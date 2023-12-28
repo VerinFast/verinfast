@@ -6,7 +6,7 @@ Walkers are functions that descend a file tree and find and parse manifests in a
 Ideally one for every manifest type.
 
 ## What's a manifest type? Is that a language?
-No. Manifest types are like Gradle or Maven, as opposed to Java.
+No. Manifest types are files associated with build or software management packages. Think of the Gradle's build.gradle or Maven's pom.xml, as opposed to Java.
 
 ## Does a manifest need to have a central repository like Maven or PyPi?
 No, although a `walker` may use a central repository to fetch supplementary data about a dependency listed in a manifest. For example, the npm walker installs all dependencies from the central repository, then reads the license string. This allows for capturing the whole dependency tree at once.
