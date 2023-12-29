@@ -92,7 +92,7 @@ def get_metrics_for_instance(sub_id: str, instance_name: str) -> List[Datum]:
                             results_dict[d] = {}
                         if m not in results_dict[d]:
                             results_dict[d][m] = {}
-                        results_dict[d][m][a] = point.value.double_value
+                        results_dict[d][m][a] = point.value.double_value * 100
                         results_dict[d]["t"] = \
                             point.interval.start_time.timestamp()
             except NotFound:
