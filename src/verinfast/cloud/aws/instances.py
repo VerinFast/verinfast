@@ -152,7 +152,10 @@ def get_instances(sub_id: int, path_to_output: str = "./") -> str | None:
     for profile in profiles:
         s2 = boto3.Session(profile_name=profile)
         sts = s2.client('sts')
-        id = sts.get_caller_identity()
+        try:
+            id = sts.get_caller_identity()
+        except botocore.exceptions.ClientError:
+            continue
         if str(id['Account']) == str(sub_id):
             right_session = s2
             break
