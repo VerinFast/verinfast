@@ -80,6 +80,7 @@ def test_ruby():
 
     return None
 
+
 def test_python():
     output_path = walk(
         path=test_folder,
@@ -92,7 +93,7 @@ def test_python():
         first_dep = output[0]
         e = Entry(**first_dep)
         assert e.license == "ISC"
-        found_azure_identity= False
+        found_azure_identity = False
         for d in output:
             if d["name"] == "azure-identity":
                 found_azure_identity = True
@@ -106,4 +107,3 @@ def test_python():
         assert found_azure_core
 
     return None
-
