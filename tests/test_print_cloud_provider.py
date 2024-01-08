@@ -1,16 +1,11 @@
-import json
 from unittest.mock import patch
-import os
 from pathlib import Path
-import shutil
 
 from verinfast.agent import Agent
 from verinfast.config import Config
-from verinfast.upload import Uploader
-from verinfast.utils.utils import DebugLog
 
 
-def print_cloud(config_file:str):
+def print_cloud(config_file: str):
     file_path = Path(__file__)
     test_folder = file_path.parent.absolute()
     agent = Agent()
@@ -24,17 +19,20 @@ def print_cloud(config_file:str):
     for provider in agent.config.modules.cloud:
         print(provider)
 
+
 @patch('verinfast.user.__get_input__', return_value='y')
 def test_gcp(self):
     config_file = "gcp_conf.yaml"
     print_cloud(config_file=config_file)
     assert True
 
+
 @patch('verinfast.user.__get_input__', return_value='y')
 def test_aws(self):
     config_file = "aws_conf.yaml"
     print_cloud(config_file=config_file)
     assert True
+
 
 @patch('verinfast.user.__get_input__', return_value='y')
 def test_aws_dash(self):
