@@ -1,0 +1,17 @@
+# This is a sample config for test runs
+baseurl: https://beta.startupos.dev/api/v2
+should_upload: false
+report:
+  uuid: 9a6e8696-f93a-4402-a64e-342ccb37592b # UUID to match to server records
+modules:
+  code:
+    git:
+      start: 2023-12-09
+    run_scan: false
+    run_sizes: false
+    run_stats: false
+    dependencies: true
+repos:
+   - https://github.com/pypa/pipenv.git
+
+delete_temp: true
