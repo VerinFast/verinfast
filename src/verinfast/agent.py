@@ -344,7 +344,7 @@ class Agent:
                     "env": machine,
                     "real_size": real_size,
                     "uname": system,
-                    "branch": branch
+                    "branch": branch if branch else None
                 }
             }
 
