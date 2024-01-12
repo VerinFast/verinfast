@@ -343,7 +343,8 @@ class Agent:
                 "metadata": {
                     "env": machine,
                     "real_size": real_size,
-                    "uname": system
+                    "uname": system,
+                    "branch": locals()['branch'] if "branch" in locals() else None
                 }
             }
 
