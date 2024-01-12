@@ -33,3 +33,4 @@ def test_no_config(self):
     agent.scan()
     assert Path(results_dir).exists()
     assert results_dir.joinpath("results.html").exists()
+

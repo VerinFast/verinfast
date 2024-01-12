@@ -46,7 +46,8 @@ release = uname.release
 version = uname.version
 machine = uname.machine
 
-template_definintion = {}
+
+template_definition = {}
 
 file_path = Path(__file__)
 parent_folder = file_path.parent.absolute()
@@ -306,8 +307,7 @@ class Agent:
 
                 with open(git_output_file, 'w') as f:
                     f.write(json.dumps(finalArr, indent=4))
-
-                template_definintion["gitlog"] = finalArr
+                template_definition["gitlog"] = finalArr
                 # End if not self.config.dry:
 
         if Path(git_output_file).exists():
@@ -391,7 +391,7 @@ class Agent:
                 with open(stats_input_file, 'w') as f:
                     f.write(json.dumps(filelist, indent=4))
 
-                template_definintion["filelist"] = filelist
+                template_definition["filelist"] = filelist
                 # Calling modernmetric with subprocess works, but we might want to call
                 # Modernmetric directly, ala lines 91-110 from modernmetric main
                 with open(stats_output_file, 'w') as f:
@@ -494,7 +494,7 @@ class Agent:
                 with open(dependencies_output_file, "r") as f:
                     template_definition["dependencies"] = json.load(f)
             self.log(msg=dependencies_output_file, tag="Dependency File", display=False)
-            template_definintion["dependencies"] = json.load(dependencies_output_file)
+            template_definition["dependencies"] = json.load(dependencies_output_file)
             self.upload(
                 file=dependencies_output_file,
                 route="dependencies",
