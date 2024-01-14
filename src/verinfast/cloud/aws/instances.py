@@ -216,13 +216,14 @@ def get_instances(sub_id: int, path_to_output: str = "./") -> str | None:
                             result["publicIp"] = instance['PublicIpAddress']
                         else:
                             result["publicIp"] = 'n/a'
-                        ni = instance["NetworkInterfaces"]
-                        for interface in ni:
-                            if 'Association' in interface:
-                                association = interface['Association']
-                                if 'PublicIp' in association:
-                                    public_ip = association['PublicIp']
-                                    result["publicIp"] = public_ip
+                        if "NetworkInterfaces" in instance:
+                            ni = instance["NetworkInterfaces"]
+                            for interface in ni:
+                                if 'Association' in interface:
+                                    association = interface['Association']
+                                    if 'PublicIp' in association:
+                                        public_ip = association['PublicIp']
+                                        result["publicIp"] = public_ip
                         my_instances.append(result)
         except botocore.exceptions.ClientError:
             pass
