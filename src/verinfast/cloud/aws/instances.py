@@ -195,18 +195,24 @@ def get_instances(sub_id: int, path_to_output: str = "./") -> str | None:
                             if 'AvailabilityZone' in placement:
                                 zone = placement['AvailabilityZone']
                                 region = zone[0:-1]
-                        result = {
-                            "id": instance["InstanceId"],
-                            "name": name,
-                            "state": instance["State"]["Name"],
-                            "type": instance['InstanceType'],
-                            "zone": zone,
-                            "region": region,
-                            "subnet": subnet_id,
-                            "architecture": instance['Architecture'],
-                            "vpc": instance['VpcId'],
-                        }
-                        if "PublicIpAddress" in result:
+                        try:
+                            result = {
+                                "id": instance["InstanceId"],
+                                "name": name,
+                                "state": instance["State"]["Name"],
+                                "type": instance['InstanceType'],
+                                "zone": zone,
+                                "region": region,
+                                "subnet": subnet_id,
+                                "architecture": instance['Architecture']
+                            }
+                        except KeyError:
+                            continue
+                        if "VpcId" in instance:
+                            result["vpc"] = instance['VpcId']
+                        else:
+                            result["vpc"] = 'n/a'
+                        if "PublicIpAddress" in instance:
                             result["publicIp"] = instance['PublicIpAddress']
                         else:
                             result["publicIp"] = 'n/a'
