@@ -87,52 +87,55 @@ def get_instances(sub_id: str, path_to_output: str = "./"):
     res = client.virtual_machines.list_all()
     print(my_instances)
     for vm in res:
-        s = vm.storage_profile.os_disk.managed_disk.id
-        tgt = s.split('resourceGroups/')[1]
-        tgt = tgt.split('/')[0]
-        name = vm.name
-        location = vm.location
-        hw = vm.hardware_profile.vm_size
-        iv = client.virtual_machines.instance_view(
-                vm_name=name,
-                resource_group_name=tgt
-            )
-        status = iv.statuses[-1]
-        network_interface = vm.network_profile.network_interfaces[0]
-        nic_name = network_interface.id.split("networkInterfaces/")[1]
-        nics = networkClient.network_interface_ip_configurations.list(
-                resource_group_name=tgt,
-                network_interface_name=nic_name
-            )
-        subnet = ""
-        public_ip = "n/a"
-        for nic in nics:
-            subnet = nic.subnet.name
-            vnet_name = nic.subnet.id.split('/')[-3]
-            if (
-                hasattr(nic, "public_ip_address") and
-                hasattr(nic.public_ip_address, "ip_address")
-            ):
-                public_ip_name = nic.public_ip_address.id.split('/')[-1]
-                pi = networkClient.public_ip_addresses.get(tgt, public_ip_name)
-                public_ip = pi.ip_address
-        architecture = "x86_64"
+        try:
+            s = vm.storage_profile.os_disk.managed_disk.id
+            tgt = s.split('resourceGroups/')[1]
+            tgt = tgt.split('/')[0]
+            name = vm.name
+            location = vm.location
+            hw = vm.hardware_profile.vm_size
+            iv = client.virtual_machines.instance_view(
+                    vm_name=name,
+                    resource_group_name=tgt
+                )
+            status = iv.statuses[-1]
+            network_interface = vm.network_profile.network_interfaces[0]
+            nic_name = network_interface.id.split("networkInterfaces/")[1]
+            nics = networkClient.network_interface_ip_configurations.list(
+                    resource_group_name=tgt,
+                    network_interface_name=nic_name
+                )
+            subnet = ""
+            public_ip = "n/a"
+            for nic in nics:
+                subnet = nic.subnet.name
+                vnet_name = nic.subnet.id.split('/')[-3]
+                if (
+                    hasattr(nic, "public_ip_address") and
+                    hasattr(nic.public_ip_address, "ip_address")
+                ):
+                    public_ip_name = nic.public_ip_address.id.split('/')[-1]
+                    pi = networkClient.public_ip_addresses.get(tgt, public_ip_name)  # noqa: E501
+                    public_ip = pi.ip_address
+            architecture = "x86_64"
 
-        if "D2p" in hw or "E2p" in hw:
-            architecture = "Arm"
+            if "D2p" in hw or "E2p" in hw:
+                architecture = "Arm"
 
-        my_instance = {
-            "id": vm.id,
-            "name": name,
-            "type": hw,
-            "state": status.display_status,
-            "zone": vm.zones[0] if vm.zones else None,
-            "region": location,
-            "subnet": subnet,
-            "architecture": architecture,
-            "publicIp": public_ip,
-            "vpc": vnet_name
-        }
+            my_instance = {
+                "id": vm.id,
+                "name": name,
+                "type": hw,
+                "state": status.display_status,
+                "zone": vm.zones[0] if vm.zones else None,
+                "region": location,
+                "subnet": subnet,
+                "architecture": architecture,
+                "publicIp": public_ip,
+                "vpc": vnet_name
+            }
+        except KeyError:
+            continue
         my_instances.append(my_instance)
         m = get_metrics_for_instance(
             metrics_client=metrics_client,

@@ -130,41 +130,44 @@ def get_instances(sub_id: str, path_to_output: str = "./"):
     instances_client = compute_v1.InstancesClient()
     for zone in zones:
         for instance in instances_client.list(project=sub_id, zone=zone):
-            name = instance.name
-            architecture = instance.disks[0].architecture
-            hw = instance.machine_type
-            state = instance.status
-            region = zone[0:-3]
-            z = zone[-1:]
-            nic = instance.network_interfaces[0]
-            subnet = nic.subnetwork
-            public_ip = "n/a"
-            if nic.access_configs:
-                public_ip = nic.access_configs[0].nat_i_p
-            vnet_name = nic.network
+            try:
+                name = instance.name
+                architecture = instance.disks[0].architecture
+                hw = instance.machine_type
+                state = instance.status
+                region = zone[0:-3]
+                z = zone[-1:]
+                nic = instance.network_interfaces[0]
+                subnet = nic.subnetwork
+                public_ip = "n/a"
+                if nic.access_configs:
+                    public_ip = nic.access_configs[0].nat_i_p
+                vnet_name = nic.network
 
-            m = get_metrics_for_instance(
-                sub_id=sub_id,
-                instance_name=name
-            )
-            d = {
+                m = get_metrics_for_instance(
+                    sub_id=sub_id,
+                    instance_name=name
+                )
+                d = {
+                        "id": str(instance.id),
+                        "metrics": [metric.dict for metric in m]
+                    }
+                metrics.append(d)
+
+                my_instance = {
                     "id": str(instance.id),
-                    "metrics": [metric.dict for metric in m]
+                    "name": name,
+                    "type": hw.split("/")[-1],
+                    "state": state,
+                    "zone": z,
+                    "region": region,
+                    "subnet": subnet.split("/")[-1],
+                    "architecture": architecture,
+                    "publicIp": public_ip,
+                    "vpc": vnet_name.split("/")[-1]
                 }
-            metrics.append(d)
-
-            my_instance = {
-                "id": str(instance.id),
-                "name": name,
-                "type": hw.split("/")[-1],
-                "state": state,
-                "zone": z,
-                "region": region,
-                "subnet": subnet.split("/")[-1],
-                "architecture": architecture,
-                "publicIp": public_ip,
-                "vpc": vnet_name.split("/")[-1]
-            }
+            except KeyError:
+                continue
             my_instances.append(my_instance)
     # for network in networks_client.list(project=sub_id):
     #     print(network)
