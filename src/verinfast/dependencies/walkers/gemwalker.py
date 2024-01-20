@@ -34,6 +34,7 @@ class GemWalker(Walker):
                     self.real_dependencies[gem_name] = gem_version
         except:  # noqa:E722
             with open(file, "r") as manifest:
+                self.loggerFunc(msg="Failed to parse Gemfile")
                 self.loggerFunc(msg=file)
                 contents = manifest.read()
                 self.loggerFunc(msg=contents+"\n\n\n")
@@ -53,21 +54,28 @@ class GemWalker(Walker):
                     if line.endswith(" do"):
                         do_nest += 1
                     if line.startswith("source"):
-                        source = line.split()[1].replace('"', "")
+                        source = line.split()[1].replace('"', "").replace("'", "")
                         sources.append({
                             "source": source,
                             "layer": do_nest
                         })
                         first_source = True
-                    if not first_source:
+                    if not first_source and not line.startswith("ruby"):
                         self.loggerFunc(msg=manifest.read() + '\n\n\n')
                         self.loggerFunc(msg=f"Invalid gemfile {file}")
                         return
                     if line == 'end':
+                        if len(sources) == 0:
+                            self.loggerFunc(msg=manifest.read() + '\n\n\n')
+                            self.loggerFunc(msg=f"Invalid gemfile {file}")
+                            return
                         last_source = sources[-1]
                         if do_nest == last_source["layer"]:
                             sources.pop()
-                            source = sources[-1] if sources else None
+                            if len(sources) > 0:
+                                source = sources[-1]["source"]
+                            else:
+                                source = None
                         do_nest -= 1
 
                     if line.startswith("gem"):
