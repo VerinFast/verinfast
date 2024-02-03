@@ -77,6 +77,15 @@ def test_ruby():
                 found_azure_core = True
                 assert d["specifier"] == "*"
         assert found_azure_core
+        found_bad_source_type = False
+        found_source_single_quote = False
+        for d in output:
+            if type(d["source"]) is dict:
+                found_bad_source_type = True
+            elif d["source"].find("'") != -1:
+                found_source_single_quote = True
+        assert not found_bad_source_type
+        assert not found_source_single_quote
 
     return None
 
