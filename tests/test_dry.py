@@ -30,7 +30,7 @@ def test_no_config(self):
     agent.config.shouldUpload = True
     agent.debug = DebugLog(path=agent.config.output_dir, debug=False)
     agent.log = agent.debug.log
-    print(agent.debug.logFile)
+    agent.uploader.config = config.upload_config
     agent.scan()
     assert Path(results_dir).exists()
     files = os.listdir(results_dir)
