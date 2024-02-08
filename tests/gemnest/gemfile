@@ -1,0 +1,5 @@
+# Gemfile_B
+
+# Additional gems for Gemfile A
+gem 'devise', '4.8.1'
+gem 'carrierwave', '2.1.0'
