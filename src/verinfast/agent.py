@@ -584,7 +584,8 @@ class Agent:
                         end=provider.end,
                         profile=provider.profile,
                         path_to_output=self.config.output_dir,
-                        log=self.log
+                        log=self.log,
+                        dry=self.config.dry
                     )
                     self.log(msg=aws_cost_file, tag="AWS Costs")
                     self.upload(
@@ -594,7 +595,8 @@ class Agent:
                     )
                     aws_instance_file = get_aws_instances(
                         sub_id=account_id,
-                        path_to_output=self.config.output_dir
+                        path_to_output=self.config.output_dir,
+                        dry=self.config.dry
                     )
                     self.log(msg=aws_instance_file, tag="AWS Instances")
                     self.upload(
@@ -611,7 +613,8 @@ class Agent:
                     aws_block_file = get_aws_blocks(
                         sub_id=account_id,
                         path_to_output=self.config.output_dir,
-                        log=self.log
+                        log=self.log,
+                        dry=self.config.dry
                     )
                     self.log(msg=aws_block_file, tag="AWS Storage")
                     self.upload(
@@ -626,7 +629,8 @@ class Agent:
                         subscription_id=provider.account,
                         start=provider.start,
                         end=provider.end,
-                        path_to_output=self.config.output_dir
+                        path_to_output=self.config.output_dir,
+                        dry=self.config.dry
                     )
                     self.log(msg=azure_cost_file, tag="Azure Costs")
                     self.upload(
@@ -636,7 +640,8 @@ class Agent:
                     )
                     azure_instance_file = get_az_instances(
                         sub_id=provider.account,
-                        path_to_output=self.config.output_dir
+                        path_to_output=self.config.output_dir,
+                        dry=self.config.dry
                     )
                     self.log(msg=azure_instance_file, tag="Azure instances")
                     self.upload(
@@ -652,7 +657,8 @@ class Agent:
                     )
                     azure_block_file = get_az_blocks(
                         sub_id=provider.account,
-                        path_to_output=self.config.output_dir
+                        path_to_output=self.config.output_dir,
+                        dry=self.config.dry
                     )
                     self.log(msg=azure_block_file, tag="Azure Storage")
                     self.upload(
@@ -664,7 +670,8 @@ class Agent:
                 if provider.provider == "gcp" and self.checkDependency("gcloud", "Google Command-line tool"):
                     gcp_instance_file = get_gcp_instances(
                         sub_id=provider.account,
-                        path_to_output=self.config.output_dir
+                        path_to_output=self.config.output_dir,
+                        dry=self.config.dry
                     )
                     self.log(msg=gcp_instance_file, tag="GCP instances")
                     self.upload(
@@ -680,7 +687,8 @@ class Agent:
                     )
                     gcp_block_file = get_gcp_blocks(
                         sub_id=provider.account,
-                        path_to_output=self.config.output_dir
+                        path_to_output=self.config.output_dir,
+                        dry=self.config.dry
                     )
                     self.log(msg=gcp_block_file, tag="GCP Storage")
                     self.upload(
