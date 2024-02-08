@@ -584,7 +584,8 @@ class Agent:
                         end=provider.end,
                         profile=provider.profile,
                         path_to_output=self.config.output_dir,
-                        log=self.log
+                        log=self.log,
+                        dry=self.config.dry
                     )
                     self.log(msg=aws_cost_file, tag="AWS Costs")
                     self.upload(
@@ -594,7 +595,8 @@ class Agent:
                     )
                     aws_instance_file = get_aws_instances(
                         sub_id=account_id,
-                        path_to_output=self.config.output_dir
+                        path_to_output=self.config.output_dir,
+                        dry=self.config.dry
                     )
                     self.log(msg=aws_instance_file, tag="AWS Instances")
                     self.upload(
@@ -611,7 +613,8 @@ class Agent:
                     aws_block_file = get_aws_blocks(
                         sub_id=account_id,
                         path_to_output=self.config.output_dir,
-                        log=self.log
+                        log=self.log,
+                        dry=self.config.dry
                     )
                     self.log(msg=aws_block_file, tag="AWS Storage")
                     self.upload(
