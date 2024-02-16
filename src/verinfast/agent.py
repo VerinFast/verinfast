@@ -18,6 +18,7 @@ from verinfast.utils.utils import DebugLog, std_exec, trimLineBreaks, escapeChar
 from verinfast.upload import Uploader
 
 from verinfast.cloud.aws.costs import runAws
+from verinfast.cloud.aws.get_profile import find_profile
 from verinfast.cloud.azure.costs import runAzure
 from verinfast.cloud.aws.instances import get_instances as get_aws_instances
 from verinfast.cloud.azure.instances import get_instances as get_az_instances
@@ -26,7 +27,7 @@ from verinfast.cloud.aws.blocks import getBlocks as get_aws_blocks
 from verinfast.cloud.azure.blocks import getBlocks as get_az_blocks
 from verinfast.cloud.gcp.blocks import getBlocks as get_gcp_blocks
 from verinfast.config import Config
-from verinfast.user import initial_prompt, save_path
+from verinfast.user import initial_prompt, save_path, __get_input__
 
 from verinfast.dependencies.walk import walk as dependency_walk
 
@@ -65,6 +66,7 @@ class Agent:
         self.up = self.uploader.make_upload_path
         self.config.upload_logs = initial_prompt()
         self.directory = save_path()
+        
 
     def create_template(self):
         if not self.config.dry:
@@ -499,6 +501,62 @@ class Agent:
                 source=repo_name
             )
 
+        
+    def preflight(self):
+        # Loop over all remote repositories from config file
+        if 'repos' in self.config.config:
+            repos = self.config.config["repos"]
+            if repos:
+                for repo_url in [r for r in repos if len(r) > 0]:       # ignore blank lines from server
+                    match = re.search("([^/]*\.git.*)", repo_url)
+                    if match:
+                        repo_name = match.group(1)
+                    else:
+                        repo_name = repo_url.rsplit('/', 1)[-1]
+                    if "@" in repo_name and re.search("^.*@.*\..*:", repo_url):
+                        repo_url = "@".join(repo_url.split("@")[0:2])
+                    elif "@" in repo_name:
+                        repo_url = repo_url.split("@")[0]
+                    try:
+                        subprocess.check_output(["git", "ls-remote", repo_url, temp_dir])
+                    except subprocess.CalledProcessError:
+                        self.log(msg=repo_url, tag=f"Unable to access", display=True)
+                        self.log(msg=repo_url, tag=f"Repository will not be scanned", display=True)
+
+            if cloud_config is not None:
+                for provider in cloud_config:
+                    try:
+                        if provider.provider == "aws" and self.checkDependency("aws", "AWS Command-line tool"):
+                            account_id = str(provider.account).replace('-', '')
+                            find_profile(account_id, self.log)
+                            self.log(tag="Access confirmed", msg=account_id, display=true)
+                        if provider.provider == "azure" and self.checkDependency("az", "Azure Command-line tool"):
+                            pass
+                        if provider.provider == "gcp" and self.checkDependency("gcloud", "Google Command-line tool"):
+                            pass
+                    except Exception as e:
+                        self.log(tag="", msg="", display=true)
+                        
+                repeat_prompt = "(Y)/n\n"
+                print("Would you like to proceed with the scan?")
+                resp = __get_input__(repeat_prompt)
+                print()
+                if resp:
+                    resp_char = resp[0]
+                else:
+                    resp_char = 'y'
+                while resp_char.lower() not in ['y', 'n']:
+                    resp = __get_input__(repeat_prompt)
+                    if resp:
+                        resp_char = resp[0]
+                    else:
+                        resp_char = 'y'
+                if resp_char.lower() == 'y':
+                    self.log(msg="Proceeding")
+                else:
+                    self.log(tag="Exiting now", msg="", display=true)
+                    exit(0)
+                        
     # ##### Scan Repos ######
     def scanRepos(self):
         # Loop over all remote repositories from config file
@@ -713,6 +771,7 @@ class Agent:
 def main():
     agent = Agent()
     try:
+        agent.preflight()
         agent.scan()
         # with open(f"{agent.config.output_dir}/results.html", "w") as f:
         #     jinja_env = Environment(loader=FileSystemLoader(templates_folder))
