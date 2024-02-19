@@ -518,24 +518,28 @@ class Agent:
                     elif "@" in repo_name:
                         repo_url = repo_url.split("@")[0]
                     try:
+                        curr_dir = os.getcwd()
+                        temp_dir = os.path.join(curr_dir, "temp_repo")
                         subprocess.check_output(["git", "ls-remote", repo_url, temp_dir])
+                        self.log(tag="Access confirmed", msg=repo_url, display=True)
                     except subprocess.CalledProcessError:
                         self.log(msg=repo_url, tag=f"Unable to access", display=True)
                         self.log(msg=repo_url, tag=f"Repository will not be scanned", display=True)
 
+            cloud_config = self.config.modules.cloud
             if cloud_config is not None:
                 for provider in cloud_config:
                     try:
                         if provider.provider == "aws" and self.checkDependency("aws", "AWS Command-line tool"):
                             account_id = str(provider.account).replace('-', '')
                             find_profile(account_id, self.log)
-                            self.log(tag="Access confirmed", msg=account_id, display=true)
+                            self.log(tag="Access confirmed", msg=account_id, display=True)
                         if provider.provider == "azure" and self.checkDependency("az", "Azure Command-line tool"):
                             pass
                         if provider.provider == "gcp" and self.checkDependency("gcloud", "Google Command-line tool"):
                             pass
                     except Exception as e:
-                        self.log(tag="", msg="", display=true)
+                        self.log(tag="", msg="", display=True)
                         
                 repeat_prompt = "(Y)/n\n"
                 print("Would you like to proceed with the scan?")
@@ -554,7 +558,7 @@ class Agent:
                 if resp_char.lower() == 'y':
                     self.log(msg="Proceeding")
                 else:
-                    self.log(tag="Exiting now", msg="", display=true)
+                    self.log(tag="Exiting now", msg="", display=True)
                     exit(0)
                         
     # ##### Scan Repos ######
