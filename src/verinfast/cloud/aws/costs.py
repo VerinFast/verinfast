@@ -18,6 +18,7 @@ def runAws(targeted_account, start, end, path_to_output,
             --metrics "BlendedCost" \
             --group-by Type=DIMENSION,Key=SERVICE \
             --profile={profile} \
+            --no-paginate \
             --output=json | cat
         '''
 
