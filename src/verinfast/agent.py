@@ -66,7 +66,6 @@ class Agent:
         self.up = self.uploader.make_upload_path
         self.config.upload_logs = initial_prompt()
         self.directory = save_path()
-        
 
     def create_template(self):
         if not self.config.dry:
@@ -501,7 +500,6 @@ class Agent:
                 source=repo_name
             )
 
-        
     def preflight(self):
         # Loop over all remote repositories from config file
         if 'repos' in self.config.config:
@@ -523,8 +521,8 @@ class Agent:
                         subprocess.check_output(["git", "ls-remote", repo_url, temp_dir])
                         self.log(tag="Access confirmed", msg=repo_url, display=True)
                     except subprocess.CalledProcessError:
-                        self.log(msg=repo_url, tag=f"Unable to access", display=True)
-                        self.log(msg=repo_url, tag=f"Repository will not be scanned", display=True)
+                        self.log(msg=repo_url, tag="Unable to access", display=True)
+                        self.log(msg=repo_url, tag="Repository will not be scanned", display=True)
 
             cloud_config = self.config.modules.cloud
             if cloud_config is not None:
@@ -538,9 +536,9 @@ class Agent:
                             pass
                         if provider.provider == "gcp" and self.checkDependency("gcloud", "Google Command-line tool"):
                             pass
-                    except Exception as e:
-                        self.log(tag="", msg="", display=True)
-                        
+                    except:
+                        self.log(msg=f"Unable to access {provider.provider} {provider.account}", tag="Unable to access", display=True)
+
                 repeat_prompt = "(Y)/n\n"
                 print("Would you like to proceed with the scan?")
                 resp = __get_input__(repeat_prompt)
@@ -560,7 +558,7 @@ class Agent:
                 else:
                     self.log(tag="Exiting now", msg="", display=True)
                     exit(0)
-                        
+
     # ##### Scan Repos ######
     def scanRepos(self):
         # Loop over all remote repositories from config file
