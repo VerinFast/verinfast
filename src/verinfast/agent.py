@@ -18,6 +18,7 @@ from verinfast.utils.utils import DebugLog, std_exec, trimLineBreaks, escapeChar
 from verinfast.upload import Uploader
 
 from verinfast.cloud.aws.costs import runAws
+from verinfast.cloud.aws.get_profile import find_profile
 from verinfast.cloud.azure.costs import runAzure
 from verinfast.cloud.aws.instances import get_instances as get_aws_instances
 from verinfast.cloud.azure.instances import get_instances as get_az_instances
@@ -26,7 +27,7 @@ from verinfast.cloud.aws.blocks import getBlocks as get_aws_blocks
 from verinfast.cloud.azure.blocks import getBlocks as get_az_blocks
 from verinfast.cloud.gcp.blocks import getBlocks as get_gcp_blocks
 from verinfast.config import Config
-from verinfast.user import initial_prompt, save_path
+from verinfast.user import initial_prompt, save_path, __get_input__
 
 from verinfast.dependencies.walk import walk as dependency_walk
 
@@ -503,9 +504,90 @@ class Agent:
             )
 
     def handleRemoveReadonly(_agent, func, path, _exp):
+        print("Would you like to delete the following path?")
         print(path)
-        os.chmod(path, stat.S_IWRITE)
-        func(path)
+        print("temp_repo is a folder created by VerinFast")
+        repeat_prompt = "y/(n)\n"
+        
+        resp = __get_input__(repeat_prompt)
+        print()
+        if resp:
+            resp_char = resp[0]
+        else:
+            resp_char = 'y'
+        while resp_char.lower() not in ['y', 'n']:
+            resp = __get_input__(repeat_prompt)
+            if resp:
+                resp_char = resp[0]
+            else:
+                resp_char = 'n'
+        if resp_char.lower() == 'y':
+            self.log(msg="Proceeding")
+            os.chmod(path, stat.S_IWRITE)
+            func(path)
+        else:
+            self.log(tag="Exiting now", msg="", display=True)
+        
+
+        
+    def preflight(self):
+        # Loop over all remote repositories from config file
+        if 'repos' in self.config.config:
+            repos = self.config.config["repos"]
+            if repos:
+                for repo_url in [r for r in repos if len(r) > 0]:       # ignore blank lines from server
+                    match = re.search("([^/]*\.git.*)", repo_url)
+                    if match:
+                        repo_name = match.group(1)
+                    else:
+                        repo_name = repo_url.rsplit('/', 1)[-1]
+                    if "@" in repo_name and re.search("^.*@.*\..*:", repo_url):
+                        repo_url = "@".join(repo_url.split("@")[0:2])
+                    elif "@" in repo_name:
+                        repo_url = repo_url.split("@")[0]
+                    try:
+                        curr_dir = os.getcwd()
+                        temp_dir = os.path.join(curr_dir, "temp_repo")
+                        subprocess.check_output(["git", "ls-remote", repo_url, temp_dir])
+                        self.log(tag="Access confirmed", msg=repo_url, display=True)
+                    except subprocess.CalledProcessError:
+                        self.log(msg=repo_url, tag="Unable to access", display=True)
+                        self.log(msg=repo_url, tag="Repository will not be scanned", display=True)
+
+            cloud_config = self.config.modules.cloud
+            if cloud_config is not None:
+                for provider in cloud_config:
+                    try:
+                        if provider.provider == "aws" and self.checkDependency("aws", "AWS Command-line tool"):
+                            account_id = str(provider.account).replace('-', '')
+                            find_profile(account_id, self.log)
+                            self.log(tag="Access confirmed", msg=account_id, display=True)
+                        if provider.provider == "azure" and self.checkDependency("az", "Azure Command-line tool"):
+                            pass
+                        if provider.provider == "gcp" and self.checkDependency("gcloud", "Google Command-line tool"):
+                            pass
+                    except:
+                        self.log(msg=f"Unable to access {provider.provider} {provider.account}", tag="Unable to access", display=True)
+
+                repeat_prompt = "(Y)/n\n"
+                print("Would you like to proceed with the scan?")
+                resp = __get_input__(repeat_prompt)
+                print()
+                if resp:
+                    resp_char = resp[0]
+                else:
+                    resp_char = 'y'
+                while resp_char.lower() not in ['y', 'n']:
+                    resp = __get_input__(repeat_prompt)
+                    if resp:
+                        resp_char = resp[0]
+                    else:
+                        resp_char = 'y'
+                if resp_char.lower() == 'y':
+                    self.log(msg="Proceeding")
+                else:
+                    self.log(tag="Exiting now", msg="", display=True)
+                    exit(0)
 
     # ##### Scan Repos ######
     def scanRepos(self):
@@ -592,7 +674,8 @@ class Agent:
                         end=provider.end,
                         profile=provider.profile,
                         path_to_output=self.config.output_dir,
-                        log=self.log
+                        log=self.log,
+                        dry=self.config.dry
                     )
                     self.log(msg=aws_cost_file, tag="AWS Costs")
                     self.upload(
@@ -602,7 +685,8 @@ class Agent:
                     )
                     aws_instance_file = get_aws_instances(
                         sub_id=account_id,
-                        path_to_output=self.config.output_dir
+                        path_to_output=self.config.output_dir,
+                        dry=self.config.dry
                     )
                     self.log(msg=aws_instance_file, tag="AWS Instances")
                     self.upload(
@@ -619,7 +703,8 @@ class Agent:
                     aws_block_file = get_aws_blocks(
                         sub_id=account_id,
                         path_to_output=self.config.output_dir,
-                        log=self.log
+                        log=self.log,
+                        dry=self.config.dry
                     )
                     self.log(msg=aws_block_file, tag="AWS Storage")
                     self.upload(
@@ -634,7 +719,8 @@ class Agent:
                         subscription_id=provider.account,
                         start=provider.start,
                         end=provider.end,
-                        path_to_output=self.config.output_dir
+                        path_to_output=self.config.output_dir,
+                        dry=self.config.dry
                     )
                     self.log(msg=azure_cost_file, tag="Azure Costs")
                     self.upload(
@@ -644,7 +730,8 @@ class Agent:
                     )
                     azure_instance_file = get_az_instances(
                         sub_id=provider.account,
-                        path_to_output=self.config.output_dir
+                        path_to_output=self.config.output_dir,
+                        dry=self.config.dry
                     )
                     self.log(msg=azure_instance_file, tag="Azure instances")
                     self.upload(
@@ -660,7 +747,8 @@ class Agent:
                     )
                     azure_block_file = get_az_blocks(
                         sub_id=provider.account,
-                        path_to_output=self.config.output_dir
+                        path_to_output=self.config.output_dir,
+                        dry=self.config.dry
                     )
                     self.log(msg=azure_block_file, tag="Azure Storage")
                     self.upload(
@@ -672,7 +760,8 @@ class Agent:
                 if provider.provider == "gcp" and self.checkDependency("gcloud", "Google Command-line tool"):
                     gcp_instance_file = get_gcp_instances(
                         sub_id=provider.account,
-                        path_to_output=self.config.output_dir
+                        path_to_output=self.config.output_dir,
+                        dry=self.config.dry
                     )
                     self.log(msg=gcp_instance_file, tag="GCP instances")
                     self.upload(
@@ -688,7 +777,8 @@ class Agent:
                     )
                     gcp_block_file = get_gcp_blocks(
                         sub_id=provider.account,
-                        path_to_output=self.config.output_dir
+                        path_to_output=self.config.output_dir,
+                        dry=self.config.dry
                     )
                     self.log(msg=gcp_block_file, tag="GCP Storage")
                     self.upload(
@@ -713,6 +803,7 @@ class Agent:
 def main():
     agent = Agent()
     try:
+        agent.preflight()
         agent.scan()
         # with open(f"{agent.config.output_dir}/results.html", "w") as f:
         #     jinja_env = Environment(loader=FileSystemLoader(templates_folder))
