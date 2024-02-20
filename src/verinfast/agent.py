@@ -31,6 +31,8 @@ from verinfast.user import initial_prompt, save_path, __get_input__
 
 from verinfast.dependencies.walk import walk as dependency_walk
 
+import errno, stat
+
 # from verinfast.pygments_patch import patch_pygments
 # from modernmetric.fp import file_process
 # If we want to run modernmetric directly
@@ -215,6 +217,7 @@ class Agent:
             return False
 
     def formatGitHash(self, hash: str):
+        hash = hash.replace("'","")
         message = std_exec(["git", "log", "-n1", "--pretty=format:%B", hash])
         author = std_exec(["git", "log", "-n1", "--pretty=format:%aN <%aE>", hash])
         commit = std_exec(["git", "log", "-n1", "--pretty=format:%H", hash])
@@ -355,7 +358,7 @@ class Agent:
                 # print(subdirs)
                 for name in list:
                     fp = os.path.join(filepath, name)
-                    extRe = re.search("^[^\.]*\.(.*)", name)
+                    extRe = re.search(r"^[^\.]*\.(.*)", name)
                     ext = extRe.group(1) if extRe else ''
                     if self.allowfile(path=fp):
                         if self.config.shouldManualFileScan:
@@ -500,6 +503,33 @@ class Agent:
                 source=repo_name
             )
 
+    def handleRemoveReadonly(_agent, func, path, _exp):
+        print("Would you like to delete the following path?")
+        print(path)
+        print("temp_repo is a folder created by VerinFast")
+        repeat_prompt = "y/(n)\n"
+        
+        resp = __get_input__(repeat_prompt)
+        print()
+        if resp:
+            resp_char = resp[0]
+        else:
+            resp_char = 'y'
+        while resp_char.lower() not in ['y', 'n']:
+            resp = __get_input__(repeat_prompt)
+            if resp:
+                resp_char = resp[0]
+            else:
+                resp_char = 'n'
+        if resp_char.lower() == 'y':
+            self.log(msg="Proceeding")
+            os.chmod(path, stat.S_IWRITE)
+            func(path)
+        else:
+            self.log(tag="Exiting now", msg="", display=True)
+        
+
+        
     def preflight(self):
         # Loop over all remote repositories from config file
         if 'repos' in self.config.config:
@@ -566,12 +596,12 @@ class Agent:
             repos = self.config.config["repos"]
             if repos:
                 for repo_url in [r for r in repos if len(r) > 0]:       # ignore blank lines from server
-                    match = re.search("([^/]*\.git.*)", repo_url)
+                    match = re.search(r"([^/]*\.git.*)", repo_url)
                     if match:
                         repo_name = match.group(1)
                     else:
                         repo_name = repo_url.rsplit('/', 1)[-1]
-                    if "@" in repo_name and re.search("^.*@.*\..*:", repo_url):
+                    if "@" in repo_name and re.search(r"^.*@.*\..*:", repo_url):
                         repo_url = "@".join(repo_url.split("@")[0:2])
                     elif "@" in repo_name:
                         repo_url = repo_url.split("@")[0]
@@ -599,7 +629,7 @@ class Agent:
 
                     os.chdir(curr_dir)
                     if not self.config.dry and self.config.delete_temp:
-                        shutil.rmtree(temp_dir)
+                        shutil.rmtree(temp_dir, onerror=self.handleRemoveReadonly)
             else:
                 self.log(msg='', tag="No remote repos", display=True)
 
@@ -612,7 +642,7 @@ class Agent:
             if localrepos:
                 for repo_path in localrepos:
                     a = Path(repo_path).absolute()
-                    match = re.search("([^/]*\.git.*)", str(a))
+                    match = re.search(r"([^/]*\.git.*)", str(a))
                     if match:
                         repo_name = match.group(1)
                     else:

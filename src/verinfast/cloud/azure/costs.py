@@ -56,7 +56,7 @@ def runAzure(subscription_id, start, end, path_to_output, dry=False):
             stdout=subprocess.PIPE
         )
 
-        bearer_token = "Bearer "+results.stdout.decode()[:-1]
+        bearer_token = "Bearer "+results.stdout.decode().rstrip()
         # print(bearer_token)
         print("Fetching data for subscription: " + subscription_id)
         conn.request(
@@ -74,7 +74,7 @@ def runAzure(subscription_id, start, end, path_to_output, dry=False):
         if 'error' in data:
             debugLog.log(msg=json.dumps(data["error"]), tag="Azure error")
             return
-
+      
         with open(f"{path_to_output}/azure_output_raw.json", "w") as outfile:
             outfile.write(json.dumps(data, indent=4))
 
