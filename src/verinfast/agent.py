@@ -10,6 +10,8 @@ import subprocess
 import traceback
 from uuid import uuid4
 
+import modernmetric.main
+
 import httpx
 from jinja2 import Environment, FileSystemLoader
 from pygments_tsx.tsx import patch_pygments
@@ -53,6 +55,11 @@ file_path = Path(__file__)
 parent_folder = file_path.parent.absolute()
 templates_folder = str(parent_folder.joinpath("templates"))
 # str_path = str(parent_folder.joinpath('str_conf.yaml').absolute())
+
+
+class Namespace:
+    def __init__(self, **kwargs):
+        self.__dict__.update(kwargs)
 
 
 class Agent:
@@ -392,11 +399,20 @@ class Agent:
                     f.write(json.dumps(filelist, indent=4))
 
                 template_definition["filelist"] = filelist
+
                 # Calling modernmetric with subprocess works, but we might want to call
                 # Modernmetric directly, ala lines 91-110 from modernmetric main
+
                 with open(stats_output_file, 'w') as f:
                     with open(stats_error_file, 'w') as e:
-                        subprocess.check_call(["modernmetric", f"--file={stats_input_file}"], stdout=f, stderr=e, encoding='utf-8')
+                        modernMetricArgs = Namespace(
+                            f"--file={stats_input_file}",
+                            stdout=f,
+                            stderr=e,
+                            encoding='utf-8'
+                        )
+                        modernmetric.main.main(modernMetricArgs)
+                        # subprocess.check_call(["modernmetric", f"--file={stats_input_file}"], stdout=f, stderr=e, encoding='utf-8')
                 with open(stats_output_file, 'r') as f:
                     template_definition["stats"] = json.load(f)
             self.upload(
