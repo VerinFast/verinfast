@@ -229,11 +229,17 @@ class Agent:
 
     def parseRepo(self, path: str, repo_name: str):
         self.log(msg='parseRepo')
+
         if not self.config.dry:
             os.chdir(path)
+
+        # Adding this for Windows support
+        # Appears to fail with blank HEAD
+        if self.config.runGit:
+            std_exec(["git", "init"])
+
         if self.config.runGit and self.checkDependency("git", "Git"):
             # Get Correct Branch
-            # TODO Get a list of branches and use most recent if no main or master
             branch = "main"
             if "@" in repo_name:
                 branch = repo_name.split("@")[1]
@@ -352,7 +358,6 @@ class Agent:
             filelist = []
 
             for filepath, subdirs, list in os.walk("."):
-                # print(subdirs)
                 for name in list:
                     fp = os.path.join(filepath, name)
                     extRe = re.search("^[^\.]*\.(.*)", name)
