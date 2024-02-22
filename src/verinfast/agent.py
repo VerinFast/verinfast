@@ -10,7 +10,7 @@ import subprocess
 import traceback
 from uuid import uuid4
 
-import modernmetric.main
+from modernmetric import main as modernmetric
 
 import httpx
 from jinja2 import Environment, FileSystemLoader
@@ -411,7 +411,7 @@ class Agent:
                             stderr=e,
                             encoding='utf-8'
                         )
-                        modernmetric.main.main(modernMetricArgs)
+                        modernmetric.main(modernMetricArgs)
                         # subprocess.check_call(["modernmetric", f"--file={stats_input_file}"], stdout=f, stderr=e, encoding='utf-8')
                 with open(stats_output_file, 'r') as f:
                     template_definition["stats"] = json.load(f)
