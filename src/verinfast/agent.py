@@ -55,11 +55,6 @@ templates_folder = str(parent_folder.joinpath("templates"))
 # str_path = str(parent_folder.joinpath('str_conf.yaml').absolute())
 
 
-class Namespace:
-    def __init__(self, **kwargs):
-        self.__dict__.update(kwargs)
-
-
 class Agent:
     def __init__(self):
         self.config = Config()
