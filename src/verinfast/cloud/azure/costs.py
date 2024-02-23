@@ -56,7 +56,7 @@ def runAzure(subscription_id, start, end, path_to_output, dry=False):
             stdout=subprocess.PIPE
         )
 
-        bearer_token = "Bearer "+results.stdout.decode()[:-1]
+        bearer_token = "Bearer "+results.stdout.decode().strip()
         # print(bearer_token)
         print("Fetching data for subscription: " + subscription_id)
         conn.request(
