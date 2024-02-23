@@ -30,9 +30,16 @@ def runAws(targeted_account, start, end, path_to_output,
             )
 
         except subprocess.CalledProcessError:
+            log(msg="Error getting data from AWS CLI get-cost-and-usage",
+                tag="AWS CLI")
             raise Exception("Error getting aws cli data.")
 
         text = results.stdout.decode()
+        if text is None or isinstance(text, str) is False:
+            log(msg="No data returned from AWS CLI get-cost-and-usage",
+                tag="AWS CLI")
+            return None
+
         obj = json.loads(text)
         results_by_time = obj["ResultsByTime"]
         charges = []
