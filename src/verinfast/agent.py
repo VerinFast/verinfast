@@ -10,7 +10,7 @@ import subprocess
 import traceback
 from uuid import uuid4
 
-from modernmetric.scan import main as modernmetric
+from modernmetric.__main__ import main as modernmetric
 
 import httpx
 from jinja2 import Environment, FileSystemLoader
@@ -396,7 +396,7 @@ class Agent:
                     f.write(json.dumps(filelist, indent=4))
 
                 template_definition["filelist"] = filelist
-                custom_args = [f"--input_file={stats_input_file}", f"--output={stats_output_file}"]
+                custom_args = [f"--file={stats_input_file}", f"--output={stats_output_file}"]
                 modernmetric(custom_args)
                 with open(stats_output_file, 'r') as f:
                     template_definition["stats"] = json.load(f)
