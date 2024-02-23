@@ -508,6 +508,33 @@ class Agent:
                 source=repo_name
             )
 
+    def handleRemoveReadonly(_agent, func, path, _exp):
+        print("Would you like to delete the following path?")
+        print(path)
+        print("temp_repo is a folder created by VerinFast")
+        repeat_prompt = "y/(n)\n"
+
+        resp = __get_input__(repeat_prompt)
+        print()
+        if resp:
+            resp_char = resp[0]
+        else:
+            resp_char = 'y'
+        while resp_char.lower() not in ['y', 'n']:
+            resp = __get_input__(repeat_prompt)
+            if resp:
+                resp_char = resp[0]
+            else:
+                resp_char = 'n'
+        if resp_char.lower() == 'y':
+            self.log(msg="Proceeding")
+            os.chmod(path, stat.S_IWRITE)
+            func(path)
+        else:
+            self.log(tag="Exiting now", msg="", display=True)
+
+
+
     def preflight(self):
         # Loop over all remote repositories from config file
         if 'repos' in self.config.config:
