@@ -10,7 +10,7 @@ import subprocess
 import traceback
 from uuid import uuid4
 
-from modernmetric import main as modernmetric
+from modernmetric.scan import main as modernmetric
 
 import httpx
 from jinja2 import Environment, FileSystemLoader
@@ -34,8 +34,6 @@ from verinfast.user import initial_prompt, save_path, __get_input__
 from verinfast.dependencies.walk import walk as dependency_walk
 
 # from verinfast.pygments_patch import patch_pygments
-# from modernmetric.fp import file_process
-# If we want to run modernmetric directly
 
 patch_pygments()
 
@@ -391,7 +389,6 @@ class Agent:
         if self.config.runStats:
             stats_input_file = os.path.join(self.config.output_dir, repo_name + ".filelist.json")
             stats_output_file = os.path.join(self.config.output_dir, repo_name + ".stats.json")
-            stats_error_file = os.path.join(self.config.output_dir, repo_name + ".stats.err")
 
             if not self.config.dry:
                 self.log(msg=repo_name, tag="Analyzing repository with Modernmetric", display=True)
@@ -399,20 +396,8 @@ class Agent:
                     f.write(json.dumps(filelist, indent=4))
 
                 template_definition["filelist"] = filelist
-
-                # Calling modernmetric with subprocess works, but we might want to call
-                # Modernmetric directly, ala lines 91-110 from modernmetric main
-
-                with open(stats_output_file, 'w') as f:
-                    with open(stats_error_file, 'w') as e:
-                        modernMetricArgs = Namespace(
-                            f"--file={stats_input_file}",
-                            stdout=f,
-                            stderr=e,
-                            encoding='utf-8'
-                        )
-                        modernmetric.main(modernMetricArgs)
-                        # subprocess.check_call(["modernmetric", f"--file={stats_input_file}"], stdout=f, stderr=e, encoding='utf-8')
+                custom_args = [f"--input_file={stats_input_file}", f"--output={stats_output_file}"]
+                modernmetric(custom_args)
                 with open(stats_output_file, 'r') as f:
                     template_definition["stats"] = json.load(f)
             self.upload(
