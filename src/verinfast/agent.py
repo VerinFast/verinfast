@@ -29,7 +29,7 @@ from verinfast.cloud.aws.blocks import getBlocks as get_aws_blocks
 from verinfast.cloud.azure.blocks import getBlocks as get_az_blocks
 from verinfast.cloud.gcp.blocks import getBlocks as get_gcp_blocks
 from verinfast.config import Config
-from verinfast.user import initial_prompt, save_path, __get_input__
+from verinfast.user import initial_prompt, save_path, repeat_boolean_prompt
 
 from verinfast.dependencies.walk import walk as dependency_walk
 
@@ -53,6 +53,9 @@ file_path = Path(__file__)
 parent_folder = file_path.parent.absolute()
 templates_folder = str(parent_folder.joinpath("templates"))
 # str_path = str(parent_folder.joinpath('str_conf.yaml').absolute())
+
+curr_dir = os.getcwd()
+temp_dir = os.path.join(curr_dir, "temp_repo")
 
 
 class Agent:
@@ -517,9 +520,7 @@ class Agent:
                     elif "@" in repo_name:
                         repo_url = repo_url.split("@")[0]
                     try:
-                        curr_dir = os.getcwd()
-                        temp_dir = os.path.join(curr_dir, "temp_repo")
-                        subprocess.check_output(["git", "ls-remote", repo_url, temp_dir])
+                        subprocess.check_output(["git", "ls-remote", repo_url])
                         self.log(tag="Access confirmed", msg=repo_url, display=True)
                     except subprocess.CalledProcessError:
                         self.log(msg=repo_url, tag="Unable to access", display=True)
@@ -540,21 +541,13 @@ class Agent:
                     except:
                         self.log(msg=f"Unable to access {provider.provider} {provider.account}", tag="Unable to access", display=True)
 
-                repeat_prompt = "(Y)/n\n"
-                print("Would you like to proceed with the scan?")
-                resp = __get_input__(repeat_prompt)
-                print()
+                resp = repeat_boolean_prompt(
+                    "Would you like to proceed with the scan?",
+                    logger=self.debug.log,
+                    default_val=True
+                )
+
                 if resp:
-                    resp_char = resp[0]
-                else:
-                    resp_char = 'y'
-                while resp_char.lower() not in ['y', 'n']:
-                    resp = __get_input__(repeat_prompt)
-                    if resp:
-                        resp_char = resp[0]
-                    else:
-                        resp_char = 'y'
-                if resp_char.lower() == 'y':
                     self.log(msg="Proceeding")
                 else:
                     self.log(tag="Exiting now", msg="", display=True)
@@ -577,10 +570,25 @@ class Agent:
                     elif "@" in repo_name:
                         repo_url = repo_url.split("@")[0]
                     self.log(msg=repo_name, tag="Processing", display=True)
-                    curr_dir = os.getcwd()
-                    temp_dir = os.path.join(curr_dir, "temp_repo")
-                    if not self.config.dry:
-                        os.makedirs(temp_dir, exist_ok=True)
+                    try:
+                        if not self.config.dry:
+                            os.makedirs(temp_dir)
+                    except:
+                        self.log(tag="Directory exists:", msg=temp_dir, display=True)
+                        resp = repeat_boolean_prompt(
+                            "Should we overwrite?",
+                            self.log,
+                            default_val=False
+                        )
+                        if resp:
+                            os.chmod(temp_dir, 0o666)
+                            shutil.rmtree(temp_dir)
+                            os.makedirs(temp_dir)
+                            os.chmod(temp_dir, 0o666)
+                        else:
+                            self.log(f"Skipping {repo_url} due to existing temp_dir")
+                            continue
+
                     self.log(msg=repo_url, tag="Repo URL")
                     self.log(msg=temp_dir, tag="Temp Directory")
                     if not self.config.dry and self.config.runGit:
