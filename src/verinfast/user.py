@@ -3,7 +3,7 @@ import os
 
 import yaml
 
-from typing import List
+from typing import List, Callable
 
 user_home = os.path.expanduser('~')
 
@@ -14,7 +14,7 @@ def __get_input__(t: str):
 
 def repeat_boolean_prompt(
         prompt: str,
-        logger: callable | None = None,
+        logger: Callable | None = None,
         default_val: bool = False
 ):
     valid_strs = ["y", "n"]
