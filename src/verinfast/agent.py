@@ -10,6 +10,8 @@ import subprocess
 import traceback
 from uuid import uuid4
 
+from modernmetric.__main__ import main as modernmetric
+
 import httpx
 from jinja2 import Environment, FileSystemLoader
 from pygments_tsx.tsx import patch_pygments
@@ -27,15 +29,13 @@ from verinfast.cloud.aws.blocks import getBlocks as get_aws_blocks
 from verinfast.cloud.azure.blocks import getBlocks as get_az_blocks
 from verinfast.cloud.gcp.blocks import getBlocks as get_gcp_blocks
 from verinfast.config import Config
-from verinfast.user import initial_prompt, save_path, __get_input__
+from verinfast.user import initial_prompt, save_path, repeat_boolean_prompt
 
 from verinfast.dependencies.walk import walk as dependency_walk
 
 import stat
 
 # from verinfast.pygments_patch import patch_pygments
-# from modernmetric.fp import file_process
-# If we want to run modernmetric directly
 
 patch_pygments()
 
@@ -55,6 +55,9 @@ file_path = Path(__file__)
 parent_folder = file_path.parent.absolute()
 templates_folder = str(parent_folder.joinpath("templates"))
 # str_path = str(parent_folder.joinpath('str_conf.yaml').absolute())
+
+curr_dir = os.getcwd()
+temp_dir = os.path.join(curr_dir, "temp_repo")
 
 
 class Agent:
@@ -392,7 +395,6 @@ class Agent:
         if self.config.runStats:
             stats_input_file = os.path.join(self.config.output_dir, repo_name + ".filelist.json")
             stats_output_file = os.path.join(self.config.output_dir, repo_name + ".stats.json")
-            stats_error_file = os.path.join(self.config.output_dir, repo_name + ".stats.err")
 
             if not self.config.dry:
                 self.log(msg=repo_name, tag="Analyzing repository with Modernmetric", display=True)
@@ -400,11 +402,8 @@ class Agent:
                     f.write(json.dumps(filelist, indent=4))
 
                 template_definition["filelist"] = filelist
-                # Calling modernmetric with subprocess works, but we might want to call
-                # Modernmetric directly, ala lines 91-110 from modernmetric main
-                with open(stats_output_file, 'w') as f:
-                    with open(stats_error_file, 'w') as e:
-                        subprocess.check_call(["modernmetric", f"--file={stats_input_file}"], stdout=f, stderr=e, encoding='utf-8')
+                custom_args = [f"--file={stats_input_file}", f"--output={stats_output_file}"]
+                modernmetric(custom_args)
                 with open(stats_output_file, 'r') as f:
                     template_definition["stats"] = json.load(f)
             self.upload(
@@ -551,9 +550,7 @@ class Agent:
                     elif "@" in repo_name:
                         repo_url = repo_url.split("@")[0]
                     try:
-                        curr_dir = os.getcwd()
-                        temp_dir = os.path.join(curr_dir, "temp_repo")
-                        subprocess.check_output(["git", "ls-remote", repo_url, temp_dir])
+                        subprocess.check_output(["git", "ls-remote", repo_url])
                         self.log(tag="Access confirmed", msg=repo_url, display=True)
                     except subprocess.CalledProcessError:
                         self.log(msg=repo_url, tag="Unable to access", display=True)
@@ -574,21 +571,13 @@ class Agent:
                     except:
                         self.log(msg=f"Unable to access {provider.provider} {provider.account}", tag="Unable to access", display=True)
 
-                repeat_prompt = "(Y)/n\n"
-                print("Would you like to proceed with the scan?")
-                resp = __get_input__(repeat_prompt)
-                print()
+                resp = repeat_boolean_prompt(
+                    "Would you like to proceed with the scan?",
+                    logger=self.debug.log,
+                    default_val=True
+                )
+
                 if resp:
-                    resp_char = resp[0]
-                else:
-                    resp_char = 'y'
-                while resp_char.lower() not in ['y', 'n']:
-                    resp = __get_input__(repeat_prompt)
-                    if resp:
-                        resp_char = resp[0]
-                    else:
-                        resp_char = 'y'
-                if resp_char.lower() == 'y':
                     self.log(msg="Proceeding")
                 else:
                     self.log(tag="Exiting now", msg="", display=True)
@@ -616,10 +605,25 @@ class Agent:
                     elif "@" in repo_name:
                         repo_url = repo_url.split("@")[0]
                     self.log(msg=repo_name, tag="Processing", display=True)
-                    curr_dir = os.getcwd()
-                    temp_dir = os.path.join(curr_dir, "temp_repo")
-                    if not self.config.dry:
-                        os.makedirs(temp_dir, exist_ok=True)
+                    try:
+                        if not self.config.dry:
+                            os.makedirs(temp_dir)
+                    except:
+                        self.log(tag="Directory exists:", msg=temp_dir, display=True)
+                        resp = repeat_boolean_prompt(
+                            "Should we overwrite?",
+                            self.log,
+                            default_val=False
+                        )
+                        if resp:
+                            os.chmod(temp_dir, 0o666)
+                            shutil.rmtree(temp_dir)
+                            os.makedirs(temp_dir)
+                            os.chmod(temp_dir, 0o666)
+                        else:
+                            self.log(f"Skipping {repo_url} due to existing temp_dir")
+                            continue
+
                     self.log(msg=repo_url, tag="Repo URL")
                     self.log(msg=temp_dir, tag="Temp Directory")
                     if not self.config.dry and self.config.runGit:
