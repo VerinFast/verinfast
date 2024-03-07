@@ -647,11 +647,15 @@ class Agent:
                 # Check if AWS-CLI is installed
                 if provider.provider == "aws" and self.checkDependency("aws", "AWS Command-line tool"):
                     account_id = str(provider.account).replace('-', '')
+                    if provider.profile is None:
+                        profile = find_profile(account_id, self.log)
+                    else:
+                        profile = provider.profile
                     aws_cost_file = runAws(
                         targeted_account=account_id,
                         start=provider.start,
                         end=provider.end,
-                        profile=provider.profile,
+                        profile=profile,
                         path_to_output=self.config.output_dir,
                         log=self.log,
                         dry=self.config.dry
