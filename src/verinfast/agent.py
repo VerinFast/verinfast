@@ -623,7 +623,7 @@ class Agent:
             if localrepos:
                 for repo_path in localrepos:
                     a = Path(repo_path).absolute()
-                    match = re.search("([^/]*\.git.*)", str(a))
+                    match = re.search(r"([^/]*\.git.*)", str(a))
                     if match:
                         repo_name = match.group(1)
                     else:
