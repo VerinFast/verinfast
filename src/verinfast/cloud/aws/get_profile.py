@@ -17,10 +17,9 @@ def find_profile(targeted_account: str, log=debugLog.log):
         stdout=subprocess.PIPE
     )
     text = results.stdout.decode()
-
     for line in text.splitlines():
         profiles.append(line)
-        cmd = f"aws sts get-caller-identity --profile={line} --output=json"
+        cmd = f"aws sts get-caller-identity --profile='{line}' --output=json"
         try:
             results = subprocess.run(
                 cmd,
@@ -35,9 +34,9 @@ def find_profile(targeted_account: str, log=debugLog.log):
         identity = json.loads(text)
         account = identity["Account"]
         available_accounts.append(account)
-
         if str(account) == str(targeted_account):
             return line
 
     debugLog.log(msg=profiles, tag="AWS Profiles")
     debugLog.log(msg=available_accounts, tag="AWS Available Accounts")
+    return None

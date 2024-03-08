@@ -43,6 +43,9 @@ def test_aws_scan(self):
     with open(results_dir.joinpath(f"aws-cost-{sub_id}.json")) as f:
         costs = json.load(f)
         assert len(costs["data"]) >= 100
+    # Make sure "aws-cost-foo.json" doesn't exist
+    my_file = Path(results_dir.joinpath("aws-cost-foo.json"))
+    assert not my_file.is_file()
     with open(results_dir.joinpath(f"aws-instances-{sub_id}.json")) as f:
         instances = json.load(f)
         assert len(instances["data"]) >= 5

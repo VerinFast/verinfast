@@ -532,8 +532,10 @@ class Agent:
                     try:
                         if provider.provider == "aws" and self.checkDependency("aws", "AWS Command-line tool"):
                             account_id = str(provider.account).replace('-', '')
-                            find_profile(account_id, self.log)
-                            self.log(tag="Access confirmed", msg=account_id, display=True)
+                            if find_profile(account_id, self.log) is None:
+                                self.log(tag=f"No matching AWS CLI profiles found for {provider.account}", msg="Account can't be scanned.", display=True)
+                            else:
+                                self.log(tag="Access confirmed", msg=account_id, display=True)
                         if provider.provider == "azure" and self.checkDependency("az", "Azure Command-line tool"):
                             pass
                         if provider.provider == "gcp" and self.checkDependency("gcloud", "Google Command-line tool"):
@@ -647,25 +649,24 @@ class Agent:
                 # Check if AWS-CLI is installed
                 if provider.provider == "aws" and self.checkDependency("aws", "AWS Command-line tool"):
                     account_id = str(provider.account).replace('-', '')
-                    if provider.profile is None:
-                        profile = find_profile(account_id, self.log)
-                    else:
-                        profile = provider.profile
                     aws_cost_file = runAws(
                         targeted_account=account_id,
                         start=provider.start,
                         end=provider.end,
-                        profile=profile,
+                        profile=provider.profile,
                         path_to_output=self.config.output_dir,
                         log=self.log,
                         dry=self.config.dry
                     )
-                    self.log(msg=aws_cost_file, tag="AWS Costs")
-                    self.upload(
-                        file=aws_cost_file,
-                        route="costs",
-                        source="AWS"
-                    )
+                    if aws_cost_file is None:
+                        self.log(msg="Error processing AWS costs", tag=account_id)
+                    else:
+                        self.log(msg=aws_cost_file, tag="AWS Costs")
+                        self.upload(
+                            file=aws_cost_file,
+                            route="costs",
+                            source="AWS"
+                        )
                     aws_instance_file = get_aws_instances(
                         sub_id=account_id,
                         path_to_output=self.config.output_dir,
@@ -677,7 +678,10 @@ class Agent:
                         route="instances",
                         source="AWS"
                     )
-                    aws_utilization_file = aws_instance_file[:-5] + "-utilization.json"
+                    aws_utilization_file = os.path.join(
+                        path_to_output,
+                        f'aws-instances-{targeted_account}-utilization.json'
+    )
                     self.upload(
                         file=aws_utilization_file,
                         route="utilization",

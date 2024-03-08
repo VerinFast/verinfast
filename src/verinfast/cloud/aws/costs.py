@@ -17,7 +17,7 @@ def runAws(targeted_account, start, end, path_to_output,
             --granularity=DAILY \
             --metrics "BlendedCost" \
             --group-by Type=DIMENSION,Key=SERVICE \
-            --profile={profile} \
+            --profile='{profile}' \
             --output=json | cat
         '''
 
@@ -70,7 +70,8 @@ def runAws(targeted_account, start, end, path_to_output,
 
     if profile is None:
         log(msg="No matching profiles found",
-            tag="AWS Available Accounts")
+            tag=targeted_account)
+        return None
 
     output_file = os.path.join(
         path_to_output,
