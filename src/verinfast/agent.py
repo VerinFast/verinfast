@@ -363,7 +363,7 @@ class Agent:
             for filepath, subdirs, list in os.walk("."):
                 for name in list:
                     fp = os.path.join(filepath, name)
-                    extRe = re.search("^[^\.]*\.(.*)", name)
+                    extRe = re.search(r"^[^\.]*\.(.*)", name)
                     ext = extRe.group(1) if extRe else ''
                     if self.allowfile(path=fp):
                         if self.config.shouldManualFileScan:
@@ -510,12 +510,12 @@ class Agent:
             repos = self.config.config["repos"]
             if repos:
                 for repo_url in [r for r in repos if len(r) > 0]:       # ignore blank lines from server
-                    match = re.search("([^/]*\.git.*)", repo_url)
+                    match = re.search(r"([^/]*\.git.*)", repo_url)
                     if match:
                         repo_name = match.group(1)
                     else:
                         repo_name = repo_url.rsplit('/', 1)[-1]
-                    if "@" in repo_name and re.search("^.*@.*\..*:", repo_url):
+                    if "@" in repo_name and re.search(r"^.*@.*\..*:", repo_url):
                         repo_url = "@".join(repo_url.split("@")[0:2])
                     elif "@" in repo_name:
                         repo_url = repo_url.split("@")[0]
@@ -562,12 +562,12 @@ class Agent:
             repos = self.config.config["repos"]
             if repos:
                 for repo_url in [r for r in repos if len(r) > 0]:       # ignore blank lines from server
-                    match = re.search("([^/]*\.git.*)", repo_url)
+                    match = re.search(r"([^/]*\.git.*)", repo_url)
                     if match:
                         repo_name = match.group(1)
                     else:
                         repo_name = repo_url.rsplit('/', 1)[-1]
-                    if "@" in repo_name and re.search("^.*@.*\..*:", repo_url):
+                    if "@" in repo_name and re.search(r"^.*@.*\..*:", repo_url):
                         repo_url = "@".join(repo_url.split("@")[0:2])
                     elif "@" in repo_name:
                         repo_url = repo_url.split("@")[0]
