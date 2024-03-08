@@ -672,33 +672,40 @@ class Agent:
                         path_to_output=self.config.output_dir,
                         dry=self.config.dry
                     )
-                    self.log(msg=aws_instance_file, tag="AWS Instances")
-                    self.upload(
-                        file=aws_instance_file,
-                        route="instances",
-                        source="AWS"
-                    )
+                    if aws_instance_file is None:
+                        self.log(msg="Error processing AWS instances", tag=account_id)
+                    else:
+                        self.log(msg=aws_instance_file, tag="AWS Instances")
+                        self.upload(
+                            file=aws_instance_file,
+                            route="instances",
+                            source="AWS"
+                        )
                     aws_utilization_file = os.path.join(
-                        path_to_output,
-                        f'aws-instances-{targeted_account}-utilization.json'
-    )
-                    self.upload(
-                        file=aws_utilization_file,
-                        route="utilization",
-                        source="AWS"
+                        self.config.output_dir,
+                        f'aws-instances-{account_id}-utilization.json'
                     )
+                    if Path(aws_utilization_file).is_file():
+                        self.upload(
+                            file=aws_utilization_file,
+                            route="utilization",
+                            source="AWS"
+                        )
                     aws_block_file = get_aws_blocks(
                         sub_id=account_id,
                         path_to_output=self.config.output_dir,
                         log=self.log,
                         dry=self.config.dry
                     )
-                    self.log(msg=aws_block_file, tag="AWS Storage")
-                    self.upload(
-                        file=aws_block_file,
-                        route="storage",
-                        source="AWS"
-                    )
+                    if aws_block_file is None:
+                        self.log(msg="Error processing AWS blocks", tag=account_id)
+                    else:
+                        self.log(msg=aws_block_file, tag="AWS Storage")
+                        self.upload(
+                            file=aws_block_file,
+                            route="storage",
+                            source="AWS"
+                        )
 
                 # Check if Azure CLI is installed
                 if provider.provider == "azure" and self.checkDependency("az", "Azure Command-line tool"):
@@ -709,40 +716,53 @@ class Agent:
                         path_to_output=self.config.output_dir,
                         dry=self.config.dry
                     )
-                    self.log(msg=azure_cost_file, tag="Azure Costs")
-                    self.upload(
-                        file=azure_cost_file,
-                        route="costs",
-                        source="Azure"
-                    )
+                    if azure_cost_file is None:
+                        self.log(msg="Error processing Azure costs", tag=provider.account)
+                    else:
+                        self.log(msg=azure_cost_file, tag="Azure Costs")
+                        self.upload(
+                            file=azure_cost_file,
+                            route="costs",
+                            source="Azure"
+                        )
                     azure_instance_file = get_az_instances(
                         sub_id=provider.account,
                         path_to_output=self.config.output_dir,
                         dry=self.config.dry
                     )
-                    self.log(msg=azure_instance_file, tag="Azure instances")
-                    self.upload(
-                        file=azure_instance_file,
-                        route="instances",
-                        source="Azure"
+                    if azure_instance_file is None:
+                        self.log(msg="Error processing Azure instances", tag=provider.account)
+                    else:
+                        self.log(msg=azure_instance_file, tag="Azure instances")
+                        self.upload(
+                            file=azure_instance_file,
+                            route="instances",
+                            source="Azure"
+                        )
+                    azure_utilization_file = os.path.join(
+                        self.config.output_dir,
+                        f'azure-instances-{account_id}-utilization.json'
                     )
-                    azure_utilization_file = azure_instance_file[:-5] + "-utilization.json"
-                    self.upload(
-                        file=azure_utilization_file,
-                        route="utilization",
-                        source="AWS"
-                    )
+                    if Path(azure_utilization_file).is_file():
+                        self.upload(
+                            file=azure_utilization_file,
+                            route="utilization",
+                            source="AWS"
+                        )
                     azure_block_file = get_az_blocks(
                         sub_id=provider.account,
                         path_to_output=self.config.output_dir,
                         dry=self.config.dry
                     )
-                    self.log(msg=azure_block_file, tag="Azure Storage")
-                    self.upload(
-                        file=azure_block_file,
-                        route="storage",
-                        source="Azure"
-                    )
+                    if azure_block_file is None:
+                        self.log(msg="Error processing Azure blocks", tag=provider.account)
+                    else:
+                        self.log(msg=azure_block_file, tag="Azure Storage")
+                        self.upload(
+                            file=azure_block_file,
+                            route="storage",
+                            source="Azure"
+                        )
 
                 if provider.provider == "gcp" and self.checkDependency("gcloud", "Google Command-line tool"):
                     gcp_instance_file = get_gcp_instances(
@@ -750,29 +770,39 @@ class Agent:
                         path_to_output=self.config.output_dir,
                         dry=self.config.dry
                     )
-                    self.log(msg=gcp_instance_file, tag="GCP instances")
-                    self.upload(
-                        file=gcp_instance_file,
-                        route="instances",
-                        source="GCP"
+                    if gcp_instance_file is None:
+                        self.log(msg="Error processing GCP instances", tag=provider.account)
+                    else:
+                        self.log(msg=gcp_instance_file, tag="GCP instances")
+                        self.upload(
+                            file=gcp_instance_file,
+                            route="instances",
+                            source="GCP"
+                        )
+                    gcp_utilization_file = os.path.join(
+                        self.config.output_dir,
+                        f'gcp-instances-{provider.account}-utilization.json'
                     )
-                    gcp_utilization_file = gcp_instance_file[:-5] + "-utilization.json"
-                    self.upload(
-                        file=gcp_utilization_file,
-                        route="utilization",
-                        source="AWS"
-                    )
+                    if Path(gcp_utilization_file).is_file():
+                        self.upload(
+                            file=gcp_utilization_file,
+                            route="utilization",
+                            source="AWS"
+                        )
                     gcp_block_file = get_gcp_blocks(
                         sub_id=provider.account,
                         path_to_output=self.config.output_dir,
                         dry=self.config.dry
                     )
-                    self.log(msg=gcp_block_file, tag="GCP Storage")
-                    self.upload(
-                        file=gcp_block_file,
-                        route="storage",
-                        source="GCP"
-                    )
+                    if gcp_block_file is None:
+                        self.log(msg="Error processing GCP blocks", tag=provider.account)
+                    else:
+                        self.log(msg=gcp_block_file, tag="GCP Storage")
+                        self.upload(
+                            file=gcp_block_file,
+                            route="storage",
+                            source="GCP"
+                        )
             except Exception as e:
                 self.log(tag="ERROR", msg="Error processing provider", display=True)
                 self.log(
