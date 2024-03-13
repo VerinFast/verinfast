@@ -218,6 +218,7 @@ class Agent:
             return False
 
     def formatGitHash(self, hash: str):
+        hash = hash.replace("'", "").replace('"', "")
         message = std_exec(["git", "log", "-n1", "--pretty=format:%B", hash])
         author = std_exec(["git", "log", "-n1", "--pretty=format:%aN <%aE>", hash])
         commit = std_exec(["git", "log", "-n1", "--pretty=format:%H", hash])
