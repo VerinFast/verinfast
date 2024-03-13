@@ -25,8 +25,7 @@ def repeat_boolean_prompt(
         print_opts = "(Y/n)"
         d = "y"
 
-    prompt = "\n\n" + prompt
-    logger(msg=prompt, tag='', display=True, timestamp=False)
+    logger(prompt)
     resp = repeat_prompt(prompt=print_opts, valid=valid_strs, default_val=d)
 
     return resp.lower() == "y"
