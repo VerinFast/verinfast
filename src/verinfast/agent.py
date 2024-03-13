@@ -521,7 +521,7 @@ class Agent:
 
     def preflight(self):
         # Loop over all remote repositories from config file
-        print("\n\n\nChecking your systems compatibility with the scan configuration:\n")
+        print("\n\n\nChecking your system's compatibility with the scan configuration:\n")
         if 'repos' in self.config.config:
             repos = self.config.config["repos"]
             if repos:
