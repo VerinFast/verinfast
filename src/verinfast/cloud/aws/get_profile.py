@@ -19,7 +19,7 @@ def find_profile(targeted_account: str, log=debugLog.log):
     text = results.stdout.decode()
     for line in text.splitlines():
         profiles.append(line)
-        cmd = f"aws sts get-caller-identity --profile='{line}' --output=json"
+        cmd = f'aws sts get-caller-identity --profile="{line}" --output=json'
         try:
             results = subprocess.run(
                 cmd,
