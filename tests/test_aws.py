@@ -43,9 +43,15 @@ def test_aws_scan(self):
     with open(results_dir.joinpath(f"aws-cost-{sub_id}.json")) as f:
         costs = json.load(f)
         assert len(costs["data"]) >= 100
+    # Make sure "aws-cost-foo.json" doesn't exist
+    bad_costs_file = Path(results_dir.joinpath("aws-cost-foo.json"))
+    assert not bad_costs_file.is_file()
     with open(results_dir.joinpath(f"aws-instances-{sub_id}.json")) as f:
         instances = json.load(f)
         assert len(instances["data"]) >= 5
+    # Make sure "aws-instances-foo.json" doesn't exist
+    bad_instances_file = Path(results_dir.joinpath("aws-instances-foo.json"))
+    assert not bad_instances_file.is_file()
     with open(
         results_dir.joinpath(f"aws-instances-{sub_id}-utilization.json")
     ) as f:
@@ -55,6 +61,11 @@ def test_aws_scan(self):
             if u["id"] == "i-0a3493d5abcdfba4b":
                 v = u["metrics"]
         assert len(v) >= 450
+    # Make sure "aws-instances-foo-utilization.json" doesn't exist
+    bad_utilization_file = Path(
+        results_dir.joinpath("aws-instances-foo-utilization.json")
+    )
+    assert not bad_utilization_file.is_file()
     with open(results_dir.joinpath(f"aws-storage-{sub_id}.json")) as f:
         storage = json.load(f)
         v = 0
@@ -62,6 +73,9 @@ def test_aws_scan(self):
             if u["name"] == "startupos-test-bucket":
                 v = u["size"]
         assert v >= 262183
+    # Make sure "aws-storage-foo.json" doesn't exist
+    bad_storage_file = Path(results_dir.joinpath("aws-storage-foo.json"))
+    assert not bad_storage_file.is_file()
 
 
 @patch('verinfast.user.__get_input__', return_value='y')
