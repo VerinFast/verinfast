@@ -537,7 +537,7 @@ class Agent:
                             if find_profile(account_id, self.log) is None:
                                 self.log(tag=f"No matching AWS CLI profiles found for {provider.account}", msg="Account can't be scanned.", display=True, timestamp=False)
                             else:
-                                self.log(tag="AWs account access confirmed", msg=account_id, display=True, timestamp=False)
+                                self.log(tag="AWS account access confirmed", msg=account_id, display=True, timestamp=False)
                         if provider.provider == "azure" and self.checkDependency("az", "Azure Command-line tool"):
                             pass
                         if provider.provider == "gcp" and self.checkDependency("gcloud", "Google Command-line tool"):
