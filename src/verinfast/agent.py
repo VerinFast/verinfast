@@ -521,7 +521,7 @@ class Agent:
 
     def preflight(self):
         # Loop over all remote repositories from config file
-        print('\n\n')
+        print("\n\n\nChecking your systems compatibility with the scan configuration:\n")
         if 'repos' in self.config.config:
             repos = self.config.config["repos"]
             if repos:
@@ -561,7 +561,7 @@ class Agent:
 
                 resp = repeat_boolean_prompt(
                     "Would you like to proceed with the scan?",
-                    logger=self.debug.log,
+                    logger=self.log,
                     default_val=True
                 )
 

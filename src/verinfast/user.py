@@ -26,7 +26,7 @@ def repeat_boolean_prompt(
         d = "y"
 
     prompt = "\n\n" + prompt
-    logger(prompt, display=True, timestamp=False)
+    print(prompt)
     resp = repeat_prompt(prompt=print_opts, valid=valid_strs, default_val=d)
 
     return resp.lower() == "y"
