@@ -16,7 +16,7 @@ import httpx
 from jinja2 import Environment, FileSystemLoader
 from pygments_tsx.tsx import patch_pygments
 
-from verinfast.utils.utils import DebugLog, std_exec, trimLineBreaks, escapeChars, truncate, truncate_children
+from verinfast.utils.utils import DebugLog, std_exec, trimLineBreaks, escapeChars, truncate, truncate_children, recursive_chmod
 from verinfast.upload import Uploader
 
 from verinfast.cloud.aws.costs import runAws
@@ -65,10 +65,12 @@ class Agent:
         self.debug = DebugLog(path=self.config.output_dir, debug=False)
         self.log = self.debug.log
         self.log(msg='', tag="Started")
+        self.log(msg='', tag="Scan Not Started")
         self.uploader = Uploader(self.config.upload_conf)
         self.up = self.uploader.make_upload_path
         self.config.upload_logs = initial_prompt()
         self.directory = save_path()
+        self.log(msg='', tag="Scan Not Started 2")
 
     def create_template(self):
         if not self.config.dry:
@@ -79,6 +81,7 @@ class Agent:
                 f.write(output)
 
     def scan(self):
+        self.log(msg='', tag="Scan Started")
         if self.config.modules is not None:
             if self.config.modules.code is not None:
                 # Check if Git is installed
@@ -152,6 +155,9 @@ class Agent:
         else:
             self.log(msg=f"{name} is installed at {which}.", tag=f"{name} status", display=True)
             return True
+
+    def manifest_uploader(self, path: str, repo_name: str):
+        self.upload(file=path, route='manifest', source=repo_name)
 
     def upload(self, file: str, route: str, source: str = '', isJSON=True):
         if not self.config.shouldUpload:
@@ -495,7 +501,16 @@ class Agent:
             dependencies_output_file = os.path.join(self.config.output_dir, repo_name + ".dependencies.json")
             self.log(msg=repo_name, tag="Scanning dependencies", display=True)
             if not self.config.dry:
-                dependencies_output_file = dependency_walk(output_file=dependencies_output_file, logger=self.log)
+                uploader = None
+                if self.config.upload_manifest and self.config.shouldUpload:
+                    def f(path):
+                        self.manifest_uploader(path=path, repo_name=repo_name)
+                    uploader = f
+                dependencies_output_file = dependency_walk(
+                    output_file=dependencies_output_file,
+                    logger=self.log,
+                    uploader=uploader
+                )
                 with open(dependencies_output_file, "r") as f:
                     template_definition["dependencies"] = json.load(f)
             self.log(msg=dependencies_output_file, tag="Dependency File", display=False)
@@ -576,6 +591,7 @@ class Agent:
                     try:
                         if not self.config.dry:
                             os.makedirs(temp_dir)
+                            recursive_chmod(temp_dir, 0o666)
                     except:
                         self.log(tag="Directory exists:", msg=temp_dir, display=True)
                         resp = repeat_boolean_prompt(
@@ -584,10 +600,10 @@ class Agent:
                             default_val=False
                         )
                         if resp:
-                            os.chmod(temp_dir, 0o666)
+                            recursive_chmod(temp_dir, 0o666)
                             shutil.rmtree(temp_dir)
                             os.makedirs(temp_dir)
-                            os.chmod(temp_dir, 0o666)
+                            recursive_chmod(temp_dir, 0o666)
                         else:
                             self.log(f"Skipping {repo_url} due to existing temp_dir")
                             continue
@@ -597,6 +613,7 @@ class Agent:
                     if not self.config.dry and self.config.runGit:
                         try:
                             subprocess.check_output(["git", "clone", repo_url, temp_dir])
+                            recursive_chmod(temp_dir, 0o666)
                         except subprocess.CalledProcessError:
                             self.log(msg=repo_url, tag="Failed to clone", display=True)
                             exit(1)

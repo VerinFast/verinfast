@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import List
+from typing import Callable, List
 
 import defusedxml
 
@@ -33,11 +33,17 @@ def write_file(output_file: str, entries):
 
 # Finds all manifests we can process in the repo
 # and stores their path in memory
-def walk(logger, path: str = "./", output_file="./dependencies.json"):
+def walk(
+        logger,
+        uploader: Callable | None = None,
+        path: str = "./",
+        output_file="./dependencies.json"
+        ):
     mavenWalker = MavenWalker(
         manifest_type="xml",
         manifest_files=["pom.xml"],
         logger=logger,
+        upload=uploader,
         root_dir=path
     )
 
@@ -45,6 +51,7 @@ def walk(logger, path: str = "./", output_file="./dependencies.json"):
         manifest_type='json',
         manifest_files=["package.json"],
         logger=logger,
+        upload=uploader,
         root_dir=path
     )
 
@@ -52,6 +59,7 @@ def walk(logger, path: str = "./", output_file="./dependencies.json"):
         manifest_type='xml',
         manifest_files=c_sharp_matches,
         logger=logger,
+        upload=uploader,
         root_dir=path
     )
 
@@ -59,12 +67,15 @@ def walk(logger, path: str = "./", output_file="./dependencies.json"):
         manifest_files=["requirements.txt", "requirements-dev.txt"],
         manifest_type="txt",
         logger=logger,
+        upload=uploader,
         root_dir=path
     )
+
     gem_walker = GemWalker(
         manifest_files=["gemfile", "Gemfile"],
         manifest_type="ruby",
         logger=logger,
+        upload=uploader,
         root_dir=path
     )
 

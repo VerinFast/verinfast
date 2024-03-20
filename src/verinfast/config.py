@@ -177,6 +177,7 @@ class Config(printable):
     truncate_findings = False
     truncate_findings_length = 30
     upload_logs = False
+    upload_manifest = False
     use_uuid = False
 
     def __init__(self, cfg_path: str = None) -> None:
@@ -203,7 +204,10 @@ class Config(printable):
             if not os.path.isfile(self.cfg_path):
                 curr_path = Path(os.getcwd())
                 parent = curr_path.parent
-                while parent and Path(curr_path) != Path('/'):
+                while (
+                    parent and
+                    str(Path(curr_path)) != str(os.path.abspath(os.sep))
+                ):
                     if curr_path.joinpath(self.cfg_path).exists():
                         self.cfg_path = curr_path.joinpath(self.cfg_path)
                         break
@@ -357,6 +361,14 @@ class Config(printable):
             code quality scan."""
         )
 
+        parser.add_argument(
+            "--upload_manifest", "-m",
+            action="store_true",
+            dest="upload_manifest",
+            help="""Upload all detected manifest files (e.g.
+            package.json, composer.json, etc...)."""
+        )
+
         return parser
 
     def handle_args(self, args):
@@ -387,6 +399,9 @@ class Config(printable):
 
         if "should_git" in args and args.should_git is True:
             self.runGit = args.should_git
+
+        if "upload_manifest" in args and args.upload_manifest is True:
+            self.upload_manifest = args.upload_manifest
 
         if "truncate_findings" in args and args.truncate_findings is not None:
             if args.truncate_findings > 0:
@@ -423,6 +438,8 @@ class Config(printable):
                 self.baseUrl = self.config["baseurl"]
             if "should_upload" in self.config:
                 self.shouldUpload = self.config["should_upload"]
+            if "upload_manifest" in self.config:
+                self.upload_manifest = self.config["upload_manifest"]
             if "dry" in self.config:
                 self.dry = self.config["dry"]
             if "delete_temp" in self.config:
