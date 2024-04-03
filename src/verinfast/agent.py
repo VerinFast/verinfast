@@ -35,6 +35,10 @@ from verinfast.dependencies.walk import walk as dependency_walk
 
 # from verinfast.pygments_patch import patch_pygments
 
+if True:
+    from verinfast_oss import main as verinfast_oss
+    oss_imported = True
+
 patch_pygments()
 
 today = date.today()
@@ -489,6 +493,11 @@ class Agent:
                     route="findings",
                     source=repo_name
                 )
+
+        # Run OSS
+        if self.config.runOSS:
+            print("Running OSS")
+            print(verinfast_oss())
 
         # ##### Scan Dependencies ######
         if self.config.runDependencies:

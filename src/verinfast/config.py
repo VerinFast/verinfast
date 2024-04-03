@@ -169,6 +169,7 @@ class Config(printable):
     runScan: bool = True
     runSizes: bool = True
     runStats: bool = True
+    runOSS: bool = True  # Set to False to skip OSS scan
     server_prefix: str | None = None
     server_code_separator: str | None = None
     server_cost_separator: str | None = None
@@ -459,6 +460,8 @@ class Config(printable):
                         self.runSizes = c["run_sizes"]
                     if "run_stats" in c:
                         self.runStats = c["run_stats"]
+                    if "run_oss" in c:
+                        self.runOSS = c["run_oss"]
                     if "git" in c:
                         g = ["git"]
                         if "start" in g:
