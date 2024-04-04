@@ -72,9 +72,7 @@ def truncate_children(
             log,
             excludes=[],
             max_length=30,
-            recursion_depth=0,
-            key_name=None,
-            parent_key=None
+            recursion_depth=0
         ):
     if isinstance(obj, dict):
         for k in obj:
@@ -82,11 +80,7 @@ def truncate_children(
             if k in excludes:
                 pass
             elif isinstance(v, str):
-                if key_name:
-                    if k in key_name:
-                        obj[k] = v[0:max_length]
-                else:
-                    obj[k] = v[0:max_length]
+                obj[k] = v[0:max_length]
             elif (
                 isinstance(v, int) or
                 isinstance(v, float) or
@@ -99,15 +93,11 @@ def truncate_children(
                     log,
                     excludes=excludes,
                     max_length=max_length,
-                    recursion_depth=recursion_depth + 1,
-                    key_name=key_name,
-                    parent_key=k
+                    recursion_depth=recursion_depth + 1
                 )
     elif isinstance(obj, list):
         for i, v in enumerate(obj):
-            if isinstance(v, str) and key_name is None:
-                obj[i] = v[0:max_length]
-            elif isinstance(v, str) and parent_key in key_name:
+            if isinstance(v, str):
                 obj[i] = v[0:max_length]
             elif (
                 isinstance(v, int) or
@@ -121,9 +111,7 @@ def truncate_children(
                     log,
                     excludes=excludes,
                     max_length=max_length,
-                    recursion_depth=recursion_depth + 1,
-                    key_name=key_name,
-                    parent_key=parent_key
+                    recursion_depth=recursion_depth + 1
                 )
 
     return obj
