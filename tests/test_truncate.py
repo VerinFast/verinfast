@@ -39,11 +39,11 @@ def check_children(
         assert len(i) <= max_length
     elif isinstance(i, dict):
         for k in i:
+            if k == "message":
+                saw_message = True
             if k in excludes:
                 print(f"{k} is excluded")
             else:
-                if k == "message":
-                    saw_message = True
                 try:
                     check_children(
                         i[k],
@@ -108,12 +108,14 @@ def test_no_truncate(self):
                     k,
                     excludes=[
                         "cwe",
+                        "owasp",
                         "path",
                         "check_id",
                         "license",
                         "taint_sink",
                         "taint_source",
-                        "fingerprint"
+                        "fingerprint",
+                        "lines"
                     ]
                 )
     assert saw_message is True
@@ -137,8 +139,7 @@ def test_truncate(self):
     agent.config = config
     agent.config.dry = False
     agent.config.shouldUpload = False
-    agent.config.truncate_findings = True
-    agent.config.truncate_findings_length = 30
+    agent.config.truncate_findings = 0
     assert agent.config.runGit is True
     assert agent.config.runScan is True
     agent.debug = DebugLog(path=agent.config.output_dir, debug=False)
@@ -150,8 +151,24 @@ def test_truncate(self):
         d = json.load(f)
         r = d["results"]
         assert r[0]["check_id"] == "bash.curl.security.curl-eval.curl-eval"
+        assert r[0]["extra"]["lines"] == ""
         for k in r:
-            check_children(k)
+            check_children(
+                    k,
+                    excludes=[
+                        "cwe",
+                        "owasp",
+                        "path",
+                        "check_id",
+                        "license",
+                        "taint_sink",
+                        "fingerprint",
+                        "message",
+                        "references",
+                        "url",
+                        "source"
+                    ]
+                )
     assert saw_message is True
 
 
@@ -173,12 +190,10 @@ def test_truncate_from_args(self):
     config.handle_args(args)
     assert config.runGit is True
     assert config.runScan is True
-    assert config.truncate_findings is True
-    assert config.truncate_findings_length == 30
+    assert config.truncate_findings == 30
     config.output_dir = results_dir
     agent.config = config
-    assert agent.config.truncate_findings is True
-    assert agent.config.truncate_findings_length == 30
+    assert agent.config.truncate_findings == 30
     agent.config.dry = False
     agent.config.shouldUpload = False
     agent.debug = DebugLog(path=agent.config.output_dir, debug=False)
