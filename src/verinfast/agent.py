@@ -483,7 +483,7 @@ class Agent:
                                 findings,
                                 self.log,
                                 excludes=truncation_exclusion,
-                                max_length=self.config.truncate_findings_length
+                                max_length=self.config.truncate_findings
                             )
                         except Exception as e:
                             self.log(tag="ERROR", msg="Error in Truncation")
