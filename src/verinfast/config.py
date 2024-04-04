@@ -387,7 +387,6 @@ class Config(printable):
             self.runGit = args.should_git
 
         if "truncate_findings" in args and args.truncate_findings is not None:
-            print('args.truncate_findings', args.truncate_findings)
             if args.truncate_findings >= 0:
                 self.truncate_findings = args.truncate_findings
             else:
@@ -426,10 +425,7 @@ class Config(printable):
             if "delete_temp" in self.config:
                 self.delete_temp = self.config["delete_temp"]
             if "truncate_findings" in self.config:
-                print('self.config["truncate_findings"]', 
-                      self.config["truncate_findings"])
                 self.truncate_findings = self.config["truncate_findings"]
-                print('self.truncate_findings', self.truncate_findings)
 
             if "server" in self.config:
                 s = self.config["server"]

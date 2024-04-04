@@ -446,9 +446,8 @@ class Agent:
                     with open(findings_output_file) as f:
                         original_findings = json.load(f)
 
-                    print('self.config.truncate_findings', self.config.truncate_findings)
                     if self.config.truncate_findings >= 0:
-                        truncation_exclusion = ["cwe", "path", "check_id", "license"]
+                        truncation_exclusion = ["cwe", "owasp", "path", "check_id", "license"]
                         self.log(
                             tag="TRUNCATING",
                             msg=f"excluding: {truncation_exclusion}"
@@ -458,7 +457,8 @@ class Agent:
                                 findings,
                                 self.log,
                                 excludes=truncation_exclusion,
-                                max_length=self.config.truncate_findings
+                                max_length=self.config.truncate_findings,
+                                key_name='lines'
                             )
                         except Exception as e:
                             self.log(tag="ERROR", msg="Error in Truncation")
