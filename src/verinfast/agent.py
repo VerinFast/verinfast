@@ -484,7 +484,7 @@ class Agent:
                                 self.log,
                                 excludes=truncation_exclusion,
                                 max_length=self.config.truncate_findings,
-                                key_name='lines'
+                                key_name=['lines', 'taint_source']
                             )
                         except Exception as e:
                             self.log(tag="ERROR", msg="Error in Truncation")
