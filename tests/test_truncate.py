@@ -22,12 +22,20 @@ def check_children(
             i: str | dict | list,
             max_length=30,
             recursion_depth=0,
+            # This list must match agent.py
             excludes=[
                 "cwe",
+                "owasp",
                 "path",
                 "check_id",
-                "license"
-            ],
+                "license",
+                "fingerprint",
+                "message",
+                "references",
+                "url",
+                "source",
+                "severity"
+            ]
         ):
     if recursion_depth > MAX_RECURSION_DEPTH:
         raise Exception("In TOO DEEP!")
@@ -108,14 +116,12 @@ def test_no_truncate(self):
                     k,
                     excludes=[
                         "cwe",
-                        "owasp",
                         "path",
                         "check_id",
                         "license",
                         "taint_sink",
                         "taint_source",
-                        "fingerprint",
-                        "lines"
+                        "fingerprint"
                     ]
                 )
     assert saw_message is True
@@ -153,22 +159,7 @@ def test_truncate(self):
         assert r[0]["check_id"] == "bash.curl.security.curl-eval.curl-eval"
         assert r[0]["extra"]["lines"] == ""
         for k in r:
-            check_children(
-                    k,
-                    excludes=[
-                        "cwe",
-                        "owasp",
-                        "path",
-                        "check_id",
-                        "license",
-                        "taint_sink",
-                        "fingerprint",
-                        "message",
-                        "references",
-                        "url",
-                        "source"
-                    ]
-                )
+            check_children(k)
     assert saw_message is True
 
 
