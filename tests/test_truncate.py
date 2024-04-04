@@ -116,14 +116,12 @@ def test_no_truncate(self):
                     k,
                     excludes=[
                         "cwe",
-                        "owasp",
                         "path",
                         "check_id",
                         "license",
                         "taint_sink",
                         "taint_source",
-                        "fingerprint",
-                        "lines"
+                        "fingerprint"
                     ]
                 )
     assert saw_message is True
@@ -162,22 +160,7 @@ def test_truncate(self):
         assert r[0]["check_id"] == "bash.curl.security.curl-eval.curl-eval"
         assert r[0]["extra"]["lines"] == ""
         for k in r:
-            check_children(
-                    k,
-                    excludes=[
-                        "cwe",
-                        "owasp",
-                        "path",
-                        "check_id",
-                        "license",
-                        "taint_sink",
-                        "fingerprint",
-                        "message",
-                        "references",
-                        "url",
-                        "source"
-                    ]
-                )
+            check_children(k)
     assert saw_message is True
 
 
