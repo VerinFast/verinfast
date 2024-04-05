@@ -145,12 +145,12 @@ class Agent:
     def checkDependency(self, command, name, kill=False) -> bool:
         which = shutil.which(command)
         if not which:
-            self.log(msg=f"{name} is required but it's not installed.", tag=f"{name} status", display=False)
+            self.log(msg=f"{name} is required but it's not installed.", tag=f"{name} status", display=False, timestamp=False)
             if kill:
                 raise Exception(f"{name} is required but it's not installed.")
             return False
         else:
-            self.log(msg=f"{name} is installed at {which}.", tag=f"{name} status", display=True)
+            self.log(msg=f"{name} is installed at {which}.", tag=f"{name} status", display=True, timestamp=False)
             return True
 
     def upload(self, file: str, route: str, source: str = '', isJSON=True):
@@ -507,6 +507,7 @@ class Agent:
 
     def preflight(self):
         # Loop over all remote repositories from config file
+        print("\n\n\nChecking your system's compatibility with the scan configuration:\n")
         if 'repos' in self.config.config:
             repos = self.config.config["repos"]
             if repos:
@@ -522,10 +523,10 @@ class Agent:
                         repo_url = repo_url.split("@")[0]
                     try:
                         subprocess.check_output(["git", "ls-remote", repo_url])
-                        self.log(tag="Access confirmed", msg=repo_url, display=True)
+                        self.log(tag="Repository access confirmed", msg=repo_url, display=True, timestamp=False)
                     except subprocess.CalledProcessError:
-                        self.log(msg=repo_url, tag="Unable to access", display=True)
-                        self.log(msg=repo_url, tag="Repository will not be scanned", display=True)
+                        self.log(msg=repo_url, tag="Unable to access", display=True, timestamp=False)
+                        self.log(msg=repo_url, tag="Repository will not be scanned", display=True, timestamp=False)
 
             cloud_config = self.config.modules.cloud
             if cloud_config is not None:
@@ -534,19 +535,19 @@ class Agent:
                         if provider.provider == "aws" and self.checkDependency("aws", "AWS Command-line tool"):
                             account_id = str(provider.account).replace('-', '')
                             if find_profile(account_id, self.log) is None:
-                                self.log(tag=f"No matching AWS CLI profiles found for {provider.account}", msg="Account can't be scanned.", display=True)
+                                self.log(tag=f"No matching AWS CLI profiles found for {provider.account}", msg="Account can't be scanned.", display=True, timestamp=False)
                             else:
-                                self.log(tag="Access confirmed", msg=account_id, display=True)
+                                self.log(tag="AWS account access confirmed", msg=account_id, display=True, timestamp=False)
                         if provider.provider == "azure" and self.checkDependency("az", "Azure Command-line tool"):
                             pass
                         if provider.provider == "gcp" and self.checkDependency("gcloud", "Google Command-line tool"):
                             pass
                     except:
-                        self.log(msg=f"Unable to access {provider.provider} {provider.account}", tag="Unable to access", display=True)
+                        self.log(msg=f"Unable to access {provider.provider} {provider.account}", tag="Unable to access", display=True, timestamp=False)
 
                 resp = repeat_boolean_prompt(
-                    "Would you like to proceed with the scan?",
-                    logger=self.debug.log,
+                    "\nWould you like to proceed with the scan?",
+                    logger=print,
                     default_val=True
                 )
 
