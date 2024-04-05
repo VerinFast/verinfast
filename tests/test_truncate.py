@@ -145,7 +145,8 @@ def test_truncate(self):
     agent.config = config
     agent.config.dry = False
     agent.config.shouldUpload = False
-    agent.config.truncate_findings = 0
+    agent.config.truncate_findings = True
+    agent.config.truncate_findings_length = 0
     assert agent.config.runGit is True
     assert agent.config.runScan is True
     agent.debug = DebugLog(path=agent.config.output_dir, debug=False)

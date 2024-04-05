@@ -175,7 +175,8 @@ class Config(printable):
     server_cost_separator: str | None = None
     shouldUpload: bool = False
     shouldManualFileScan: bool = True
-    truncate_findings = -1
+    truncate_findings = False
+    truncate_findings_length = 30
     upload_logs = False
     use_uuid = False
 
@@ -289,9 +290,10 @@ class Config(printable):
             "-t", "--truncate", "--truncate_findings",
             dest="truncate_findings",
             type=int,
+            default=-1,
             help="""This flag will further enhance privacy by capping
-            The length of security warning code snippets. It defaults to
-            unlimited, but can be set to any level you feel comfortable with.
+            The length of security warnings. It defaults to unlimited,
+            but can be set to any level you feel comfortable with.
 
             <0 = unlimited
             We recommend 30 as good balance between privacy and utility
@@ -389,9 +391,10 @@ class Config(printable):
 
         if "truncate_findings" in args and args.truncate_findings is not None:
             if args.truncate_findings >= 0:
-                self.truncate_findings = args.truncate_findings
+                self.truncate_findings = True
+                self.truncate_findings_length = args.truncate_findings
             else:
-                self.truncate_findings = -1
+                self.truncate_findings = False
 
     def is_path_remote(self) -> bool:
         s = self.cfg_path
@@ -427,6 +430,11 @@ class Config(printable):
                 self.delete_temp = self.config["delete_temp"]
             if "truncate_findings" in self.config:
                 self.truncate_findings = self.config["truncate_findings"]
+                if "truncate_findings_length" in self.config:
+                    self.truncate_findings_length = \
+                        self.config["truncate_findings_length"]
+                else:
+                    self.truncate_findings_length = 30
 
             if "server" in self.config:
                 s = self.config["server"]
