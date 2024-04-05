@@ -175,7 +175,8 @@ class Config(printable):
     server_cost_separator: str | None = None
     shouldUpload: bool = False
     shouldManualFileScan: bool = True
-    truncate_findings = -1
+    truncate_findings = False
+    truncate_findings_length = 30
     upload_logs = False
     use_uuid = False
 
@@ -292,9 +293,10 @@ class Config(printable):
             "-t", "--truncate", "--truncate_findings",
             dest="truncate_findings",
             type=int,
+            default=-1,
             help="""This flag will further enhance privacy by capping
-            The length of security warning code snippets. It defaults to
-            unlimited, but can be set to any level you feel comfortable with.
+            The length of security warnings. It defaults to unlimited,
+            but can be set to any level you feel comfortable with.
 
             <0 = unlimited
             We recommend 30 as good balance between privacy and utility
@@ -395,7 +397,7 @@ class Config(printable):
                 self.truncate_findings = True
                 self.truncate_findings_length = args.truncate_findings
             else:
-                self.truncate_findings = -1
+                self.truncate_findings = False
 
     def is_path_remote(self) -> bool:
         s = self.cfg_path
