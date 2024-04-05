@@ -182,10 +182,12 @@ def test_truncate_from_args(self):
     config.handle_args(args)
     assert config.runGit is True
     assert config.runScan is True
-    assert config.truncate_findings == 30
+    assert config.truncate_findings is True
+    assert config.truncate_findings_length == 30
     config.output_dir = results_dir
     agent.config = config
-    assert agent.config.truncate_findings == 30
+    assert agent.config.truncate_findings is True
+    assert agent.config.truncate_findings_length == 30
     agent.config.dry = False
     agent.config.shouldUpload = False
     agent.debug = DebugLog(path=agent.config.output_dir, debug=False)

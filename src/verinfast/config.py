@@ -289,7 +289,6 @@ class Config(printable):
             "-t", "--truncate", "--truncate_findings",
             dest="truncate_findings",
             type=int,
-            default=-1,
             help="""This flag will further enhance privacy by capping
             The length of security warnings. It defaults to unlimited,
             but can be set to any level you feel comfortable with.
