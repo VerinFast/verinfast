@@ -131,14 +131,17 @@ class DebugLog:
         self.debug = debug
 
     def log(self, msg, tag=None, display=False, timestamp=True):
-        if tag is None:
+        if tag is None and timestamp:
             s = inspect.stack()[1]
 
             tag = f"{s.filename}@{s.lineno} {s.function}"
         if timestamp:
             d = date.today()
             tag = f"{d} {time.strftime('%H:%M:%S', time.localtime())} {tag}"
-        output = f"{tag}: {msg}"
+        if tag != "":
+            output = f"{tag}: {msg}"
+        else:
+            output = f"{msg}"
 
         with open(self.logFile, 'a') as f:
             f.write(output+"\n")
