@@ -447,7 +447,20 @@ class Agent:
                         original_findings = json.load(f)
 
                     if self.config.truncate_findings:
-                        truncation_exclusion = ["cwe", "path", "check_id", "license"]
+                        # Exclusions are set to exclude fields that are not code
+                        truncation_exclusion = [
+                            "cwe",
+                            "owasp",
+                            "path",
+                            "check_id",
+                            "license",
+                            "fingerprint",
+                            "message",
+                            "references",
+                            "url",
+                            "source",
+                            "severity"
+                        ]
                         self.log(
                             tag="TRUNCATING",
                             msg=f"excluding: {truncation_exclusion}"
