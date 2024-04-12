@@ -505,6 +505,7 @@ class Agent:
 
         # Run OSS
         if self.config.runOSS:
+            self.log(msg=repo_name, tag="Loading OSS model...", display=True)
             from verinfast_oss import getembeddings
             oss_output_file = os.path.join(self.config.output_dir, repo_name + ".oss.json")
             if not self.config.dry:
