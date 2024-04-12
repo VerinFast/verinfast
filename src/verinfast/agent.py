@@ -89,6 +89,7 @@ class Agent:
 
                 if self.config.runOSS:
                     self.log(msg='(This can take a few minutes.)', tag="Loading OSS model...", display=True)
+                    # // TO DO download from somewhere
                     from verinfast_oss import getembeddings
                     ourGetembeddings = getembeddings
 
