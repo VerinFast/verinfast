@@ -32,6 +32,7 @@ class Uploader:
             "stats": f"{report}{code_sep}/{code}/{repo_name}/stats",
             "findings": f"{report}{code_sep}/{code}/{repo_name}/findings",
             "dependencies": f"{report}{code_sep}/{code}/{repo_name}/dependencies",  # noqa: E501
+            "oss": f"{report}{code_sep}/{code}/{repo_name}/oss",
             "costs": f"{report}{cost_sep}/costs",
             "instances": f"{report}{cost_sep}/instances",
             "utilization": f"{report}{cost_sep}/instance_utilization",
@@ -51,7 +52,8 @@ class Uploader:
             "pygount",
             "stats",
             "findings",
-            "dependencies"
+            "dependencies",
+            "oss"
         ]
 
         if path_type in requires_code and code is None:
