@@ -36,7 +36,7 @@ from verinfast.dependencies.walk import walk as dependency_walk
 # from verinfast.pygments_patch import patch_pygments
 
 if True:
-    from verinfast_oss import main as verinfast_oss
+    from verinfast_oss import getembeddings
     oss_imported = True
 
 patch_pygments()
@@ -496,8 +496,16 @@ class Agent:
 
         # Run OSS
         if self.config.runOSS:
-            print("Running OSS")
-            print(verinfast_oss())
+            oss_output_file = os.path.join(self.config.output_dir, repo_name + ".oss.json")
+            if not self.config.dry:
+                self.log(msg=repo_name, tag="Running OSS", display=True)
+                getembeddings(path_to_output=oss_output_file, single_file=True)
+            self.log(msg=oss_output_file, tag="OSS File", display=False)
+            self.upload(
+                file=oss_output_file,
+                route="oss",
+                source=repo_name
+            )
 
         # ##### Scan Dependencies ######
         if self.config.runDependencies:

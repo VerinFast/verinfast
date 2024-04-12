@@ -169,7 +169,7 @@ class Config(printable):
     runScan: bool = True
     runSizes: bool = True
     runStats: bool = True
-    runOSS: bool = True  # Set to False to skip OSS scan
+    runOSS: bool = False  # OSS off by default
     server_prefix: str | None = None
     server_code_separator: str | None = None
     server_cost_separator: str | None = None
