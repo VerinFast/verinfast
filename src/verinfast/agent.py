@@ -87,7 +87,7 @@ class Agent:
                 # Check if Git is installed
                 self.checkDependency("git", "Git")
 
-                if self.config.runOSS:
+                if self.config.runOSS and not self.config.dry:
                     self.log(msg='(This can take a few minutes.)', tag="Loading OSS model...", display=True)
                     # // TO DO download from somewhere
                     from verinfast_oss import getembeddings
