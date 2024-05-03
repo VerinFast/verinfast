@@ -541,34 +541,34 @@ class Agent:
                         self.log(msg=repo_url, tag="Unable to access", display=True, timestamp=False)
                         self.log(msg=repo_url, tag="Repository will not be scanned", display=True, timestamp=False)
 
-            cloud_config = self.config.modules.cloud
-            if cloud_config is not None:
-                for provider in cloud_config:
-                    try:
-                        if provider.provider == "aws" and self.checkDependency("aws", "AWS Command-line tool"):
-                            account_id = str(provider.account).replace('-', '')
-                            if find_profile(account_id, self.log) is None:
-                                self.log(tag=f"No matching AWS CLI profiles found for {provider.account}", msg="Account can't be scanned.", display=True, timestamp=False)
-                            else:
-                                self.log(tag="AWS account access confirmed", msg=account_id, display=True, timestamp=False)
-                        if provider.provider == "azure" and self.checkDependency("az", "Azure Command-line tool"):
-                            pass
-                        if provider.provider == "gcp" and self.checkDependency("gcloud", "Google Command-line tool"):
-                            pass
-                    except:
-                        self.log(msg=f"Unable to access {provider.provider} {provider.account}", tag="Unable to access", display=True, timestamp=False)
+        cloud_config = self.config.modules.cloud
+        if cloud_config is not None:
+            for provider in cloud_config:
+                try:
+                    if provider.provider == "aws" and self.checkDependency("aws", "AWS Command-line tool"):
+                        account_id = str(provider.account).replace('-', '')
+                        if find_profile(account_id, self.log) is None:
+                            self.log(tag=f"No matching AWS CLI profiles found for {provider.account}", msg="Account can't be scanned.", display=True, timestamp=False)
+                        else:
+                            self.log(tag="AWS account access confirmed", msg=account_id, display=True, timestamp=False)
+                    if provider.provider == "azure" and self.checkDependency("az", "Azure Command-line tool"):
+                        pass
+                    if provider.provider == "gcp" and self.checkDependency("gcloud", "Google Command-line tool"):
+                        pass
+                except:
+                    self.log(msg=f"Unable to access {provider.provider} {provider.account}", tag="Unable to access", display=True, timestamp=False)
 
-                resp = repeat_boolean_prompt(
-                    "\nWould you like to proceed with the scan?",
-                    logger=print,
-                    default_val=True
-                )
+        resp = repeat_boolean_prompt(
+            "\nWould you like to proceed with the scan?",
+            logger=print,
+            default_val=True
+        )
 
-                if resp:
-                    self.log(msg="Proceeding")
-                else:
-                    self.log(tag="Exiting now", msg="", display=True)
-                    exit(0)
+        if resp:
+            self.log(msg="Proceeding")
+        else:
+            self.log(tag="Exiting now", msg="", display=True)
+            exit(0)
 
     # ##### Scan Repos ######
     def scanRepos(self):
