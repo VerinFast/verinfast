@@ -8,6 +8,7 @@ from verinfast.dependencies.walkers.maven import MavenWalker
 from verinfast.dependencies.walkers.npm import NodeWalker
 from verinfast.dependencies.walkers.gemwalker import GemWalker
 from verinfast.dependencies.walkers.nuget import NuGetWalker, c_sharp_matches
+from verinfast.dependencies.walkers.dockerwalker import DockerWalker
 from verinfast.dependencies.walkers.python import PyWalker
 from verinfast.dependencies.walkers.classes import Entry
 
@@ -67,6 +68,12 @@ def walk(logger, path: str = "./", output_file="./dependencies.json"):
         logger=logger,
         root_dir=path
     )
+    docker_walker = DockerWalker(
+        manifest_files=["Dockerfile", "dockerfile"],
+        manifest_type="Dockerfile",
+        logger=logger,
+        root_dir=path
+    )
 
     path = str(Path(path).absolute())
     entries: List[Entry] = []
@@ -90,6 +97,9 @@ def walk(logger, path: str = "./", output_file="./dependencies.json"):
     logger(msg="Dependency Scan 80%", display=True)
     entries += gem_walker.entries
     write_file(output_file=output_file, entries=entries)
+    logger(msg="Dependency Scan 95%", display=True)
+    docker_walker.walk(path=path)
+    entries += docker_walker.entries
     logger(msg="Dependency Scan 100%", display=True)
 
     return output_file
