@@ -4,9 +4,12 @@ from verinfast.dependencies.walkers.classes import Walker, Entry
 class DockerWalker(Walker):
     def parse(self, file: str, expand=False):
         with open(file, 'rb') as f:
+            string = f'\nDockerfile found {file}:\n\n\n {str(f.read())} \n\n\n'
+            self.log(timestamp=False, tag=None, msg=string)
+        with open(file, 'rb') as f:
             lines = f.readlines()
             for line in lines:
-                line = line.lower()
+                line = str(line).lower()
                 if line.startswith('from'):
                     name = line.split(' ')[1]
                     parts = name.split(':')
