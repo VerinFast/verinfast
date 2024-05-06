@@ -9,8 +9,10 @@ class DockerWalker(Walker):
         with open(file, 'rb') as f:
             lines = f.readlines()
             for line in lines:
+                print(line)
                 line = str(line).lower()
                 if line.startswith('from'):
+                    print('matches from')
                     name = line.split(' ')[1]
                     parts = name.split(':')
                     e = Entry(
@@ -19,6 +21,7 @@ class DockerWalker(Walker):
                         source='Dockerfile',
                         required_by=file
                     )
+                    print(e.to_json())
                     self.entries.append(e)
 
     def expand(self, file):
