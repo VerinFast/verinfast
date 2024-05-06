@@ -103,13 +103,15 @@ def walk(logger, path: str = "./", output_file="./dependencies.json"):
     py_walker.walk(path=path)
     logger(msg="Dependency Scan 60%", display=True)
     entries += py_walker.entries
+    write_file(output_file=output_file, entries=entries)
     gem_walker.walk(path=path)
     logger(msg="Dependency Scan 80%", display=True)
     entries += gem_walker.entries
     write_file(output_file=output_file, entries=entries)
     logger(msg="Dependency Scan 95%", display=True)
-    docker_walker.walk(path=path)
+    docker_walker.walk(path=path, expand=False)
     entries += docker_walker.entries
+    write_file(output_file=output_file, entries=entries)
     logger(msg="Dependency Scan 100%", display=True)
 
     return output_file
