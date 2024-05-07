@@ -6,13 +6,11 @@ class DockerWalker(Walker):
         with open(file, 'rb') as f:
             string = f'\nDockerfile found {file}:\n\n\n {str(f.read())} \n\n\n'
             self.log(timestamp=False, tag=None, msg=string)
-        with open(file, 'rb') as f:
+        with open(file, 'r') as f:
             lines = f.readlines()
             for line in lines:
-                print(line)
                 line = str(line).lower()
                 if line.startswith('from'):
-                    print('matches from')
                     name = line.split(' ')[1]
                     parts = name.split(':')
                     e = Entry(
