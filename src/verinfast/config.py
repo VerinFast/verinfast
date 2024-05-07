@@ -224,7 +224,7 @@ class Config(printable):
             "repos" not in self.config and
             "local_repos" not in self.config and
             (
-                "modules" not in self.config or 
+                "modules" not in self.config or
                 "cloud" not in self.config["modules"]
             )
         ):
