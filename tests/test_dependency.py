@@ -136,7 +136,7 @@ def test_docker():
         for d in output:
             if d["name"] == "ubuntu":
                 found_ubuntu_base_image = True
-                assert d["version"] == "trusty"
+                assert d["specifier"] == "trusty"
                 assert d["source"] == "Dockerfile"
         assert found_ubuntu_base_image
 
