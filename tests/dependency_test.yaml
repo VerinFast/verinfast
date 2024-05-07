@@ -1,0 +1,11 @@
+# This is a sample config for test runs
+dry: false
+modules:
+  code:
+    run_git: false
+    run_scan: false
+    run_sizes: false
+    run_stats: false
+    git:
+      start: 2023-02-09
+    dependencies: true
