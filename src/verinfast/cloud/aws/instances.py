@@ -180,10 +180,10 @@ def get_instances(sub_id: int, path_to_output: str = "./",
                                 name = instance["InstanceId"]
                             else:
                                 tags_with_name = [t['Value'] for t in tags if t['Key'] == 'Name']  # noqa: E501
-                                if not tagsWName:
+                                if not tags_with_name:
                                     name = instance["InstanceId"]
                                 else:
-                                    name = tagsWName[0]
+                                    name = tags_with_name[0]
                             m = get_instance_utilization(
                                 instance_id=instance["InstanceId"],
                                 session=right_session,
