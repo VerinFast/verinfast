@@ -46,7 +46,9 @@ def test_aws_scan(self):
     # Make sure "aws-cost-foo.json" doesn't exist
     bad_costs_file = Path(results_dir.joinpath("aws-cost-foo.json"))
     assert not bad_costs_file.is_file()
-    with open(results_dir.joinpath(f"aws-instances-{sub_id}.json")) as f:
+    instancesFile = results_dir.joinpath(f"aws-instances-{sub_id}.json")
+    print("instancesFile", instancesFile)
+    with open(instancesFile) as f:
         instances = json.load(f)
         assert len(instances["data"]) >= 5
     # Make sure "aws-instances-foo.json" doesn't exist
@@ -66,7 +68,9 @@ def test_aws_scan(self):
         results_dir.joinpath("aws-instances-foo-utilization.json")
     )
     assert not bad_utilization_file.is_file()
-    with open(results_dir.joinpath(f"aws-storage-{sub_id}.json")) as f:
+    storageFile = results_dir.joinpath(f"aws-storage-{sub_id}.json")
+    print("storageFile", storageFile)
+    with open(storageFile) as f:
         storage = json.load(f)
         v = 0
         for u in storage["data"]:
