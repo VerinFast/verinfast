@@ -77,7 +77,7 @@ def walk(logger, path: str = "./", output_file="./dependencies.json"):
     )
 
     docker_walker = DockerWalker(
-        manifest_files=["Dockerfile", "dockerfile"],
+        manifest_files=["Dockerfile", "dockerfile", "docker-compose.yml"],
         manifest_type="Dockerfile",
         logger=logger,
         root_dir=path
