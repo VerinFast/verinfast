@@ -95,7 +95,6 @@ class Agent:
                     with httpimport.remote_repo(verinfast_oss_url):
                         from verinfast_oss import getembeddings
                         ourGetembeddings = getembeddings
-                        print('ourGetembeddings loaded')
 
                 if self.config.shouldUpload:
                     headers = {
