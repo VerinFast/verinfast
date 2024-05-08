@@ -1,20 +1,22 @@
 import json
 from pathlib import Path
 
-from pygments_tsx.tsx import patch_pygments
-
 from verinfast.dependencies.walk import walk
 from verinfast.dependencies.walkers.classes import Entry
 
 file_path = Path(__file__)
 test_folder = file_path.parent
-
-patch_pygments()
+docker_folder = test_folder.joinpath('fixtures/docker')
 
 
 def logger(msg, **kwargs):
     print(msg)
     print(kwargs)
+
+
+def test_dockerfile_exists():
+    docker_file_path = docker_folder.joinpath('Dockerfile')
+    assert Path.exists(docker_file_path)
 
 
 def test_walk():
@@ -65,18 +67,18 @@ def test_ruby():
         first_dep = output[0]
         e = Entry(**first_dep)
         assert e.license == "ISC"
-        found_azure_identity = False
+        found_rubocop = False
         for d in output:
             if d["name"] == "rubocop-ast":
-                found_azure_identity = True
+                found_rubocop = True
                 assert d["specifier"] == "*"
-        assert found_azure_identity
-        found_azure_core = False
+        assert found_rubocop
+        found_aasm = False
         for d in output:
             if d["name"] == "aasm":
-                found_azure_core = True
+                found_aasm = True
                 assert d["specifier"] == "*"
-        assert found_azure_core
+        assert found_aasm
         found_bad_source_type = False
         found_source_single_quote = False
         for d in output:
@@ -114,5 +116,28 @@ def test_python():
                 found_azure_core = True
                 assert d["source"] == "pip"
         assert found_azure_core
+
+    return None
+
+
+def test_docker():
+    output_path = walk(
+        path=docker_folder,
+        output_file="./dependencies.json",
+        logger=logger
+    )
+    with open(output_path) as output_file:
+        output = json.load(output_file)
+        assert len(output) >= 1
+        # first_dep = output[0]
+        # e = Entry(**first_dep)
+        # assert e.license == "ISC"
+        found_ubuntu_base_image = False
+        for d in output:
+            if d["name"] == "ubuntu":
+                found_ubuntu_base_image = True
+                assert d["specifier"] == "trusty"
+                assert d["source"] == "Dockerfile"
+        assert found_ubuntu_base_image
 
     return None
