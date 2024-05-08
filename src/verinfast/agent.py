@@ -33,11 +33,9 @@ from verinfast.user import initial_prompt, save_path, repeat_boolean_prompt
 
 from verinfast.dependencies.walk import walk as dependency_walk
 
-# from verinfast.pygments_patch import patch_pygments
+import httpimport
 
-if True:
-    from verinfast_oss import main as verinfast_oss
-    oss_imported = True
+verinfast_oss_url = "https://storage.googleapis.com/staging.startupos-328814.appspot.com/packages/verinfast_oss-2024.5.8140149.tar.gz"
 
 patch_pygments()
 
@@ -94,8 +92,9 @@ class Agent:
                 if self.config.runOSS and not self.config.dry:
                     self.log(msg='(This can take a few minutes.)', tag="Loading OSS model...", display=True)
                     # // TO DO download from somewhere
-                    from verinfast_oss import getembeddings
-                    ourGetembeddings = getembeddings
+                    with httpimport.remote_repo(verinfast_oss_url):
+                        from verinfast_oss import getembeddings
+                        ourGetembeddings = getembeddings
 
                 if self.config.shouldUpload:
                     headers = {
