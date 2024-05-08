@@ -1,0 +1,56 @@
+[
+    {
+        "name": "ubuntu",
+        "source": "Dockerfile",
+        "specifier": "trusty",
+        "required_by": "/home/ceoja/verinfast/tests/fixtures/docker/Dockerfile"
+    },
+    {
+        "name": " redis",
+        "source": "docker-compose",
+        "specifier": "*",
+        "required_by": "/home/ceoja/verinfast/tests/fixtures/docker/docker-compose.yml"
+    },
+    {
+        "name": " redis",
+        "source": "docker-compose",
+        "specifier": "5",
+        "required_by": "/home/ceoja/verinfast/tests/fixtures/docker/docker-compose.yml"
+    },
+    {
+        "name": " redis",
+        "source": "docker-compose",
+        "specifier": "sha256:0ed5d5928d4737458944eb604cc8509e245c3e19d02ad83935398bc4b991aac7",
+        "required_by": "/home/ceoja/verinfast/tests/fixtures/docker/docker-compose.yml"
+    },
+    {
+        "name": " library/redis",
+        "source": "docker-compose",
+        "specifier": "*",
+        "required_by": "/home/ceoja/verinfast/tests/fixtures/docker/docker-compose.yml"
+    },
+    {
+        "name": " docker.io/library/redis",
+        "source": "docker-compose",
+        "specifier": "*",
+        "required_by": "/home/ceoja/verinfast/tests/fixtures/docker/docker-compose.yml"
+    },
+    {
+        "name": " my_private.registry:5000/redis",
+        "source": "docker-compose",
+        "specifier": "*",
+        "required_by": "/home/ceoja/verinfast/tests/fixtures/docker/docker-compose.yml"
+    },
+    {
+        "name": " my_private.registry:5000",
+        "source": "docker-compose",
+        "specifier": "5",
+        "required_by": "/home/ceoja/verinfast/tests/fixtures/docker/docker-compose.yml"
+    },
+    {
+        "name": " my_private.registry:5000/redis",
+        "source": "docker-compose",
+        "specifier": "sha256:0ed5d5928d4737458944eb604cc8509e245c3e19d02ad83935398bc4b991aac7",
+        "required_by": "/home/ceoja/verinfast/tests/fixtures/docker/docker-compose.yml"
+    }
+]
