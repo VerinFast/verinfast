@@ -33,7 +33,9 @@ from verinfast.user import initial_prompt, save_path, repeat_boolean_prompt
 
 from verinfast.dependencies.walk import walk as dependency_walk
 
-# from verinfast.pygments_patch import patch_pygments
+import httpimport
+
+verinfast_oss_url = "https://storage.googleapis.com/staging.startupos-328814.appspot.com/packages/verinfast_oss-2024.5.8140149.tar.gz"
 
 patch_pygments()
 
@@ -57,6 +59,8 @@ templates_folder = str(parent_folder.joinpath("templates"))
 curr_dir = os.getcwd()
 temp_dir = os.path.join(curr_dir, "temp_repo")
 
+ourGetembeddings = None
+
 
 class Agent:
     def __init__(self):
@@ -79,10 +83,18 @@ class Agent:
                 f.write(output)
 
     def scan(self):
+        global ourGetembeddings
         if self.config.modules is not None:
             if self.config.modules.code is not None:
                 # Check if Git is installed
                 self.checkDependency("git", "Git")
+                if self.config.runOSS and not self.config.dry:
+                    self.log(msg='(This can take a few minutes.)', tag="Loading OSS model...", display=True)
+                    # // TO DO download from somewhere
+
+                    with httpimport.remote_repo(verinfast_oss_url):
+                        from verinfast_oss import getembeddings
+                        ourGetembeddings = getembeddings
 
                 if self.config.shouldUpload:
                     headers = {
@@ -502,6 +514,19 @@ class Agent:
                     route="findings",
                     source=repo_name
                 )
+
+        # Run OSS
+        if self.config.runOSS:
+            oss_output_file = os.path.join(self.config.output_dir, repo_name + ".oss.json")
+            if not self.config.dry:
+                self.log(msg=repo_name, tag="Running OSS", display=True)
+                ourGetembeddings(path_to_output=oss_output_file, single_file=True)
+            self.log(msg=oss_output_file, tag="OSS File", display=False)
+            self.upload(
+                file=oss_output_file,
+                route="oss",
+                source=repo_name
+            )
 
         # ##### Scan Dependencies ######
         if self.config.runDependencies:
