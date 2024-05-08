@@ -24,7 +24,7 @@ def test_oss_scan(self):
     os.makedirs(agent.config.output_dir, exist_ok=True)
     agent.config.config["local_repos"] = [tsx_path]
 
-    agent.scanRepos()
+    agent.scan()
 
     with open(output_path) as output_file:
         output = json.load(output_file)

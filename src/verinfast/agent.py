@@ -88,13 +88,14 @@ class Agent:
             if self.config.modules.code is not None:
                 # Check if Git is installed
                 self.checkDependency("git", "Git")
-
                 if self.config.runOSS and not self.config.dry:
                     self.log(msg='(This can take a few minutes.)', tag="Loading OSS model...", display=True)
                     # // TO DO download from somewhere
+
                     with httpimport.remote_repo(verinfast_oss_url):
                         from verinfast_oss import getembeddings
                         ourGetembeddings = getembeddings
+                        print('ourGetembeddings loaded')
 
                 if self.config.shouldUpload:
                     headers = {
