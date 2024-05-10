@@ -4,6 +4,7 @@ from typing import List
 
 import defusedxml
 
+from verinfast.dependencies.walkers.composer import ComposerWalker
 from verinfast.dependencies.walkers.maven import MavenWalker
 from verinfast.dependencies.walkers.npm import NodeWalker
 from verinfast.dependencies.walkers.gemwalker import GemWalker
@@ -67,9 +68,17 @@ def walk(logger, path: str = "./", output_file="./dependencies.json"):
         logger=logger,
         root_dir=path
     )
-
+    composer_walker = ComposerWalker(
+        manifest_files=["composer.json"],
+        manifest_type=["json"],
+        logger=logger,
+        root_dir=path
+    )
+    
     path = str(Path(path).absolute())
     entries: List[Entry] = []
+    composer_walker.initialize(root_path=path)
+
     mavenWalker.walk(path=path)
     logger(msg="Dependency Scan 10%", display=True)
     entries += mavenWalker.entries
