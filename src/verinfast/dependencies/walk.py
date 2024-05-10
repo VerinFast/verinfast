@@ -83,6 +83,13 @@ def walk(logger, path: str = "./", output_file="./dependencies.json"):
         root_dir=path
     )
 
+    composer_walker = ComposerWalker(
+        manifest_files=["composer.json"],
+        manifest_type=["json"],
+        logger=logger,
+        root_dir=path
+    )
+
     path = str(Path(path).absolute())
     entries: List[Entry] = []
     composer_walker.initialize(root_path=path)
