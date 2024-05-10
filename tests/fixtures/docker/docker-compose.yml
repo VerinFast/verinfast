@@ -1,0 +1,19 @@
+name: testapp
+
+services:
+  redis-1:
+    image: redis
+  redis-2:
+    image: redis:5
+  redis-3:
+    image: redis@sha256:0ed5d5928d4737458944eb604cc8509e245c3e19d02ad83935398bc4b991aac7
+  redis-4:
+    image: library/redis
+  redis-5:
+    image: docker.io/library/redis
+  redis-6:
+    image: my_private.registry:5000/redis
+  redis-7:
+    image: my_private.registry:5000/redis:5
+  redis-8:
+    image: my_private.registry:5000/redis@sha256:0ed5d5928d4737458944eb604cc8509e245c3e19d02ad83935398bc4b991aac7
