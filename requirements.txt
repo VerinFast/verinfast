@@ -24,4 +24,4 @@ pytest-cov~=5.0.0
 pytest-xdist~=3.6.1
 pyyaml~=6.0.1
 semgrep~=1.72.0
-windows-curses~=2.3.2; sys.platform == 'win32'
+windows-curses~=2.3.3; sys.platform == 'win32'
