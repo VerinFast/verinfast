@@ -8,6 +8,10 @@ from verinfast.dependencies.walkers.classes import Walker, Entry
 
 
 class ComposerWalker(Walker):
+    dependency_tree = {}
+
+    def __init__(self, manifest_type: str, manifest_files: List[str], logger, root_dir: str = "./") -> None:
+        super().__init__(manifest_type, manifest_files, logger, root_dir)
     def initialize(self, root_path: str = "./"):
         root_path = str(Path(root_path).absolute())
         self.install_points: List[Path] = []
@@ -33,21 +37,28 @@ class ComposerWalker(Walker):
         try:
             with open(file) as f:
                 cjson = json.load(f)
-                if any([e.name == cjson['name'] for e in self.entries]):
-                    existing: Entry = next(entry for entry in self.entries if entry.name == cjson['name'])
-                    existing.license = cjson['license']
-                    existing.summary = cjson['description']
+                if "license" in cjson and self.dependency_tree.get(cjson['name']):
+                    for version in self.dependency_tree[cjson['name']]:
+                        self.dependency_tree[cjson['name']][version].license = cjson['license']
+                        if "description" in cjson:
+                            self.dependency_tree[cjson['name']][version].summary = cjson['description']
                 if 'require' in cjson:
                     for k, v in cjson['require'].items():
-                        if not any([e.name == k for e in self.entries]):
-                            e = Entry(
-                                name=k,
-                                source="composer",
-                                specifier=v,
-                            )
-                            self.entries.append(e)
-
+                        if self.dependency_tree.get(k):
+                            self.dependency_tree[k] = self.dependency_tree[k]
+                        else:
+                            self.dependency_tree[k] = {}
+                        if self.dependency_tree[k].get(v):
+                            self.dependency_tree[k][v] = self.dependency_tree[k][v]
+                        else:
+                            self.dependency_tree[k][v] = Entry(name=k, source="composer", specifier=v)
+                print(self.dependency_tree)
         except Exception as error:
             self.log(f"error parsing {file}")
+            try:
+                self.log(json.load(file)['name'])
+                self.log(json.load(file)['require'])
+            except:
+                raise
             self.log(error)
 

@@ -1,12 +1,21 @@
 import json
+from unittest.mock import patch
+import os
 from pathlib import Path
+import shutil
 
+from verinfast.agent import Agent
+from verinfast.config import Config
+from verinfast.utils.utils import DebugLog
+import verinfast.user
 from verinfast.dependencies.walk import walk
 from verinfast.dependencies.walkers.classes import Entry
 
 file_path = Path(__file__)
 test_folder = file_path.parent
 docker_folder = test_folder.joinpath('fixtures/docker')
+results_dir = test_folder.joinpath("results").absolute()
+composer_config_path = str(test_folder.joinpath('composer.yaml').absolute())
 
 
 def logger(msg, **kwargs):
@@ -141,3 +150,33 @@ def test_docker():
         assert found_ubuntu_base_image
 
     return None
+
+def test_composer():
+    output_path = walk(
+        path=test_folder,
+        output_file="./dependencies.json",
+        logger=logger
+    )
+    with open(output_path) as output_file:
+        output = json.load(output_file)
+        assert len(output) >= 1
+
+@patch('verinfast.user.__get_input__', return_value='y')
+def test_composer_config(self):
+    try:
+        shutil.rmtree(results_dir)
+    except Exception as e:
+        print(e)
+        pass
+    os.makedirs(results_dir, exist_ok=True)
+    agent = Agent()
+    config = Config(composer_config_path)
+    config.output_dir = results_dir
+    print(agent.config.output_dir)
+    agent.config = config
+    agent.config.shouldUpload = True
+    agent.debug = DebugLog(path=agent.config.output_dir, debug=False)
+    agent.log = agent.debug.log
+    print(agent.debug.logFile)
+    agent.scan()
+    assert Path(results_dir).exists() is True
