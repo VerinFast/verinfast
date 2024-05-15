@@ -151,6 +151,7 @@ def test_docker():
 
     return None
 
+
 def test_composer():
     output_path = walk(
         path=test_folder,
@@ -161,6 +162,7 @@ def test_composer():
         output = json.load(output_file)
         assert len(output) >= 1
 
+
 @patch('verinfast.user.__get_input__', return_value='y')
 def test_composer_config(self):
     try:
@@ -168,6 +170,7 @@ def test_composer_config(self):
     except Exception as e:
         print(e)
         pass
+    assert verinfast.user.initial_prompt is not None
     os.makedirs(results_dir, exist_ok=True)
     agent = Agent()
     config = Config(composer_config_path)
