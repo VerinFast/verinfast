@@ -49,7 +49,7 @@ def runAws(targeted_account, start, end, path_to_output,
                     newCharge = {
                         "Date": charge["TimePeriod"]["Start"],
                         "Group": group["Keys"][0],
-                        "Cost": group["Metrics"]["BlendedCost"]["Amount"],
+                        "Cost": -group["Metrics"]["BlendedCost"]["Amount"] if group["Keys"][0] == "Savings Plans for AWS Compute usage" else group["Metrics"]["BlendedCost"]["Amount"],
                         "Currency": group["Metrics"]["BlendedCost"]["Unit"]
                     }
                     charges.append(newCharge)
