@@ -5,6 +5,7 @@ import re
 from glob import glob
 import subprocess
 import time
+import stat
 
 from typing import List
 
@@ -147,3 +148,17 @@ class DebugLog:
             f.write(output+"\n")
         if display or self.debug:
             print(output)
+
+
+# Delete a directory and all its contents, despite permissions
+def delete_directory_with_chmod(directory_path):
+    for root, dirs, files in os.walk(directory_path, topdown=False):
+        for file in files:
+            file_path = os.path.join(root, file)
+            os.chmod(file_path, stat.S_IWUSR)
+            os.remove(file_path)
+        for dir in dirs:
+
+            dir_path = os.path.join(root, dir)
+            os.rmdir(dir_path)
+    os.rmdir(directory_path)

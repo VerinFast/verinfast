@@ -16,7 +16,7 @@ import httpx
 from jinja2 import Environment, FileSystemLoader
 from pygments_tsx.tsx import patch_pygments
 
-from verinfast.utils.utils import DebugLog, std_exec, trimLineBreaks, escapeChars, truncate, truncate_children
+from verinfast.utils.utils import DebugLog, std_exec, trimLineBreaks, escapeChars, truncate, truncate_children, delete_directory_with_chmod
 from verinfast.upload import Uploader
 
 from verinfast.cloud.aws.costs import runAws
@@ -598,10 +598,12 @@ class Agent:
                             default_val=False
                         )
                         if resp:
-                            os.chmod(temp_dir, 0o666)
-                            shutil.rmtree(temp_dir)
-                            os.makedirs(temp_dir)
-                            os.chmod(temp_dir, 0o666)
+                            try:
+                                delete_directory_with_chmod(temp_dir)
+                                os.makedirs(temp_dir)
+                            except Exception as e:
+                                self.log(tag=f"Failed to delete {temp_dir}", msg=e, display=True)
+                                continue
                         else:
                             self.log(f"Skipping {repo_url} due to existing temp_dir")
                             continue
