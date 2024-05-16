@@ -594,7 +594,7 @@ class Agent:
                         self.log(tag="Directory exists:", msg=temp_dir, display=True)
                         resp = repeat_boolean_prompt(
                             "Should we overwrite?",
-                            self.log,
+                            logger=print,
                             default_val=False
                         )
                         if resp:
