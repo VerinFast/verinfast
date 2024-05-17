@@ -3,11 +3,46 @@ import os
 
 import yaml
 
+from typing import List, Callable
+
 user_home = os.path.expanduser('~')
 
 
 def __get_input__(t: str):
     return input(t)
+
+
+def repeat_boolean_prompt(
+        prompt: str,
+        logger: Callable | None = None,
+        default_val: bool = False
+):
+    valid_strs = ["y", "n"]
+    print_opts = "(y/N)"
+    d = "n"
+
+    if default_val is True:
+        print_opts = "(Y/n)"
+        d = "y"
+
+    logger(prompt)
+    resp = repeat_prompt(prompt=print_opts, valid=valid_strs, default_val=d)
+
+    return resp.lower() == "y"
+
+
+def repeat_prompt(
+        prompt: str,
+        valid: List[str],
+        default_val: str | None = None
+):
+    prompt += "\n"
+    resp = __get_input__(prompt).lower()
+    while resp not in valid:
+        if default_val and not resp:
+            return default_val
+        resp = __get_input__(prompt).lower()
+    return resp
 
 
 def initial_prompt():
@@ -40,22 +75,9 @@ def initial_prompt():
         with open(f_path, "r") as f:
             conf = yaml.safe_load(f)
 
-    repeat_prompt = "(Y)/n\n"
     if "upload_permission" not in conf:
-        print(warning)
-        resp = __get_input__(repeat_prompt)
-        print()
+        resp = repeat_boolean_prompt(warning, print, True)
         if resp:
-            resp_char = resp[0]
-        else:
-            resp_char = 'y'
-        while resp_char.lower() not in ['y', 'n']:
-            resp = __get_input__(repeat_prompt)
-            if resp:
-                resp_char = resp[0]
-            else:
-                resp_char = 'y'
-        if resp_char.lower() == 'y':
             conf["upload_permission"] = True
             should_upload_log = True
         else:
