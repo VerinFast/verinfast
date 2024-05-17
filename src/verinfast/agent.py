@@ -259,7 +259,8 @@ class Agent:
                 except subprocess.CalledProcessError:
                     try:
                         cmd = "git for-each-ref --count=1 --sort=-committerdate refs/heads/ --format='%(refname:short)'"
-                        branch = std_exec(cmd.split(" "))
+                        # remove new lines and apostrophes from branch name.
+                        branch = std_exec(cmd.split(" ")).replace("'", "").replace("\n", "")
                         subprocess.check_call(["git", "checkout", branch])
                     except subprocess.CalledProcessError:
                         if self.config.runGit:
