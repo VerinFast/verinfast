@@ -262,7 +262,7 @@ class Agent:
                         # remove new lines and apostrophes from branch name.
                         branch = std_exec(cmd.split(" ")).replace("'", "").replace("\n", "")
                         subprocess.check_call(["git", "checkout", branch])
-                    except subprocess.CalledProcessError as ex:
+                    except subprocess.CalledProcessError:
                         if self.config.runGit:
                             raise Exception("Error checking out branch from git.")
                         else:
