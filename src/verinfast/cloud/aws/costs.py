@@ -4,6 +4,7 @@ import subprocess
 
 from verinfast.utils.utils import DebugLog
 from verinfast.cloud.aws.get_profile import find_profile
+
 debugLog = DebugLog(os.getcwd())
 
 
@@ -49,8 +50,12 @@ def runAws(targeted_account, start, end, path_to_output,
                     newCharge = {
                         "Date": charge["TimePeriod"]["Start"],
                         "Group": group["Keys"][0],
-                        "Cost": -group["Metrics"]["BlendedCost"]["Amount"] if group["Keys"][0] == "Savings Plans for AWS Compute usage" else group["Metrics"]["BlendedCost"]["Amount"],
-                        "Currency": group["Metrics"]["BlendedCost"]["Unit"]
+                        "Cost": (
+                            -group["Metrics"]["BlendedCost"]["Amount"]
+                            if group["Keys"][0] == "Savings Plans for AWS Compute usage"  # noqa: E501
+                            else group["Metrics"]["BlendedCost"]["Amount"]
+                        ),
+                        "Currency": group["Metrics"]["BlendedCost"]["Unit"],
                     }
                     charges.append(newCharge)
         upload = {

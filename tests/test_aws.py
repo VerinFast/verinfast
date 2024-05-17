@@ -43,6 +43,9 @@ def test_aws_scan(self):
     with open(results_dir.joinpath(f"aws-cost-{sub_id}.json")) as f:
         costs = json.load(f)
         assert len(costs["data"]) >= 100
+        for cost in costs["data"]:
+            if cost['Group'] == "Savings Plans for AWS Compute usage":
+                assert cost["Cost"] < 0
     # Make sure "aws-cost-foo.json" doesn't exist
     bad_costs_file = Path(results_dir.joinpath("aws-cost-foo.json"))
     assert not bad_costs_file.is_file()
