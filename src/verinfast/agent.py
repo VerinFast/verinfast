@@ -756,7 +756,7 @@ class Agent:
                         )
                     azure_utilization_file = os.path.join(
                         self.config.output_dir,
-                        f'azure-instances-{account_id}-utilization.json'
+                        f'azure-instances-{provider.account}-utilization.json'
                     )
                     if Path(azure_utilization_file).is_file():
                         self.upload(
