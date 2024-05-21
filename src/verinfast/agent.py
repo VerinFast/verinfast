@@ -73,7 +73,7 @@ class Agent:
     # Takes a string and shows it to the user.
     # Also ensures that string is written to the logs.
     # No other decoration is allowed.
-    def print_and_log(self, msg):
+    def print_and_log(self, msg: str):
         self.log(msg=msg, tag="", display=True, timestamp=False)
     
     def create_template(self):
