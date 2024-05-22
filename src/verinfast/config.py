@@ -226,7 +226,10 @@ class Config(printable):
         if (
             "repos" not in self.config and
             "local_repos" not in self.config and
-            "modules" not in self.config  # If cloud specified it's here.
+            (
+                "modules" not in self.config or
+                "cloud" not in self.config["modules"]
+            )
         ):
             self.config["local_repos"] = [self.local_scan_path]
             gm = GitModule()
@@ -293,7 +296,6 @@ class Config(printable):
             "-t", "--truncate", "--truncate_findings",
             dest="truncate_findings",
             type=int,
-            default=-1,
             help="""This flag will further enhance privacy by capping
             The length of security warnings. It defaults to unlimited,
             but can be set to any level you feel comfortable with.
@@ -404,7 +406,7 @@ class Config(printable):
             self.upload_manifest = args.upload_manifest
 
         if "truncate_findings" in args and args.truncate_findings is not None:
-            if args.truncate_findings > 0:
+            if args.truncate_findings >= 0:
                 self.truncate_findings = True
                 self.truncate_findings_length = args.truncate_findings
             else:
@@ -444,6 +446,13 @@ class Config(printable):
                 self.dry = self.config["dry"]
             if "delete_temp" in self.config:
                 self.delete_temp = self.config["delete_temp"]
+            if "truncate_findings" in self.config:
+                self.truncate_findings = self.config["truncate_findings"]
+                if "truncate_findings_length" in self.config:
+                    self.truncate_findings_length = \
+                        self.config["truncate_findings_length"]
+                else:
+                    self.truncate_findings_length = 30
 
             if "server" in self.config:
                 s = self.config["server"]

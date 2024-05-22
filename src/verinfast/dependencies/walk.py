@@ -4,10 +4,12 @@ from typing import Callable, List
 
 import defusedxml
 
+from verinfast.dependencies.walkers.composer import ComposerWalker
 from verinfast.dependencies.walkers.maven import MavenWalker
 from verinfast.dependencies.walkers.npm import NodeWalker
 from verinfast.dependencies.walkers.gemwalker import GemWalker
 from verinfast.dependencies.walkers.nuget import NuGetWalker, c_sharp_matches
+from verinfast.dependencies.walkers.dockerwalker import DockerWalker
 from verinfast.dependencies.walkers.python import PyWalker
 from verinfast.dependencies.walkers.classes import Entry
 
@@ -78,9 +80,23 @@ def walk(
         upload=uploader,
         root_dir=path
     )
+    docker_walker = DockerWalker(
+        manifest_files=["Dockerfile", "dockerfile", "docker-compose.yml"],
+        manifest_type="Dockerfile",
+        logger=logger,
+        root_dir=path
+    )
+    composer_walker = ComposerWalker(
+        manifest_files=['composer.json'],
+        manifest_type='json',
+        logger=logger,
+        root_dir=path
+    )
 
     path = str(Path(path).absolute())
     entries: List[Entry] = []
+    composer_walker.initialize(root_path=path)
+    entries += composer_walker.entries
     mavenWalker.walk(path=path)
     logger(msg="Dependency Scan 10%", display=True)
     entries += mavenWalker.entries
@@ -97,9 +113,14 @@ def walk(
     py_walker.walk(path=path)
     logger(msg="Dependency Scan 60%", display=True)
     entries += py_walker.entries
+    write_file(output_file=output_file, entries=entries)
     gem_walker.walk(path=path)
     logger(msg="Dependency Scan 80%", display=True)
     entries += gem_walker.entries
+    write_file(output_file=output_file, entries=entries)
+    logger(msg="Dependency Scan 95%", display=True)
+    docker_walker.walk(path=path, expand=False)
+    entries += docker_walker.entries
     write_file(output_file=output_file, entries=entries)
     logger(msg="Dependency Scan 100%", display=True)
 

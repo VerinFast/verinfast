@@ -55,7 +55,7 @@ templates_folder = str(parent_folder.joinpath("templates"))
 # str_path = str(parent_folder.joinpath('str_conf.yaml').absolute())
 
 curr_dir = os.getcwd()
-temp_dir = os.path.join(curr_dir, "temp_repo")
+temp_dir = os.path.abspath(os.path.join('~/.verinfast/', "temp_repo"))
 
 
 class Agent:
@@ -148,12 +148,12 @@ class Agent:
     def checkDependency(self, command, name, kill=False) -> bool:
         which = shutil.which(command)
         if not which:
-            self.log(msg=f"{name} is required but it's not installed.", tag=f"{name} status", display=False)
+            self.log(msg=f"{name} is required but it's not installed.", tag=f"{name} status", display=False, timestamp=False)
             if kill:
                 raise Exception(f"{name} is required but it's not installed.")
             return False
         else:
-            self.log(msg=f"{name} is installed at {which}.", tag=f"{name} status", display=True)
+            self.log(msg=f"{name} is installed at {which}.", tag=f"{name} status", display=True, timestamp=False)
             return True
 
     def manifest_uploader(self, path: str, repo_name: str):
@@ -265,7 +265,8 @@ class Agent:
                 except subprocess.CalledProcessError:
                     try:
                         cmd = "git for-each-ref --count=1 --sort=-committerdate refs/heads/ --format='%(refname:short)'"
-                        branch = std_exec(cmd.split(" "))
+                        # remove new lines and apostrophes from branch name.
+                        branch = std_exec(cmd.split(" ")).replace("'", "").replace("\n", "")
                         subprocess.check_call(["git", "checkout", branch])
                     except subprocess.CalledProcessError:
                         if self.config.runGit:
@@ -453,7 +454,20 @@ class Agent:
                         original_findings = json.load(f)
 
                     if self.config.truncate_findings:
-                        truncation_exclusion = ["cwe", "path", "check_id", "license"]
+                        # Exclusions are set to exclude fields that are not code
+                        truncation_exclusion = [
+                            "cwe",
+                            "owasp",
+                            "path",
+                            "check_id",
+                            "license",
+                            "fingerprint",
+                            "message",
+                            "references",
+                            "url",
+                            "source",
+                            "severity"
+                        ]
                         self.log(
                             tag="TRUNCATING",
                             msg=f"excluding: {truncation_exclusion}"
@@ -522,6 +536,7 @@ class Agent:
 
     def preflight(self):
         # Loop over all remote repositories from config file
+        print("\n\n\nChecking your system's compatibility with the scan configuration:\n")
         if 'repos' in self.config.config:
             repos = self.config.config["repos"]
             if repos:
@@ -537,39 +552,39 @@ class Agent:
                         repo_url = repo_url.split("@")[0]
                     try:
                         subprocess.check_output(["git", "ls-remote", repo_url])
-                        self.log(tag="Access confirmed", msg=repo_url, display=True)
+                        self.log(tag="Repository access confirmed", msg=repo_url, display=True, timestamp=False)
                     except subprocess.CalledProcessError:
-                        self.log(msg=repo_url, tag="Unable to access", display=True)
-                        self.log(msg=repo_url, tag="Repository will not be scanned", display=True)
+                        self.log(msg=repo_url, tag="Unable to access", display=True, timestamp=False)
+                        self.log(msg=repo_url, tag="Repository will not be scanned", display=True, timestamp=False)
 
-            cloud_config = self.config.modules.cloud
-            if cloud_config is not None:
-                for provider in cloud_config:
-                    try:
-                        if provider.provider == "aws" and self.checkDependency("aws", "AWS Command-line tool"):
-                            account_id = str(provider.account).replace('-', '')
-                            if find_profile(account_id, self.log) is None:
-                                self.log(tag=f"No matching AWS CLI profiles found for {provider.account}", msg="Account can't be scanned.", display=True)
-                            else:
-                                self.log(tag="Access confirmed", msg=account_id, display=True)
-                        if provider.provider == "azure" and self.checkDependency("az", "Azure Command-line tool"):
-                            pass
-                        if provider.provider == "gcp" and self.checkDependency("gcloud", "Google Command-line tool"):
-                            pass
-                    except:
-                        self.log(msg=f"Unable to access {provider.provider} {provider.account}", tag="Unable to access", display=True)
+        cloud_config = self.config.modules.cloud
+        if cloud_config is not None:
+            for provider in cloud_config:
+                try:
+                    if provider.provider == "aws" and self.checkDependency("aws", "AWS Command-line tool"):
+                        account_id = str(provider.account).replace('-', '')
+                        if find_profile(account_id, self.log) is None:
+                            self.log(tag=f"No matching AWS CLI profiles found for {provider.account}", msg="Account can't be scanned.", display=True, timestamp=False)
+                        else:
+                            self.log(tag="AWS account access confirmed", msg=account_id, display=True, timestamp=False)
+                    if provider.provider == "azure" and self.checkDependency("az", "Azure Command-line tool"):
+                        pass
+                    if provider.provider == "gcp" and self.checkDependency("gcloud", "Google Command-line tool"):
+                        pass
+                except:
+                    self.log(msg=f"Unable to access {provider.provider} {provider.account}", tag="Unable to access", display=True, timestamp=False)
 
-                resp = repeat_boolean_prompt(
-                    "Would you like to proceed with the scan?",
-                    logger=self.debug.log,
-                    default_val=True
-                )
+        resp = repeat_boolean_prompt(
+            "\nWould you like to proceed with the scan?",
+            logger=print,
+            default_val=True
+        )
 
-                if resp:
-                    self.log(msg="Proceeding")
-                else:
-                    self.log(tag="Exiting now", msg="", display=True)
-                    exit(0)
+        if resp:
+            self.log(msg="Proceeding")
+        else:
+            self.log(tag="Exiting now", msg="", display=True)
+            exit(0)
 
     # ##### Scan Repos ######
     def scanRepos(self):
@@ -594,18 +609,11 @@ class Agent:
                             recursive_chmod(temp_dir, 0o666)
                     except:
                         self.log(tag="Directory exists:", msg=temp_dir, display=True)
-                        resp = repeat_boolean_prompt(
-                            "Should we overwrite?",
-                            self.log,
-                            default_val=False
-                        )
-                        if resp:
-                            recursive_chmod(temp_dir, 0o666)
+                        try:
                             shutil.rmtree(temp_dir)
                             os.makedirs(temp_dir)
-                            recursive_chmod(temp_dir, 0o666)
-                        else:
-                            self.log(f"Skipping {repo_url} due to existing temp_dir")
+                        except Exception as e:
+                            self.log(tag=f"Failed to delete {temp_dir}", msg=e, display=True)
                             continue
 
                     self.log(msg=repo_url, tag="Repo URL")

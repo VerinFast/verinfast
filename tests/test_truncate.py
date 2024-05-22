@@ -22,12 +22,20 @@ def check_children(
             i: str | dict | list,
             max_length=30,
             recursion_depth=0,
+            # This list must match agent.py
             excludes=[
                 "cwe",
+                "owasp",
                 "path",
                 "check_id",
-                "license"
-            ],
+                "license",
+                "fingerprint",
+                "message",
+                "references",
+                "url",
+                "source",
+                "severity"
+            ]
         ):
     if recursion_depth > MAX_RECURSION_DEPTH:
         raise Exception("In TOO DEEP!")
@@ -39,11 +47,11 @@ def check_children(
         assert len(i) <= max_length
     elif isinstance(i, dict):
         for k in i:
+            if k == "message":
+                saw_message = True
             if k in excludes:
                 print(f"{k} is excluded")
             else:
-                if k == "message":
-                    saw_message = True
                 try:
                     check_children(
                         i[k],
@@ -138,7 +146,7 @@ def test_truncate(self):
     agent.config.dry = False
     agent.config.shouldUpload = False
     agent.config.truncate_findings = True
-    agent.config.truncate_findings_length = 30
+    agent.config.truncate_findings_length = 0
     assert agent.config.runGit is True
     assert agent.config.runScan is True
     agent.debug = DebugLog(path=agent.config.output_dir, debug=False)
@@ -150,6 +158,7 @@ def test_truncate(self):
         d = json.load(f)
         r = d["results"]
         assert r[0]["check_id"] == "bash.curl.security.curl-eval.curl-eval"
+        assert r[0]["extra"]["lines"] == ""
         for k in r:
             check_children(k)
     assert saw_message is True
