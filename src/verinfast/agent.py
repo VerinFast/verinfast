@@ -55,7 +55,7 @@ templates_folder = str(parent_folder.joinpath("templates"))
 # str_path = str(parent_folder.joinpath('str_conf.yaml').absolute())
 
 curr_dir = os.getcwd()
-temp_dir = os.path.join(curr_dir, "temp_repo")
+temp_dir = os.path.abspath(os.path.join('~/.verinfast/', "temp_repo"))
 
 
 class Agent:
@@ -593,18 +593,11 @@ class Agent:
                             os.makedirs(temp_dir)
                     except:
                         self.log(tag="Directory exists:", msg=temp_dir, display=True)
-                        resp = repeat_boolean_prompt(
-                            "Should we overwrite?",
-                            self.log,
-                            default_val=False
-                        )
-                        if resp:
-                            os.chmod(temp_dir, 0o666)
+                        try:
                             shutil.rmtree(temp_dir)
                             os.makedirs(temp_dir)
-                            os.chmod(temp_dir, 0o666)
-                        else:
-                            self.log(f"Skipping {repo_url} due to existing temp_dir")
+                        except Exception as e:
+                            self.log(tag=f"Failed to delete {temp_dir}", msg=e, display=True)
                             continue
 
                     self.log(msg=repo_url, tag="Repo URL")
