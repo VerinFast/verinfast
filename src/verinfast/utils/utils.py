@@ -117,6 +117,13 @@ def truncate_children(
     return obj
 
 
+def recursive_chmod(path, permissions):
+    for dirpath, dirnames, filenames in os.walk(path):
+        os.chmod(dirpath, permissions)
+        for filename in filenames:
+            os.chmod(os.path.join(dirpath, filename), permissions)
+
+
 # Chunk a list
 def chunks(lst, n):
     """Yield successive n-sized chunks from lst."""

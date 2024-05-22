@@ -1,8 +1,9 @@
 import glob
 import json
+import os
 import subprocess
 from pathlib import Path
-from typing import List
+from typing import List, Callable
 
 import httpx
 
@@ -58,7 +59,8 @@ class Walker():
         self,
         manifest_type: str,  # "json",
         manifest_files: List[str],  # ["package.json"]
-        logger,
+        logger: Callable,
+        upload: Callable | None = None,
         root_dir: str = "./"
     ) -> None:
         self.files = []
@@ -72,6 +74,7 @@ class Walker():
         self.entries = []
         self.requestx = httpx.Client(http2=True, timeout=None)
         self.loggerFunc = logger
+        self.upload = upload
 
     def initialize(self, command: str):
         if command:
@@ -98,6 +101,7 @@ class Walker():
              path: str = "./",
              parse: bool = True,
              expand: bool = False,
+             upload_manifest: bool = False,
              debug: int = 0):
         for p in Path(path).rglob('**/*'):
             if debug > 1:
@@ -106,6 +110,19 @@ class Walker():
                 if debug > 0:
                     self.log(f"FOUND: {p.name}", display=True)
                 self.files.append(p)
+                if self.upload is not None:
+                    dict = {}
+                    with open(p, 'r') as f:
+                        content = f.read()
+                        dict = {
+                            "path": str(p),
+                            "type": self.manifest_type,
+                            "content": content
+                        }
+                    with open('./temp_file.json', 'w+') as f:
+                        json.dump(dict, f)
+                    self.upload('./temp_file.json')
+                    os.remove('./temp_file.json')
                 if parse:
                     self.parse(file=str(p.absolute()), expand=expand)
 
