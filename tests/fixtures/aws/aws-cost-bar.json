@@ -1,0 +1,84 @@
+{
+    "GroupDefinitions": [
+        {
+            "Type": "DIMENSION",
+            "Key": "SERVICE"
+        },
+        {
+            "Type": "TAG",
+            "Key": "Environment"
+        }
+    ],
+    "ResultsByTime": [
+        {
+            "Estimated": false,
+            "TimePeriod": {
+                "Start": "2017-09-01",
+                "End": "2017-10-01"
+            },
+            "Total": {},
+            "Groups": [
+                {
+                    "Keys": [
+                        "Amazon Simple Storage Service",
+                        "Environment$"
+                    ],
+                    "Metrics": {
+                        "BlendedCost": {
+                            "Amount": "40.3527508453",
+                            "Unit": "USD"
+                        },
+                        "UnblendedCost": {
+                            "Amount": "40.3543773134",
+                            "Unit": "USD"
+                        },
+                        "UsageQuantity": {
+                            "Amount": "9312771.098461578",
+                            "Unit": "N/A"
+                        }
+                    }
+                },
+                {
+                    "Keys": [
+                        "Amazon Simple Storage Service",
+                        "Environment$Dev"
+                    ],
+                    "Metrics": {
+                        "BlendedCost": {
+                            "Amount": "0.2682364644",
+                            "Unit": "USD"
+                        },
+                        "UnblendedCost": {
+                            "Amount": "0.2682364644",
+                            "Unit": "USD"
+                        },
+                        "UsageQuantity": {
+                            "Amount": "22403.4395271182",
+                            "Unit": "N/A"
+                        }
+                    }
+                },
+                {
+                    "Keys": [
+                        "Savings Plans for AWS Compute usage",
+                        "Environment$Dev"
+                    ],
+                    "Metrics": {
+                        "BlendedCost": {
+                            "Amount": "0.2682364644",
+                            "Unit": "USD"
+                        },
+                        "UnblendedCost": {
+                            "Amount": "0.2682364644",
+                            "Unit": "USD"
+                        },
+                        "UsageQuantity": {
+                            "Amount": "22403.4395271182",
+                            "Unit": "N/A"
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}
