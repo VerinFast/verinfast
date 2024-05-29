@@ -520,6 +520,9 @@ class Agent:
             )
 
     def preflight(self):
+        if self.config.dry:
+            return
+
         # Loop over all remote repositories from config file
         print("\n\n\nChecking your system's compatibility with the scan configuration:\n")
         if 'repos' in self.config.config:
@@ -855,6 +858,11 @@ def main():
         os.unlink(agent.config.output_dir+"/log.txt")
         print(f"""The log for this run has moved to:
               {d}/{new_folder_name}/{new_file_name}""")
+
+    # We only do this if you have a remote config but didn't upload
+    if agent.config.shouldUpload is False and agent.config.is_path_remote():
+        print("To upload results from this location please run")
+        print(f"verinfast -c {agent.config.cfg_path} -o {agent.config.output_dir} --should_upload --dry")
 
 
 if __name__ == "__main__":
