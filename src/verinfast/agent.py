@@ -520,6 +520,7 @@ class Agent:
             )
 
     def preflight(self):
+        # If the 'dry' configuration is set, skip the preflight checks
         if self.config.dry:
             return
 
