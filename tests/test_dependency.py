@@ -88,6 +88,7 @@ def test_entity():
         output_file=output_file,
         logger=enabled_logger(False)
     )
+    print(output_path)
     with open(output_path) as output_file:
         output = json.load(output_file)
         assert len(output) >= 1
