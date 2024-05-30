@@ -62,6 +62,12 @@ def test_walk():
     node_modules = folder_path.joinpath('node_modules')
     shutil.rmtree(node_modules)
     os.remove(folder_path.joinpath("package-lock.json"))
+
+    os.remove(output_path)
+    assert not Path(output_path).exists()
+    node_modules = folder_path.joinpath('node_modules')
+    shutil.rmtree(node_modules)
+    os.remove(folder_path.joinpath("package-lock.json"))
     return None
 
 
@@ -82,6 +88,7 @@ def test_entity():
         output_file=output_file,
         logger=enabled_logger(False)
     )
+    print(output_path)
     with open(output_path) as output_file:
         output = json.load(output_file)
         assert len(output) >= 1
