@@ -56,6 +56,7 @@ templates_folder = str(parent_folder.joinpath("templates"))
 
 curr_dir = os.getcwd()
 temp_dir = os.path.abspath(os.path.join('~/.verinfast/', "temp_repo"))
+print (print)
 
 
 class Agent:
