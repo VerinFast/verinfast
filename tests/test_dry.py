@@ -26,12 +26,15 @@ def test_no_config(self):
     config.output_dir = results_dir
     print(agent.config.output_dir)
     agent.config = config
+    assert agent.config.use_uuid is True
     agent.config.dry = True
     agent.config.shouldUpload = True
-    agent.uploader.config = config.upload_conf
     agent.debug = DebugLog(path=agent.config.output_dir, debug=False)
     agent.log = agent.debug.log
     agent.uploader.config = config.upload_conf
+    assert agent.config.use_uuid is True, f"Expected True, config {agent.config}"
+    get_url = agent.uploader.make_upload_path("scan_id", report=agent.config.reportId)
+    assert get_url == "/report/uuid/9a6e8696-f93a-4402-a64e-342ccb37592b/CorsisCode", get_url
     agent.scan()
     assert Path(results_dir).exists()
     files = os.listdir(results_dir)
