@@ -21,9 +21,9 @@ class ComposerWalker(Walker):
             os.chdir(target_dir)
             try:
                 res = std_exec([
-                    "composer", 
-                    "install", 
-                    "--no-dev", 
+                    "composer",
+                    "install",
+                    "--no-dev",
                     "--no-progress"
                 ])
                 self.log(tag="", msg=res, timestamp=False)
