@@ -18,9 +18,18 @@ results_dir = test_folder.joinpath("results").absolute()
 composer_config_path = str(test_folder.joinpath('composer.yaml').absolute())
 
 
-def logger(msg, **kwargs):
-    print(msg)
-    print(kwargs)
+def enabled_logger(flag=True):
+    def silent(msg, **kwargs):
+        return None
+
+    def logger(msg, **kwargs):
+        print(msg)
+        print(kwargs)
+
+    if flag:
+        return logger
+    else:
+        return silent
 
 
 def test_dockerfile_exists():
@@ -39,7 +48,7 @@ def test_walk():
     output_path = walk(
         path=folder_path,
         output_file=output_file,
-        logger=logger
+        logger=enabled_logger(False)
         )
 
     with open(output_path) as output_file:
@@ -61,14 +70,18 @@ def test_entity():
     file_path = folder_path.joinpath('test.csproj')
     output_file = test_folder.joinpath("dependencies2.json")
     assert file_path.exists(), "Manifest doesn't exist"
+    shutil.rmtree(output_file, ignore_errors=True)
+    try:
+        os.remove(output_file)
+    except:  # noqa
+        pass
     assert not output_file.exists(), "Results file exists"
 
     output_path = walk(
-        path=folder_path,
-        output_file="./dependencies.json",
-        logger=logger
+        path=str(folder_path),
+        output_file=output_file,
+        logger=enabled_logger(False)
     )
-    print(output_path)
     with open(output_path) as output_file:
         output = json.load(output_file)
         assert len(output) >= 1
@@ -156,7 +169,7 @@ def test_docker():
     output_path = walk(
         path=docker_folder,
         output_file="./dependencies.json",
-        logger=logger
+        logger=enabled_logger(False)
     )
     with open(output_path) as output_file:
         output = json.load(output_file)
@@ -174,33 +187,52 @@ def test_docker():
 
 
 def test_composer():
+    folder_path = test_folder.joinpath("fixtures/composer_walker").absolute()
+    file_path = folder_path.joinpath('composer.json')
+    assert file_path.exists(), "Manifest doesn't exist"
+
+    output_file_path = test_folder.joinpath("dependencies3.json")
+    try:
+        os.remove(output_file_path)
+    except:  # noqa
+        pass
+
     output_path = walk(
-        path=test_folder.joinpath("fixtures/composer_walker"),
-        output_file=test_folder.joinpath("dependencies2.json"),
-        logger=logger
+        path=folder_path,
+        output_file=output_file_path,
+        logger=enabled_logger(False)
     )
     with open(output_path) as output_file:
         output = json.load(output_file)
         assert len(output) >= 1
 
+    os.remove(output_path)
 
-# @patch('verinfast.user.__get_input__', return_value='y')
-# def test_composer_config(self):
-#     try:
-#         shutil.rmtree(results_dir)
-#     except Exception as e:
-#         print(e)
-#         pass
-#     assert verinfast.user.initial_prompt is not None
-#     os.makedirs(results_dir, exist_ok=True)
-#     agent = Agent()
-#     config = Config(composer_config_path)
-#     config.output_dir = results_dir
-#     print(agent.config.output_dir)
-#     agent.config = config
-#     agent.config.shouldUpload = True
-#     agent.debug = DebugLog(path=agent.config.output_dir, debug=False)
-#     agent.log = agent.debug.log
-#     print(agent.debug.logFile)
-#     agent.scan()
-#     assert Path(results_dir).exists() is True
+    return None
+
+
+@patch('verinfast.user.__get_input__', return_value='y')
+def test_composer_config(self):
+    try:
+        shutil.rmtree(results_dir)
+    except Exception as e:
+        print(e)
+        pass
+    assert verinfast.user.initial_prompt is not None
+    os.makedirs(results_dir, exist_ok=True)
+    agent = Agent()
+    config = Config(composer_config_path)
+    config.output_dir = results_dir
+    agent.config = config
+    agent.config.shouldUpload = False
+    agent.debug = DebugLog(path=agent.config.output_dir, debug=False)
+    agent.log = agent.debug.log
+    agent.scan()
+    assert Path(results_dir).exists() is True
+    expected_files = [
+        "CssToInlineStyles.git.dependencies.json",
+        "laravel.git.dependencies.json"
+    ]
+    for f in expected_files:
+        expected_file = results_dir.joinpath(f)
+        assert expected_file.exists(), f"{expected_file} does not exist"
