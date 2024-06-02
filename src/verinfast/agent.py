@@ -55,7 +55,7 @@ templates_folder = str(parent_folder.joinpath("templates"))
 # str_path = str(parent_folder.joinpath('str_conf.yaml').absolute())
 
 curr_dir = os.getcwd()
-temp_dir = os.path.abspath(os.path.join('~/.verinfast/', "temp_repo"))
+temp_dir = Path(os.path.expanduser('~/.verinfast/')).joinpath('temp_repo')
 
 
 class Agent:
