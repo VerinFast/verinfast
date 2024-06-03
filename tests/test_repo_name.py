@@ -58,6 +58,34 @@ url_list = [
         "expected_url": "https://github.com/StartupOS/small-test-repo.git",
         "expected_branch": "test/slashes/inbranch",
         "test": "GitHub HTTPS URL with branch with slashes"
+    },
+    {
+        "url": "https://gitlab.com/gitlab-org/gitlab.git",
+        "expected_name": "gitlab.git",
+        "expected_url": "https://gitlab.com/gitlab-org/gitlab.git",
+        "expected_branch": None,
+        "test": "Simple GitLab HTTPS URL"
+    },
+    {
+        "url": "https://gitlab.com/gitlab-org/gitlab.git@develop",
+        "expected_name": "gitlab.git",
+        "expected_url": "https://gitlab.com/gitlab-org/gitlab.git",
+        "expected_branch": "develop",
+        "test": "Simple GitLab HTTPS URL with branch"
+    },
+    {
+        "url": "https://bitbucket.org/foo/bar.git",
+        "expected_name": "bar.git",
+        "expected_url": "https://bitbucket.org/foo/bar.git",
+        "expected_branch": None,
+        "test": "Simple Bitbucket HTTPS URL"
+    },
+    {
+        "url": "https://bitbucket.org/foo/bar.git@develop",
+        "expected_name": "bar.git",
+        "expected_url": "https://bitbucket.org/foo/bar.git",
+        "expected_branch": "develop",
+        "test": "Simple Bitbucket HTTPS URL with branch"
     }
 ]
 
@@ -77,3 +105,5 @@ def test_repo_urls():
             f"Expected branch: {url['expected_branch']}, "
             f"Got: {branch} for {url['test']}"
         )
+        print(f"Test passed for {url['test']}")
+        print(f"Name: {name}, URL: {repo_url}, Branch: {branch}")
