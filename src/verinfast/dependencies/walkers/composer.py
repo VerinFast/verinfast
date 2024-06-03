@@ -1,10 +1,10 @@
 import json
 import os
-import subprocess
 from pathlib import Path
 from typing import List
 
 from verinfast.dependencies.walkers.classes import Walker, Entry
+from verinfast.utils.utils import std_exec
 
 
 class ComposerWalker(Walker):
@@ -20,15 +20,25 @@ class ComposerWalker(Walker):
             target_dir = Path(p).parent
             os.chdir(target_dir)
             try:
-                subprocess.run(
-                    "composer install --no-dev --no-progress",
-                    capture_output=True,
-                    shell=True
-                )
+                res = std_exec([
+                    "composer",
+                    "install",
+                    "--no-dev",
+                    "--no-progress"
+                ])
+                self.log(tag="", msg=res, timestamp=False)
             except Exception as error:
-                self.log(f'Error with composer install: {error}')
-            else:
+                self.log(
+                    tag="ERROR",
+                    msg=f'Error with composer install: {error}'
+                )
+            finally:
                 self.walk('./')
+            for dep in self.dependency_tree:
+                dependency = self.dependency_tree[dep]
+                for v in dependency:
+                    version = dependency[v]
+                    self.entries.append(version)
             os.chdir(root_path)
 
     def parse(self, file: str, expand=False):
@@ -59,7 +69,7 @@ class ComposerWalker(Walker):
                         else:
                             self.dependency_tree[k][v] = Entry(
                                 name=k, source="composer", specifier=v)
-                print(self.dependency_tree)
+                self.log(self.dependency_tree)
         except Exception as error:
             self.log(f"error parsing {file}")
             try:
