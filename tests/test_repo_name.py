@@ -7,6 +7,7 @@ url_list = [
         "expected_url": "git@github.com:StartupOS/small-test-repo.git",
     },
     {
+        # Test case for a URL with a branch. The branch is expected to be part of the repo name.
         "url": "git@github.com:StartupOS/small-test-repo.git@main",
         "expected_name": "small-test-repo.git@main",
         "expected_url": "git@github.com:StartupOS/small-test-repo.git"
