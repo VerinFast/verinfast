@@ -150,16 +150,28 @@ class DebugLog:
 
 
 # Returns a tuple of the repo name and the repo url from the original url
-def get_repo_name_and_url(repo_url: str):
+def get_repo_name_url_and_branch(repo_url: str):
     # match = re.search(r"([^/]*\.git.*)", repo_url) ^.*?/(.*)
-    # The regex pattern captures the entire URL and the repository name after the last '/'
-    match = re.search(r"(^.*?/(.*))", repo_url)
+    # The regex pattern captures the entire URL
+    # and the repository name after the last '/'
+    # match = re.search(r"([^/]*\.git.*)", repo_url) # Old regex
+
+    branch = None
+    # Match repo_name to after the last '/' in the URL
+    match = re.search(r"(^[^@]*/(.*))", repo_url)
     if match:
         repo_name = match.group(2)
     else:
         repo_name = repo_url.rsplit('/', 1)[-1]
-    if re.search(r"^.*@.*\..*:@", repo_url):
+    # Handle an @ in the middle of the URL, e.g.
+    # git@github.com:StartupOS/small-test-repo.git@develop
+    if "@" in repo_name and re.search(r"^.*@.*\..*:", repo_url):
         repo_url = "@".join(repo_url.split("@")[0:2])
     elif "@" in repo_name:
+        # Remove branch from url
         repo_url = repo_url.split("@")[0]
-    return repo_name, repo_url
+    if "@" in repo_name:
+        split_repo_name = repo_name.split("@")
+        branch = split_repo_name[1]
+        repo_name = split_repo_name[0]
+    return repo_name, repo_url, branch

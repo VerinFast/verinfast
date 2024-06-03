@@ -1,28 +1,79 @@
-from verinfast.utils.utils import get_repo_name_and_url
+from verinfast.utils.utils import get_repo_name_url_and_branch
 
 url_list = [
     {
         "url": "git@github.com:StartupOS/small-test-repo.git",
         "expected_name": "small-test-repo.git",
         "expected_url": "git@github.com:StartupOS/small-test-repo.git",
+        "expected_branch": None,
+        "test": "Simple GitHub SSH URL"
     },
     {
-        # Test case for a URL with a branch. The branch is expected to be part of the repo name.
-        "url": "git@github.com:StartupOS/small-test-repo.git@main",
-        "expected_name": "small-test-repo.git@main",
-        "expected_url": "git@github.com:StartupOS/small-test-repo.git"
+        "url": "git@github.com:StartupOS/small-test-repo.git@develop",
+        "expected_name": "small-test-repo.git",
+        "expected_url": "git@github.com:StartupOS/small-test-repo.git",
+        "expected_branch": "develop",
+        "test": "GitHub SSH URL with branch"
     },
     {
         "url": "git.gitlab.foo.com:demo/demo.git",
         "expected_name": "demo.git",
-        "expected_url": "git.gitlab.foo.com:demo/demo.git"
+        "expected_url": "git.gitlab.foo.com:demo/demo.git",
+        "expected_branch": None,
+        "test": "Simple GitLab SSH URL"
     },
+    {
+        "url": "git.gitlab.foo.com:demo/demo.git@develop",
+        "expected_name": "demo.git",
+        "expected_url": "git.gitlab.foo.com:demo/demo.git",
+        "expected_branch": "develop",
+        "test": "Simple GitLab SSH URL"
+    },
+    {
+        "url": "git@ssh.dev.azure.com:v3/bar/Foo%20Mobile%20Android",
+        "expected_name": "Foo%20Mobile%20Android",
+        "expected_url": "git@ssh.dev.azure.com:v3/bar/"
+                        "Foo%20Mobile%20Android",
+        "expected_branch": None,
+        "test": "Azure DevOps SSH URL"
+    },
+    {
+        "url": "https://github.com/StartupOS/small-test-repo.git",
+        "expected_name": "small-test-repo.git",
+        "expected_url": "https://github.com/StartupOS/small-test-repo.git",
+        "expected_branch": None,
+        "test": "Simple GitHub HTTPS URL"
+    },
+    {
+        "url": "https://github.com/StartupOS/small-test-repo.git@develop",
+        "expected_name": "small-test-repo.git",
+        "expected_url": "https://github.com/StartupOS/small-test-repo.git",
+        "expected_branch": "develop",
+        "test": "Simple GitHub HTTPS URL with branch"
+    },
+    {
+        "url": "https://github.com/StartupOS/small-test-repo.git@test/"
+               "slashes/inbranch",
+        "expected_name": "small-test-repo.git",
+        "expected_url": "https://github.com/StartupOS/small-test-repo.git",
+        "expected_branch": "test/slashes/inbranch",
+        "test": "GitHub HTTPS URL with branch with slashes"
+    }
 ]
 
 
 def test_repo_urls():
     for url in url_list:
-        name, repo_url = get_repo_name_and_url(url["url"])
-        assert name == url["expected_name"]
-        assert repo_url == url["expected_url"]
-    return None
+        name, repo_url, branch = get_repo_name_url_and_branch(url["url"])
+        assert name == url["expected_name"], (
+            f"Expected name: {url['expected_name']}, "
+            f"Got: {name} for {url['test']}"
+        )
+        assert repo_url == url["expected_url"], (
+            f"Expected repo_url: {url['expected_url']}, "
+            f"Got: {repo_url} for {url['test']}"
+        )
+        assert branch == url["expected_branch"], (
+            f"Expected branch: {url['expected_branch']}, "
+            f"Got: {branch} for {url['test']}"
+        )
