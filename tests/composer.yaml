@@ -1,0 +1,20 @@
+# This is a sample config for test runs
+baseurl: https://beta.startupos.dev/api/v2
+should_upload: false
+delete_temp: false
+report:
+  uuid: 9a6e8696-f93a-4402-a64e-342ccb37592b # UUID to match to server records
+modules:
+  code:
+    git:
+      start: 2024-02-09
+    dry: false
+    dependencies: true
+    run_scan: false
+    run_sizes: false
+    run_stats: false
+repos:
+  - https://github.com/laravel/laravel.git
+  # - git@github.com:ramsey/uuid.git
+  # - git@github.com:thephpleague/flysystem.git
+  - git@github.com:tijsverkoyen/CssToInlineStyles.git
