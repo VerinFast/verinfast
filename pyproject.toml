@@ -11,8 +11,8 @@ build-backend = "hatchling.build"
 [project]
 name = "verinfast"
 authors = [
-  { name="Jason Nichols", email="github@startupos.dev" },
-  { name="Sean Conrad", email="github@startupos.dev"}
+  { name="Jason Nichols", email="github@verinfast.com" },
+  { name="Sean Conrad", email="github@verinfast.com"}
 ]
 description = "This tool safely and securely analyzes applications for benchmarking."
 readme = "README.md"
@@ -25,9 +25,9 @@ classifiers = [
 dynamic = ["dependencies", "version"]
 
 [project.urls]
-"Homepage" = "https://github.com/StartupOS/verinfast"
-"Bug Tracker" = "https://github.com/StartupOS/verinfast/issues"
-"Source" = "https://github.com/StartupOS/verinfast"
+"Homepage" = "https://github.com/VerinFast/verinfast"
+"Bug Tracker" = "https://github.com/VerinFast/verinfast/issues"
+"Source" = "https://github.com/VerinFast/verinfast"
 
 [project.scripts]
 verinfast = "verinfast.agent:main"

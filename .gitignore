@@ -160,6 +160,8 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
+*.sln
+
 # Downloaded and results files
 verinfast/results
 verinfast/log.txt
