@@ -149,12 +149,12 @@ class DebugLog:
             print(output)
 
 
-# Returns a tuple of the repo name and the repo url from the original url
+# Returns a tuple of the repo name, repo url and branch from the original url
 def get_repo_name_url_and_branch(repo_url: str):
-    # match = re.search(r"([^/]*\.git.*)", repo_url) ^.*?/(.*)
     # The regex pattern captures the entire URL
     # and the repository name after the last '/'
-    # match = re.search(r"([^/]*\.git.*)", repo_url) # Old regex
+
+    repo_url = repo_url.strip()
 
     branch = None
     # Match repo_name to after the last '/' in the URL

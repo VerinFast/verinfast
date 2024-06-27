@@ -16,7 +16,7 @@ import httpx
 from jinja2 import Environment, FileSystemLoader
 from pygments_tsx.tsx import patch_pygments
 
-from verinfast.utils.utils import DebugLog, std_exec, trimLineBreaks, escapeChars, truncate, truncate_children
+from verinfast.utils.utils import DebugLog, std_exec, trimLineBreaks, escapeChars, truncate, truncate_children, get_repo_name_url_and_branch
 from verinfast.upload import Uploader
 
 from verinfast.cloud.aws.costs import runAws
@@ -233,11 +233,14 @@ class Agent:
         }
         return returnVal
 
-    def parseRepo(self, path: str, repo_name: str):
+    def parseRepo(self, path: str, repo_name: str, repo_url: str, branch: str):
         self.log(msg='parseRepo')
 
         if not self.config.dry:
             os.chdir(path)
+
+        if branch is None:
+            branch = "main"
 
         # Adding this for Windows support
         # Appears to fail with blank HEAD
@@ -245,11 +248,6 @@ class Agent:
             std_exec(["git", "init"])
 
         if self.config.runGit and self.checkDependency("git", "Git"):
-            # Get Correct Branch
-            branch = "main"
-            if "@" in repo_name:
-                branch = repo_name.split("@")[1]
-                repo_name = repo_name.split("@")[0]
             try:
                 if not self.config.dry:
                     subprocess.check_call(["git", f"--work-tree={path}", "checkout", branch])
@@ -269,7 +267,6 @@ class Agent:
                             raise Exception("Error checking out branch from git.")
                         else:
                             self.log("Error checking out branch from git.")
-            branch = branch.strip()
 
         # Git Stats
         git_output_file = os.path.join(self.config.output_dir, repo_name + ".git.log.json")
@@ -583,16 +580,10 @@ class Agent:
             repos = self.config.config["repos"]
             if repos:
                 for repo_url in [r for r in repos if len(r) > 0]:       # ignore blank lines from server
-                    match = re.search(r"([^/]*\.git.*)", repo_url)
-                    if match:
-                        repo_name = match.group(1)
-                    else:
-                        repo_name = repo_url.rsplit('/', 1)[-1]
-                    if "@" in repo_name and re.search(r"^.*@.*\..*:", repo_url):
-                        repo_url = "@".join(repo_url.split("@")[0:2])
-                    elif "@" in repo_name:
-                        repo_url = repo_url.split("@")[0]
+                    repo_name, repo_url, branch = get_repo_name_url_and_branch(repo_url)
                     self.log(msg=repo_name, tag="Processing", display=True)
+                    self.log(msg=repo_url, tag="URL", display=True)
+                    self.log(msg=branch, tag="Branch Specified", display=True)
                     try:
                         if not self.config.dry:
                             os.makedirs(temp_dir)
@@ -617,7 +608,7 @@ class Agent:
 
                         self.log(msg=repo_url, tag="Successfully cloned", display=True)
                     try:
-                        self.parseRepo(temp_dir, repo_name)
+                        self.parseRepo(temp_dir, repo_name, repo_url, branch)
                     except Exception as e:
                         self.log(msg=str(e), tag="parseRepo Error Caught")
                         self.log(tag="", msg=traceback.format_exc())
