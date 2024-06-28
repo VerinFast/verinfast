@@ -155,23 +155,28 @@ def get_repo_name_url_and_branch(repo_url: str):
     # and the repository name after the last '/'
 
     repo_url = repo_url.strip()
-
     branch = None
-    # Match repo_name to after the last '/' in the URL
-    match = re.search(r"(^[^@]*/(.*))", repo_url)
-    if match:
-        repo_name = match.group(2)
+
+    split_url = repo_url.split("@")
+
+    # HTTPS URLs
+    if repo_url.startswith("https://") or repo_url.startswith("http://"):
+        # Check for branch in URL
+        if len(split_url) > 1:
+            branch = split_url[1]
+            repo_url = split_url[0]
     else:
-        repo_name = repo_url.rsplit('/', 1)[-1]
-    # Handle an @ in the middle of the URL, e.g.
-    # git@github.com:StartupOS/small-test-repo.git@develop
-    if "@" in repo_name and re.search(r"^.*@.*\..*:", repo_url):
-        repo_url = "@".join(repo_url.split("@")[0:2])
-    elif "@" in repo_name:
-        # Remove branch from url
-        repo_url = repo_url.split("@")[0]
-    if "@" in repo_name:
-        split_repo_name = repo_name.split("@")
-        branch = split_repo_name[1]
-        repo_name = split_repo_name[0]
+        # SSH URLs
+        # Check for branch in URL
+        if len(split_url) > 2:
+            branch = split_url[2]
+            # Remove branch so that the repo name can be extracted
+            # without colliding with /'s in branch name
+            repo_url = repo_url.replace(f"@{branch}", "")
+            print(f"Repo URL after removing branch: {repo_url}")
+            print(f"@{branch}")
+
+    # Match repo_name to after the last '/' in the cleaned URL
+    repo_name = repo_url.rsplit('/', 1)[-1]
+
     return repo_name, repo_url, branch

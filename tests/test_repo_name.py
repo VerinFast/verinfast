@@ -16,18 +16,26 @@ url_list = [
         "test": "GitHub SSH URL with branch"
     },
     {
-        "url": "git.gitlab.foo.com:demo/demo.git",
-        "expected_name": "demo.git",
-        "expected_url": "git.gitlab.foo.com:demo/demo.git",
+        "url": "git@github.com:StartupOS/small-test-repo.git@"
+               "test/slashes/inbranch",
+        "expected_name": "small-test-repo.git",
+        "expected_url": "git@github.com:StartupOS/small-test-repo.git",
+        "expected_branch": "test/slashes/inbranch",
+        "test": "GitHub SSH URL with branch with slashes"
+    },
+    {
+        "url": "git@gitlab.com:gitlab-org/gitlab-foss.git",
+        "expected_name": "gitlab-foss.git",
+        "expected_url": "git@gitlab.com:gitlab-org/gitlab-foss.git",
         "expected_branch": None,
         "test": "Simple GitLab SSH URL"
     },
     {
-        "url": "git.gitlab.foo.com:demo/demo.git@develop",
-        "expected_name": "demo.git",
-        "expected_url": "git.gitlab.foo.com:demo/demo.git",
+        "url": "git@gitlab.com:gitlab-org/gitlab-foss.git@develop",
+        "expected_name": "gitlab-foss.git",
+        "expected_url": "git@gitlab.com:gitlab-org/gitlab-foss.git",
         "expected_branch": "develop",
-        "test": "Simple GitLab SSH URL"
+        "test": "GitLab SSH URL with branch"
     },
     {
         "url": "git@ssh.dev.azure.com:v3/bar/Foo%20Mobile%20Android",
