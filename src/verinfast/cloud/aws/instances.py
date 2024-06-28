@@ -145,101 +145,117 @@ def get_instance_utilization(
     return data
 
 
-def get_instances(sub_id: int, path_to_output: str = "./") -> str | None:
-    session = boto3.Session()
-    profiles = session.available_profiles
-    right_session = None
-    for profile in profiles:
-        s2 = boto3.Session(profile_name=profile)
-        sts = s2.client('sts')
-        try:
-            id = sts.get_caller_identity()
-        except botocore.exceptions.ClientError:
-            continue
-        if str(id['Account']) == str(sub_id):
-            right_session = s2
-            break
-    if right_session is None:
-        return None
-    my_instances = []
-    metrics = []
-    for region in regions:
-        try:
-            client = right_session.client('ec2', region_name=region)
-            paginator = client.get_paginator('describe_instances')
-            page_iterator = paginator.paginate()
-            for page in page_iterator:
-                reservations = page['Reservations']
-                for reservation in reservations:
-                    instances = reservation['Instances']
-                    for instance in instances:
-                        tags = instance['Tags']
-                        name = [t['Value'] for t in tags if t['Key'] == 'Name'][0]  # noqa: E501
-                        m = get_instance_utilization(
-                            instance_id=instance["InstanceId"],
-                            session=right_session,
-                            region=region
-                        )
-                        d = {
-                                "id": instance["InstanceId"],
-                                "metrics": [metric.dict for metric in m]
-                            }
-                        metrics.append(d)
-                        region = None
-                        subnet_id = None
-                        zone = None
-                        if 'SubnetId' in instance:
-                            subnet_id = instance['SubnetId']
-                        if 'Placement' in instance:
-                            placement = instance['Placement']
-                            if 'AvailabilityZone' in placement:
-                                zone = placement['AvailabilityZone']
-                                region = zone[0:-1]
-                        result = {
-                            "id": instance["InstanceId"],
-                            "name": name,
-                            "state": instance["State"]["Name"],
-                            "type": instance['InstanceType'],
-                            "zone": zone,
-                            "region": region,
-                            "subnet": subnet_id,
-                            "architecture": instance['Architecture'],
-                            "vpc": instance['VpcId'],
-                        }
-                        if "PublicIpAddress" in result:
-                            result["publicIp"] = instance['PublicIpAddress']
-                        else:
-                            result["publicIp"] = 'n/a'
-                        ni = instance["NetworkInterfaces"]
-                        for interface in ni:
-                            if 'Association' in interface:
-                                association = interface['Association']
-                                if 'PublicIp' in association:
-                                    public_ip = association['PublicIp']
-                                    result["publicIp"] = public_ip
-                        my_instances.append(result)
-        except botocore.exceptions.ClientError:
-            pass
+def get_instances(sub_id: int, path_to_output: str = "./",
+                  dry=False) -> str | None:
+    if not dry:
+        session = boto3.Session()
+        profiles = session.available_profiles
+        right_session = None
+        for profile in profiles:
+            s2 = boto3.Session(profile_name=profile)
+            sts = s2.client('sts')
+            try:
+                id = sts.get_caller_identity()
+            except botocore.exceptions.ClientError:
+                continue
+            if str(id['Account']) == str(sub_id):
+                right_session = s2
+                break
+        if right_session is None:
+            return None
+        my_instances = []
+        metrics = []
+        for region in regions:
+            try:
+                client = right_session.client('ec2', region_name=region)
+                paginator = client.get_paginator('describe_instances')
+                page_iterator = paginator.paginate()
+                for page in page_iterator:
+                    reservations = page['Reservations']
+                    for reservation in reservations:
+                        instances = reservation['Instances']
+                        for instance in instances:
+                            tags = instance['Tags']
+                            if tags is None:
+                                name = instance["InstanceId"]
+                            else:
+                                tags_with_name = [t['Value'] for t in tags if t['Key'] == 'Name']  # noqa: E501
+                                if not tags_with_name:
+                                    name = instance["InstanceId"]
+                                else:
+                                    name = tags_with_name[0]
+                            m = get_instance_utilization(
+                                instance_id=instance["InstanceId"],
+                                session=right_session,
+                                region=region
+                            )
+                            d = {
+                                    "id": instance["InstanceId"],
+                                    "metrics": [metric.dict for metric in m]
+                                }
+                            metrics.append(d)
+                            region = None
+                            subnet_id = None
+                            zone = None
+                            if 'SubnetId' in instance:
+                                subnet_id = instance['SubnetId']
+                            if 'Placement' in instance:
+                                placement = instance['Placement']
+                                if 'AvailabilityZone' in placement:
+                                    zone = placement['AvailabilityZone']
+                                    region = zone[0:-1]
+                            try:
+                                result = {
+                                    "id": instance["InstanceId"],
+                                    "name": name,
+                                    "state": instance["State"]["Name"],
+                                    "type": instance['InstanceType'],
+                                    "zone": zone,
+                                    "region": region,
+                                    "subnet": subnet_id,
+                                    "architecture": instance['Architecture']
+                                }
+                            except KeyError:
+                                continue
+                            if "VpcId" in instance:
+                                result["vpc"] = instance['VpcId']
+                            else:
+                                result["vpc"] = 'n/a'
+                            if "PublicIpAddress" in instance:
+                                result["publicIp"] = instance['PublicIpAddress']  # noqa: E501
+                            else:
+                                result["publicIp"] = 'n/a'
+                            if "NetworkInterfaces" in instance:
+                                ni = instance["NetworkInterfaces"]
+                                for interface in ni:
+                                    if 'Association' in interface:
+                                        association = interface['Association']
+                                        if 'PublicIp' in association:
+                                            public_ip = association['PublicIp']
+                                            result["publicIp"] = public_ip
+                            my_instances.append(result)
+            except botocore.exceptions.ClientError:
+                pass
 
-    upload = {
-                "metadata": {
-                    "provider": "aws",
-                    "account": str(sub_id)
-                },
-                "data": my_instances
-            }
+        upload = {
+                    "metadata": {
+                        "provider": "aws",
+                        "account": str(sub_id)
+                    },
+                    "data": my_instances
+                }
+    # End dry check
+
     aws_output_file = os.path.join(
         path_to_output,
         f'aws-instances-{sub_id}.json'
     )
 
-    with open(aws_output_file, 'w') as outfile:
-        outfile.write(json.dumps(upload, indent=4))
-    upload['data'] = metrics
-    with open(aws_output_file[:-5]+"-utilization.json", "w") as outfile2:
-        outfile2.write(json.dumps(upload, indent=4))
+    if not dry:
+        with open(aws_output_file, 'w') as outfile:
+            outfile.write(json.dumps(upload, indent=4))
+        upload['data'] = metrics
+        with open(aws_output_file[:-5]+"-utilization.json", "w") as outfile2:
+            outfile2.write(json.dumps(upload, indent=4))
 
     return aws_output_file
-
-# Test Code
-# i = get_instances(436708548746)

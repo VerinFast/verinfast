@@ -10,6 +10,8 @@ import subprocess
 import traceback
 from uuid import uuid4
 
+from modernmetric.__main__ import main as modernmetric
+
 import httpx
 from jinja2 import Environment, FileSystemLoader
 from pygments_tsx.tsx import patch_pygments
@@ -18,6 +20,7 @@ from verinfast.utils.utils import DebugLog, std_exec, trimLineBreaks, escapeChar
 from verinfast.upload import Uploader
 
 from verinfast.cloud.aws.costs import runAws
+from verinfast.cloud.aws.get_profile import find_profile
 from verinfast.cloud.azure.costs import runAzure
 from verinfast.cloud.aws.instances import get_instances as get_aws_instances
 from verinfast.cloud.azure.instances import get_instances as get_az_instances
@@ -26,13 +29,11 @@ from verinfast.cloud.aws.blocks import getBlocks as get_aws_blocks
 from verinfast.cloud.azure.blocks import getBlocks as get_az_blocks
 from verinfast.cloud.gcp.blocks import getBlocks as get_gcp_blocks
 from verinfast.config import Config
-from verinfast.user import initial_prompt, save_path
+from verinfast.user import initial_prompt, save_path, repeat_boolean_prompt
 
 from verinfast.dependencies.walk import walk as dependency_walk
 
 # from verinfast.pygments_patch import patch_pygments
-# from modernmetric.fp import file_process
-# If we want to run modernmetric directly
 
 patch_pygments()
 
@@ -53,6 +54,9 @@ file_path = Path(__file__)
 parent_folder = file_path.parent.absolute()
 templates_folder = str(parent_folder.joinpath("templates"))
 # str_path = str(parent_folder.joinpath('str_conf.yaml').absolute())
+
+curr_dir = os.getcwd()
+temp_dir = Path(os.path.expanduser('~/.verinfast/')).joinpath('temp_repo')
 
 
 class Agent:
@@ -97,10 +101,12 @@ class Agent:
                 else:
                     print("ID only fetched for upload")
                 self.scanRepos()
-                self.create_template()
             if self.config.modules and self.config.modules.cloud and len(self.config.modules.cloud):
                 self.scanCloud()
+            try:
                 self.create_template()
+            except:
+                self.log(tag="ERROR", msg="Template Creation Failed")
         self.log(msg='', tag="Finished")
 
     # Excludes files in .git directories. Takes path of full path with filename
@@ -142,12 +148,12 @@ class Agent:
     def checkDependency(self, command, name, kill=False) -> bool:
         which = shutil.which(command)
         if not which:
-            self.log(msg=f"{name} is required but it's not installed.", tag=f"{name} status", display=False)
+            self.log(msg=f"{name} is required but it's not installed.", tag=f"{name} status", display=False, timestamp=False)
             if kill:
                 raise Exception(f"{name} is required but it's not installed.")
             return False
         else:
-            self.log(msg=f"{name} is installed at {which}.", tag=f"{name} status", display=True)
+            self.log(msg=f"{name} is installed at {which}.", tag=f"{name} status", display=True, timestamp=False)
             return True
 
     def upload(self, file: str, route: str, source: str = '', isJSON=True):
@@ -215,6 +221,7 @@ class Agent:
             return False
 
     def formatGitHash(self, hash: str):
+        hash = hash.replace("'", "").replace('"', "")
         message = std_exec(["git", "log", "-n1", "--pretty=format:%B", hash])
         author = std_exec(["git", "log", "-n1", "--pretty=format:%aN <%aE>", hash])
         commit = std_exec(["git", "log", "-n1", "--pretty=format:%H", hash])
@@ -229,11 +236,17 @@ class Agent:
 
     def parseRepo(self, path: str, repo_name: str):
         self.log(msg='parseRepo')
+
         if not self.config.dry:
             os.chdir(path)
+
+        # Adding this for Windows support
+        # Appears to fail with blank HEAD
+        if self.config.runGit:
+            std_exec(["git", "init"])
+
         if self.config.runGit and self.checkDependency("git", "Git"):
             # Get Correct Branch
-            # TODO Get a list of branches and use most recent if no main or master
             branch = "main"
             if "@" in repo_name:
                 branch = repo_name.split("@")[1]
@@ -249,7 +262,8 @@ class Agent:
                 except subprocess.CalledProcessError:
                     try:
                         cmd = "git for-each-ref --count=1 --sort=-committerdate refs/heads/ --format='%(refname:short)'"
-                        branch = std_exec(cmd.split(" "))
+                        # remove new lines and apostrophes from branch name.
+                        branch = std_exec(cmd.split(" ")).replace("'", "").replace("\n", "")
                         subprocess.check_call(["git", "checkout", branch])
                     except subprocess.CalledProcessError:
                         if self.config.runGit:
@@ -352,10 +366,9 @@ class Agent:
             filelist = []
 
             for filepath, subdirs, list in os.walk("."):
-                # print(subdirs)
                 for name in list:
                     fp = os.path.join(filepath, name)
-                    extRe = re.search("^[^\.]*\.(.*)", name)
+                    extRe = re.search(r"^[^\.]*\.(.*)", name)
                     ext = extRe.group(1) if extRe else ''
                     if self.allowfile(path=fp):
                         if self.config.shouldManualFileScan:
@@ -384,7 +397,6 @@ class Agent:
         if self.config.runStats:
             stats_input_file = os.path.join(self.config.output_dir, repo_name + ".filelist.json")
             stats_output_file = os.path.join(self.config.output_dir, repo_name + ".stats.json")
-            stats_error_file = os.path.join(self.config.output_dir, repo_name + ".stats.err")
 
             if not self.config.dry:
                 self.log(msg=repo_name, tag="Analyzing repository with Modernmetric", display=True)
@@ -392,11 +404,8 @@ class Agent:
                     f.write(json.dumps(filelist, indent=4))
 
                 template_definition["filelist"] = filelist
-                # Calling modernmetric with subprocess works, but we might want to call
-                # Modernmetric directly, ala lines 91-110 from modernmetric main
-                with open(stats_output_file, 'w') as f:
-                    with open(stats_error_file, 'w') as e:
-                        subprocess.check_call(["modernmetric", f"--file={stats_input_file}"], stdout=f, stderr=e, encoding='utf-8')
+                custom_args = [f"--file={stats_input_file}", f"--output={stats_output_file}"]
+                modernmetric(custom_args)
                 with open(stats_output_file, 'r') as f:
                     template_definition["stats"] = json.load(f)
             self.upload(
@@ -442,7 +451,20 @@ class Agent:
                         original_findings = json.load(f)
 
                     if self.config.truncate_findings:
-                        truncation_exclusion = ["cwe", "path", "check_id", "license"]
+                        # Exclusions are set to exclude fields that are not code
+                        truncation_exclusion = [
+                            "cwe",
+                            "owasp",
+                            "path",
+                            "check_id",
+                            "license",
+                            "fingerprint",
+                            "message",
+                            "references",
+                            "url",
+                            "source",
+                            "severity"
+                        ]
                         self.log(
                             tag="TRUNCATING",
                             msg=f"excluding: {truncation_exclusion}"
@@ -501,6 +523,61 @@ class Agent:
                 source=repo_name
             )
 
+    def preflight(self):
+        if self.config.dry:
+            return
+
+        # Loop over all remote repositories from config file
+        print("\n\n\nChecking your system's compatibility with the scan configuration:\n")
+        if 'repos' in self.config.config:
+            repos = self.config.config["repos"]
+            if repos:
+                for repo_url in [r for r in repos if len(r) > 0]:       # ignore blank lines from server
+                    match = re.search(r"([^/]*\.git.*)", repo_url)
+                    if match:
+                        repo_name = match.group(1)
+                    else:
+                        repo_name = repo_url.rsplit('/', 1)[-1]
+                    if "@" in repo_name and re.search(r"^.*@.*\..*:", repo_url):
+                        repo_url = "@".join(repo_url.split("@")[0:2])
+                    elif "@" in repo_name:
+                        repo_url = repo_url.split("@")[0]
+                    try:
+                        subprocess.check_output(["git", "ls-remote", repo_url])
+                        self.log(tag="Repository access confirmed", msg=repo_url, display=True, timestamp=False)
+                    except subprocess.CalledProcessError:
+                        self.log(msg=repo_url, tag="Unable to access", display=True, timestamp=False)
+                        self.log(msg=repo_url, tag="Repository will not be scanned", display=True, timestamp=False)
+
+        cloud_config = self.config.modules.cloud
+        if cloud_config is not None:
+            for provider in cloud_config:
+                try:
+                    if provider.provider == "aws" and self.checkDependency("aws", "AWS Command-line tool"):
+                        account_id = str(provider.account).replace('-', '')
+                        if find_profile(account_id, self.log) is None:
+                            self.log(tag=f"No matching AWS CLI profiles found for {provider.account}", msg="Account can't be scanned.", display=True, timestamp=False)
+                        else:
+                            self.log(tag="AWS account access confirmed", msg=account_id, display=True, timestamp=False)
+                    if provider.provider == "azure" and self.checkDependency("az", "Azure Command-line tool"):
+                        pass
+                    if provider.provider == "gcp" and self.checkDependency("gcloud", "Google Command-line tool"):
+                        pass
+                except:
+                    self.log(msg=f"Unable to access {provider.provider} {provider.account}", tag="Unable to access", display=True, timestamp=False)
+
+        resp = repeat_boolean_prompt(
+            "\nWould you like to proceed with the scan?",
+            logger=print,
+            default_val=True
+        )
+
+        if resp:
+            self.log(msg="Proceeding")
+        else:
+            self.log(tag="Exiting now", msg="", display=True)
+            exit(0)
+
     # ##### Scan Repos ######
     def scanRepos(self):
         # Loop over all remote repositories from config file
@@ -508,20 +585,28 @@ class Agent:
             repos = self.config.config["repos"]
             if repos:
                 for repo_url in [r for r in repos if len(r) > 0]:       # ignore blank lines from server
-                    match = re.search("([^/]*\.git.*)", repo_url)
+                    match = re.search(r"([^/]*\.git.*)", repo_url)
                     if match:
                         repo_name = match.group(1)
                     else:
                         repo_name = repo_url.rsplit('/', 1)[-1]
-                    if "@" in repo_name and re.search("^.*@.*\..*:", repo_url):
+                    if "@" in repo_name and re.search(r"^.*@.*\..*:", repo_url):
                         repo_url = "@".join(repo_url.split("@")[0:2])
                     elif "@" in repo_name:
                         repo_url = repo_url.split("@")[0]
                     self.log(msg=repo_name, tag="Processing", display=True)
-                    curr_dir = os.getcwd()
-                    temp_dir = os.path.join(curr_dir, "temp_repo")
-                    if not self.config.dry:
-                        os.makedirs(temp_dir, exist_ok=True)
+                    try:
+                        if not self.config.dry:
+                            os.makedirs(temp_dir)
+                    except:
+                        self.log(tag="Directory exists:", msg=temp_dir, display=True)
+                        try:
+                            shutil.rmtree(temp_dir)
+                            os.makedirs(temp_dir)
+                        except Exception as e:
+                            self.log(tag=f"Failed to delete {temp_dir}", msg=e, display=True)
+                            continue
+
                     self.log(msg=repo_url, tag="Repo URL")
                     self.log(msg=temp_dir, tag="Temp Directory")
                     if not self.config.dry and self.config.runGit:
@@ -554,7 +639,7 @@ class Agent:
             if localrepos:
                 for repo_path in localrepos:
                     a = Path(repo_path).absolute()
-                    match = re.search("([^/]*\.git.*)", str(a))
+                    match = re.search(r"([^/]*\.git.*)", str(a))
                     if match:
                         repo_name = match.group(1)
                     else:
@@ -586,41 +671,57 @@ class Agent:
                         end=provider.end,
                         profile=provider.profile,
                         path_to_output=self.config.output_dir,
-                        log=self.log
+                        log=self.log,
+                        dry=self.config.dry
                     )
-                    self.log(msg=aws_cost_file, tag="AWS Costs")
-                    self.upload(
-                        file=aws_cost_file,
-                        route="costs",
-                        source="AWS"
-                    )
+                    if aws_cost_file is None:
+                        self.log(msg="Error processing AWS costs", tag=account_id)
+                    else:
+                        self.log(msg=aws_cost_file, tag="AWS Costs")
+                        self.upload(
+                            file=aws_cost_file,
+                            route="costs",
+                            source="AWS"
+                        )
                     aws_instance_file = get_aws_instances(
                         sub_id=account_id,
-                        path_to_output=self.config.output_dir
+                        path_to_output=self.config.output_dir,
+                        dry=self.config.dry
                     )
-                    self.log(msg=aws_instance_file, tag="AWS Instances")
-                    self.upload(
-                        file=aws_instance_file,
-                        route="instances",
-                        source="AWS"
+                    if aws_instance_file is None:
+                        self.log(msg="Error processing AWS instances", tag=account_id)
+                    else:
+                        self.log(msg=aws_instance_file, tag="AWS Instances")
+                        self.upload(
+                            file=aws_instance_file,
+                            route="instances",
+                            source="AWS"
+                        )
+                    aws_utilization_file = os.path.join(
+                        self.config.output_dir,
+                        f'aws-instances-{account_id}-utilization.json'
                     )
-                    aws_utilization_file = aws_instance_file[:-5] + "-utilization.json"
-                    self.upload(
-                        file=aws_utilization_file,
-                        route="utilization",
-                        source="AWS"
-                    )
+                    if Path(aws_utilization_file).is_file():
+                        self.upload(
+                            file=aws_utilization_file,
+                            route="utilization",
+                            source="AWS"
+                        )
                     aws_block_file = get_aws_blocks(
                         sub_id=account_id,
                         path_to_output=self.config.output_dir,
-                        log=self.log
+                        log=self.log,
+                        dry=self.config.dry
                     )
-                    self.log(msg=aws_block_file, tag="AWS Storage")
-                    self.upload(
-                        file=aws_block_file,
-                        route="storage",
-                        source="AWS"
-                    )
+                    if aws_block_file is None:
+                        self.log(msg="Error processing AWS blocks", tag=account_id)
+                    else:
+                        self.log(msg=aws_block_file, tag="AWS Storage")
+                        self.upload(
+                            file=aws_block_file,
+                            route="storage",
+                            source="AWS"
+                        )
 
                 # Check if Azure CLI is installed
                 if provider.provider == "azure" and self.checkDependency("az", "Azure Command-line tool"):
@@ -628,68 +729,96 @@ class Agent:
                         subscription_id=provider.account,
                         start=provider.start,
                         end=provider.end,
-                        path_to_output=self.config.output_dir
+                        path_to_output=self.config.output_dir,
+                        dry=self.config.dry
                     )
-                    self.log(msg=azure_cost_file, tag="Azure Costs")
-                    self.upload(
-                        file=azure_cost_file,
-                        route="costs",
-                        source="Azure"
-                    )
+                    if azure_cost_file is None:
+                        self.log(msg="Error processing Azure costs", tag=provider.account)
+                    else:
+                        self.log(msg=azure_cost_file, tag="Azure Costs")
+                        self.upload(
+                            file=azure_cost_file,
+                            route="costs",
+                            source="Azure"
+                        )
                     azure_instance_file = get_az_instances(
                         sub_id=provider.account,
-                        path_to_output=self.config.output_dir
+                        path_to_output=self.config.output_dir,
+                        dry=self.config.dry
                     )
-                    self.log(msg=azure_instance_file, tag="Azure instances")
-                    self.upload(
-                        file=azure_instance_file,
-                        route="instances",
-                        source="Azure"
+                    if azure_instance_file is None:
+                        self.log(msg="Error processing Azure instances", tag=provider.account)
+                    else:
+                        self.log(msg=azure_instance_file, tag="Azure instances")
+                        self.upload(
+                            file=azure_instance_file,
+                            route="instances",
+                            source="Azure"
+                        )
+                    azure_utilization_file = os.path.join(
+                        self.config.output_dir,
+                        f'azure-instances-{provider.account}-utilization.json'
                     )
-                    azure_utilization_file = azure_instance_file[:-5] + "-utilization.json"
-                    self.upload(
-                        file=azure_utilization_file,
-                        route="utilization",
-                        source="AWS"
-                    )
+                    if Path(azure_utilization_file).is_file():
+                        self.upload(
+                            file=azure_utilization_file,
+                            route="utilization",
+                            source="AWS"
+                        )
                     azure_block_file = get_az_blocks(
                         sub_id=provider.account,
-                        path_to_output=self.config.output_dir
+                        path_to_output=self.config.output_dir,
+                        dry=self.config.dry
                     )
-                    self.log(msg=azure_block_file, tag="Azure Storage")
-                    self.upload(
-                        file=azure_block_file,
-                        route="storage",
-                        source="Azure"
-                    )
+                    if azure_block_file is None:
+                        self.log(msg="Error processing Azure blocks", tag=provider.account)
+                    else:
+                        self.log(msg=azure_block_file, tag="Azure Storage")
+                        self.upload(
+                            file=azure_block_file,
+                            route="storage",
+                            source="Azure"
+                        )
 
                 if provider.provider == "gcp" and self.checkDependency("gcloud", "Google Command-line tool"):
                     gcp_instance_file = get_gcp_instances(
                         sub_id=provider.account,
-                        path_to_output=self.config.output_dir
+                        path_to_output=self.config.output_dir,
+                        dry=self.config.dry
                     )
-                    self.log(msg=gcp_instance_file, tag="GCP instances")
-                    self.upload(
-                        file=gcp_instance_file,
-                        route="instances",
-                        source="GCP"
+                    if gcp_instance_file is None:
+                        self.log(msg="Error processing GCP instances", tag=provider.account)
+                    else:
+                        self.log(msg=gcp_instance_file, tag="GCP instances")
+                        self.upload(
+                            file=gcp_instance_file,
+                            route="instances",
+                            source="GCP"
+                        )
+                    gcp_utilization_file = os.path.join(
+                        self.config.output_dir,
+                        f'gcp-instances-{provider.account}-utilization.json'
                     )
-                    gcp_utilization_file = gcp_instance_file[:-5] + "-utilization.json"
-                    self.upload(
-                        file=gcp_utilization_file,
-                        route="utilization",
-                        source="AWS"
-                    )
+                    if Path(gcp_utilization_file).is_file():
+                        self.upload(
+                            file=gcp_utilization_file,
+                            route="utilization",
+                            source="AWS"
+                        )
                     gcp_block_file = get_gcp_blocks(
                         sub_id=provider.account,
-                        path_to_output=self.config.output_dir
+                        path_to_output=self.config.output_dir,
+                        dry=self.config.dry
                     )
-                    self.log(msg=gcp_block_file, tag="GCP Storage")
-                    self.upload(
-                        file=gcp_block_file,
-                        route="storage",
-                        source="GCP"
-                    )
+                    if gcp_block_file is None:
+                        self.log(msg="Error processing GCP blocks", tag=provider.account)
+                    else:
+                        self.log(msg=gcp_block_file, tag="GCP Storage")
+                        self.upload(
+                            file=gcp_block_file,
+                            route="storage",
+                            source="GCP"
+                        )
             except Exception as e:
                 self.log(tag="ERROR", msg="Error processing provider", display=True)
                 self.log(
@@ -707,12 +836,8 @@ class Agent:
 def main():
     agent = Agent()
     try:
+        agent.preflight()
         agent.scan()
-        # with open(f"{agent.config.output_dir}/results.html", "w") as f:
-        #     jinja_env = Environment(loader=FileSystemLoader(templates_folder))
-        #     jinja_env.globals.update(zip=zip)
-        #     output = jinja_env.get_template("results.j2").render(template_definition)
-        #     f.write(output)
     except Exception as e:
         agent.log(msg=str(e), tag="Main Scan Error Caught")
         if agent.config.upload_logs:
@@ -732,6 +857,11 @@ def main():
         os.unlink(agent.config.output_dir+"/log.txt")
         print(f"""The log for this run has moved to:
               {d}/{new_folder_name}/{new_file_name}""")
+
+    # We only do this if you have a remote config but didn't upload
+    if agent.config.shouldUpload is False and agent.config.is_path_remote():
+        print("To upload results from this location please run")
+        print(f"verinfast -c {agent.config.cfg_path} -o {agent.config.output_dir} --should_upload --dry")
 
 
 if __name__ == "__main__":

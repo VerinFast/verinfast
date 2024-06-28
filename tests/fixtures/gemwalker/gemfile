@@ -16,7 +16,6 @@ gem 'rubocop-rspec', '~> 2.25.0'
 # https://github.com/codeclimate/test-reporter/issues/418
 gem 'simplecov', '~> 0.10', '< 0.18'
 gem 'stackprof', platform: :mri
-gem 'test-queue'
 gem 'yard', '~> 0.9'
 
 group :test do
@@ -34,3 +33,14 @@ gem 'rubocop-ast', path: local_ast if Dir.exist? local_ast
 
 local_gemfile = File.expand_path('Gemfile.local', __dir__)
 eval_gemfile local_gemfile if File.exist?(local_gemfile)
+
+# Import Gemfile_B
+eval_gemfile 'gemnest/Gemfile'
+
+# Use gems from a custom Git, private repository
+source 'https://github.com/example/gems.git' do
+    gem 'custom_gem', '1.0.0'
+  end
+
+# Another Gem after custom
+gem 'test-queue'
