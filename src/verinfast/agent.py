@@ -233,7 +233,7 @@ class Agent:
         }
         return returnVal
 
-    def parseRepo(self, path: str, repo_name: str, repo_url: str, branch: str):
+    def parseRepo(self, path: str, repo_name: str, branch: str = None):
         self.log(msg='parseRepo')
 
         if not self.config.dry:
@@ -608,7 +608,7 @@ class Agent:
 
                         self.log(msg=repo_url, tag="Successfully cloned", display=True)
                     try:
-                        self.parseRepo(temp_dir, repo_name, repo_url, branch)
+                        self.parseRepo(temp_dir, repo_name, branch)
                     except Exception as e:
                         self.log(msg=str(e), tag="parseRepo Error Caught")
                         self.log(tag="", msg=traceback.format_exc())

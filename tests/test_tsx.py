@@ -26,9 +26,7 @@ def test_scan(self):
 
     agent.parseRepo(
         path=tsx_path,
-        repo_name=repo_name,
-        repo_url='',
-        branch="main")
+        repo_name=repo_name)
 
     with open(output_path) as output_file:
         output = json.load(output_file)
