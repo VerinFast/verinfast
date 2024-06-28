@@ -24,7 +24,11 @@ def test_scan(self):
     agent.config.output_dir = test_folder.joinpath("results")
     os.makedirs(agent.config.output_dir, exist_ok=True)
 
-    agent.parseRepo(path=tsx_path, repo_name=repo_name)
+    agent.parseRepo(
+        path=tsx_path,
+        repo_name=repo_name,
+        repo_url='',
+        branch="main")
 
     with open(output_path) as output_file:
         output = json.load(output_file)
