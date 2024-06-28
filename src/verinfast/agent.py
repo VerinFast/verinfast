@@ -55,7 +55,7 @@ templates_folder = str(parent_folder.joinpath("templates"))
 # str_path = str(parent_folder.joinpath('str_conf.yaml').absolute())
 
 curr_dir = os.getcwd()
-temp_dir = os.path.abspath(os.path.join('~/.verinfast/', "temp_repo"))
+temp_dir = Path(os.path.expanduser('~/.verinfast/')).joinpath('temp_repo')
 
 
 class Agent:
@@ -100,10 +100,12 @@ class Agent:
                 else:
                     print("ID only fetched for upload")
                 self.scanRepos()
-                self.create_template()
             if self.config.modules and self.config.modules.cloud and len(self.config.modules.cloud):
                 self.scanCloud()
+            try:
                 self.create_template()
+            except:
+                self.log(tag="ERROR", msg="Template Creation Failed")
         self.log(msg='', tag="Finished")
 
     # Excludes files in .git directories. Takes path of full path with filename
@@ -835,11 +837,6 @@ def main():
     try:
         agent.preflight()
         agent.scan()
-        # with open(f"{agent.config.output_dir}/results.html", "w") as f:
-        #     jinja_env = Environment(loader=FileSystemLoader(templates_folder))
-        #     jinja_env.globals.update(zip=zip)
-        #     output = jinja_env.get_template("results.j2").render(template_definition)
-        #     f.write(output)
     except Exception as e:
         agent.log(msg=str(e), tag="Main Scan Error Caught")
         if agent.config.upload_logs:

@@ -21,7 +21,7 @@ default_month_delta = 6
 default_end_date = date.today()
 default_start_year = default_end_date.year
 default_start_month = default_end_date.month-default_month_delta
-while default_start_month < 0:
+while default_start_month <= 0:
     default_start_year -= 1
     default_start_month += 12
 

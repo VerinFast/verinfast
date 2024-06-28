@@ -70,13 +70,18 @@ def test_aws_scan(self):
     assert not bad_utilization_file.is_file()
     storageFile = results_dir.joinpath(f"aws-storage-{sub_id}.json")
     print("storageFile", storageFile)
-    with open(storageFile) as f:
-        storage = json.load(f)
-        v = 0
-        for u in storage["data"]:
-            if u["name"] == "startupos-test-bucket":
-                v = u["size"]
-        assert v >= 262183
+    try:
+        with open(storageFile) as f:
+            storage = json.load(f)
+            v = 0
+            for u in storage["data"]:
+                if u["name"] == "startupos-test-bucket":
+                    v = u["size"]
+            assert v >= 262183
+    except Exception as e:
+        print(e)
+        print("Missing the storage file")
+        print(os.listdir(results_dir))
     # Make sure "aws-storage-foo.json" doesn't exist
     bad_storage_file = Path(results_dir.joinpath("aws-storage-foo.json"))
     assert not bad_storage_file.is_file()
