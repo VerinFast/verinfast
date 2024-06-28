@@ -177,8 +177,6 @@ def get_instances(sub_id: int, path_to_output: str = "./",
                         for instance in instances:
                             tags = instance.get('Tags')
                             if tags is None:
-                                tags = instance['Tags']
-                            if tags is None:
                                 name = instance["InstanceId"]
                             else:
                                 tags_with_name = [t['Value'] for t in tags if t['Key'] == 'Name']  # noqa: E501
