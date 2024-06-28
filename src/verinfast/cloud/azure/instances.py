@@ -91,7 +91,9 @@ def get_instances(sub_id: str, path_to_output: str = "./", dry=False):
         for vm in res:
             try:
                 s = vm.storage_profile.os_disk.managed_disk.id
-                tgt = s.split('resourceGroups/')[1]
+                tgt = s.split('resourceGroups/')
+                if len(tgt) < 2:
+                    continue
                 tgt = tgt.split('/')[0]
                 name = vm.name
                 location = vm.location
