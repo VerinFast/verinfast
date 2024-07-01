@@ -580,7 +580,10 @@ class Agent:
             repos = self.config.config["repos"]
             if repos:
                 for repo_url in [r for r in repos if len(r) > 0]:       # ignore blank lines from server
-                    repo_name, repo_url, branch = get_repo_name_url_and_branch(repo_url)
+                    repo_info = get_repo_name_url_and_branch(repo_url)
+                    repo_name = repo_info["repo_name"]
+                    repo_url = repo_info["repo_url"]
+                    branch = repo_info["branch"]
                     self.log(msg=repo_name, tag="Processing", display=True)
                     self.log(msg=repo_url, tag="URL", display=True)
                     self.log(msg=branch, tag="Branch Specified", display=True)

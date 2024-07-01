@@ -149,7 +149,7 @@ class DebugLog:
             print(output)
 
 
-# Returns a tuple of the repo name, repo url and branch from the original url
+# Returns a dict of the repo name, repo url and branch from the original url
 def get_repo_name_url_and_branch(repo_url: str):
     # The regex pattern captures the entire URL
     # and the repository name after the last '/'
@@ -179,4 +179,8 @@ def get_repo_name_url_and_branch(repo_url: str):
     # Match repo_name to after the last '/' in the cleaned URL
     repo_name = repo_url.rsplit('/', 1)[-1]
 
-    return repo_name, repo_url, branch
+    return {
+        "repo_name": repo_name,
+        "repo_url": repo_url,
+        "branch": branch
+    }
