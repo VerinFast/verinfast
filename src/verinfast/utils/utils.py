@@ -147,3 +147,47 @@ class DebugLog:
             f.write(output+"\n")
         if display or self.debug:
             print(output)
+
+
+# Returns a dict of the repo name, repo url and branch from the original url
+def get_repo_name_url_and_branch(repo_url: str):
+    # The regex pattern captures the entire URL
+    # and the repository name after the last '/'
+
+    repo_url = repo_url.strip()
+    branch = None
+
+    split_url = repo_url.split("@")
+
+    # HTTPS URLs
+    if repo_url.startswith("https://") or repo_url.startswith("http://"):
+        # Check for branch in URL
+        if len(split_url) == 2:
+            branch = split_url[1]
+            repo_url = split_url[0]
+        elif len(split_url) == 3:
+            # Username and password in URL
+            # e.g. https://user:password@my.githost.com/repo@branch
+            branch = split_url[2]
+            # Remove branch so that the repo name can be extracted
+            # without colliding with /'s in branch name
+            repo_url = repo_url.replace(f"@{branch}", "")
+    else:
+        # SSH URLs
+        # Check for branch in URL
+        if len(split_url) > 2:
+            branch = split_url[2]
+            # Remove branch so that the repo name can be extracted
+            # without colliding with /'s in branch name
+            repo_url = repo_url.replace(f"@{branch}", "")
+            print(f"Repo URL after removing branch: {repo_url}")
+            print(f"@{branch}")
+
+    # Match repo_name to after the last '/' in the cleaned URL
+    repo_name = repo_url.rsplit('/', 1)[-1]
+
+    return {
+        "repo_name": repo_name,
+        "repo_url": repo_url,
+        "branch": branch
+    }

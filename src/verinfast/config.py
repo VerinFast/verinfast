@@ -21,7 +21,7 @@ default_month_delta = 6
 default_end_date = date.today()
 default_start_year = default_end_date.year
 default_start_month = default_end_date.month-default_month_delta
-while default_start_month < 0:
+while default_start_month <= 0:
     default_start_year -= 1
     default_start_month += 12
 
@@ -154,6 +154,7 @@ class Config(printable):
     """
     baseUrl: str = ''
     cfg_path: str = ".verinfast.yaml"
+    original_cfg_path: str = ".verinfast.yaml"
     config = FileNotFoundError
     scanId: int = 0
     delete_config_after = False
@@ -182,14 +183,16 @@ class Config(printable):
     def __init__(self, cfg_path: str = None) -> None:
         if cfg_path is not None:
             self.cfg_path = cfg_path
+            self.original_cfg_path = cfg_path
         elif 'pytest' not in sys.argv[0]:
             parser = self.init_argparse()
             args = parser.parse_args()
             if "config" in args and args.config is not None:
                 self.cfg_path = args.config
+                self.original_cfg_path = args.config
 
         # TODO: Support JSON
-        if self.is_path_remote():
+        if self.is_original_path_remote():
             self.delete_config_after = True
             requestx = httpx.Client(http2=True, timeout=None)
             response = requestx.get(self.cfg_path)
@@ -397,8 +400,8 @@ class Config(printable):
             else:
                 self.truncate_findings = False
 
-    def is_path_remote(self) -> bool:
-        s = self.cfg_path
+    def is_original_path_remote(self) -> bool:
+        s = self.original_cfg_path
 
         # TODO: Add ftp
         supported_protocols = [

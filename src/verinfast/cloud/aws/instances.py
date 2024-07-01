@@ -175,7 +175,7 @@ def get_instances(sub_id: int, path_to_output: str = "./",
                     for reservation in reservations:
                         instances = reservation['Instances']
                         for instance in instances:
-                            tags = instance['Tags']
+                            tags = instance.get('Tags')
                             if tags is None:
                                 name = instance["InstanceId"]
                             else:

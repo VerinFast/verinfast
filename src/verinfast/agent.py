@@ -16,7 +16,7 @@ import httpx
 from jinja2 import Environment, FileSystemLoader
 from pygments_tsx.tsx import patch_pygments
 
-from verinfast.utils.utils import DebugLog, std_exec, trimLineBreaks, escapeChars, truncate, truncate_children
+from verinfast.utils.utils import DebugLog, std_exec, trimLineBreaks, escapeChars, truncate, truncate_children, get_repo_name_url_and_branch
 from verinfast.upload import Uploader
 
 from verinfast.cloud.aws.costs import runAws
@@ -47,6 +47,7 @@ release = uname.release
 version = uname.version
 machine = uname.machine
 
+
 template_definition = {}
 
 file_path = Path(__file__)
@@ -55,7 +56,7 @@ templates_folder = str(parent_folder.joinpath("templates"))
 # str_path = str(parent_folder.joinpath('str_conf.yaml').absolute())
 
 curr_dir = os.getcwd()
-temp_dir = os.path.join(curr_dir, "temp_repo")
+temp_dir = Path(os.path.expanduser('~/.verinfast/')).joinpath('temp_repo')
 
 
 class Agent:
@@ -106,10 +107,12 @@ class Agent:
                 else:
                     print("ID only fetched for upload")
                 self.scanRepos()
-                self.create_template()
             if self.config.modules and self.config.modules.cloud and len(self.config.modules.cloud):
                 self.scanCloud()
+            try:
                 self.create_template()
+            except:
+                self.log(tag="ERROR", msg="Template Creation Failed")
         self.log(msg='', tag="Finished")
 
     # Excludes files in .git directories. Takes path of full path with filename
@@ -248,11 +251,14 @@ class Agent:
         }
         return returnVal
 
-    def parseRepo(self, path: str, repo_name: str):
+    def parseRepo(self, path: str, repo_name: str, branch: str = None):
         self.log(msg='parseRepo')
 
         if not self.config.dry:
             os.chdir(path)
+
+        if branch is None:
+            branch = "main"
 
         # Adding this for Windows support
         # Appears to fail with blank HEAD
@@ -260,11 +266,6 @@ class Agent:
             std_exec(["git", "init"])
 
         if self.config.runGit and self.checkDependency("git", "Git"):
-            # Get Correct Branch
-            branch = "main"
-            if "@" in repo_name:
-                branch = repo_name.split("@")[1]
-                repo_name = repo_name.split("@")[0]
             try:
                 if not self.config.dry:
                     subprocess.check_call(["git", f"--work-tree={path}", "checkout", branch])
@@ -276,14 +277,14 @@ class Agent:
                 except subprocess.CalledProcessError:
                     try:
                         cmd = "git for-each-ref --count=1 --sort=-committerdate refs/heads/ --format='%(refname:short)'"
-                        branch = std_exec(cmd.split(" "))
+                        # remove new lines and apostrophes from branch name.
+                        branch = std_exec(cmd.split(" ")).replace("'", "").replace("\n", "")
                         subprocess.check_call(["git", "checkout", branch])
                     except subprocess.CalledProcessError:
                         if self.config.runGit:
                             raise Exception("Error checking out branch from git.")
                         else:
                             self.log("Error checking out branch from git.")
-            branch = branch.strip()
 
         # Git Stats
         git_output_file = os.path.join(self.config.output_dir, repo_name + ".git.log.json")
@@ -334,7 +335,6 @@ class Agent:
 
                 with open(git_output_file, 'w') as f:
                     f.write(json.dumps(finalArr, indent=4))
-
                 template_definition["gitlog"] = finalArr
                 # End if not self.config.dry:
 
@@ -371,7 +371,8 @@ class Agent:
                 "metadata": {
                     "env": machine,
                     "real_size": real_size,
-                    "uname": system
+                    "uname": system,
+                    "branch": locals()['branch'] if "branch" in locals() else None
                 }
             }
 
@@ -536,6 +537,10 @@ class Agent:
             )
 
     def preflight(self):
+        # If the 'dry' configuration is set, skip the preflight checks
+        if self.config.dry:
+            return
+
         # Loop over all remote repositories from config file
         print("\n\n\nChecking your system's compatibility with the scan configuration:\n")
         if 'repos' in self.config.config:
@@ -594,33 +599,23 @@ class Agent:
             repos = self.config.config["repos"]
             if repos:
                 for repo_url in [r for r in repos if len(r) > 0]:       # ignore blank lines from server
-                    match = re.search(r"([^/]*\.git.*)", repo_url)
-                    if match:
-                        repo_name = match.group(1)
-                    else:
-                        repo_name = repo_url.rsplit('/', 1)[-1]
-                    if "@" in repo_name and re.search(r"^.*@.*\..*:", repo_url):
-                        repo_url = "@".join(repo_url.split("@")[0:2])
-                    elif "@" in repo_name:
-                        repo_url = repo_url.split("@")[0]
+                    repo_info = get_repo_name_url_and_branch(repo_url)
+                    repo_name = repo_info["repo_name"]
+                    repo_url = repo_info["repo_url"]
+                    branch = repo_info["branch"]
                     self.log(msg=repo_name, tag="Processing", display=True)
+                    self.log(msg=repo_url, tag="URL", display=True)
+                    self.log(msg=branch, tag="Branch Specified", display=True)
                     try:
                         if not self.config.dry:
                             os.makedirs(temp_dir)
                     except:
                         self.log(tag="Directory exists:", msg=temp_dir, display=True)
-                        resp = repeat_boolean_prompt(
-                            "Should we overwrite?",
-                            self.log,
-                            default_val=False
-                        )
-                        if resp:
-                            os.chmod(temp_dir, 0o666)
+                        try:
                             shutil.rmtree(temp_dir)
                             os.makedirs(temp_dir)
-                            os.chmod(temp_dir, 0o666)
-                        else:
-                            self.log(f"Skipping {repo_url} due to existing temp_dir")
+                        except Exception as e:
+                            self.log(tag=f"Failed to delete {temp_dir}", msg=e, display=True)
                             continue
 
                     self.log(msg=repo_url, tag="Repo URL")
@@ -635,7 +630,7 @@ class Agent:
 
                         self.log(msg=repo_url, tag="Successfully cloned", display=True)
                     try:
-                        self.parseRepo(temp_dir, repo_name)
+                        self.parseRepo(temp_dir, repo_name, branch)
                     except Exception as e:
                         self.log(msg=str(e), tag="parseRepo Error Caught")
                         self.log(tag="", msg=traceback.format_exc())
@@ -773,7 +768,7 @@ class Agent:
                         )
                     azure_utilization_file = os.path.join(
                         self.config.output_dir,
-                        f'azure-instances-{account_id}-utilization.json'
+                        f'azure-instances-{provider.account}-utilization.json'
                     )
                     if Path(azure_utilization_file).is_file():
                         self.upload(
@@ -854,11 +849,6 @@ def main():
     try:
         agent.preflight()
         agent.scan()
-        # with open(f"{agent.config.output_dir}/results.html", "w") as f:
-        #     jinja_env = Environment(loader=FileSystemLoader(templates_folder))
-        #     jinja_env.globals.update(zip=zip)
-        #     output = jinja_env.get_template("results.j2").render(template_definition)
-        #     f.write(output)
     except Exception as e:
         agent.log(msg=str(e), tag="Main Scan Error Caught")
         if agent.config.upload_logs:
@@ -878,6 +868,11 @@ def main():
         os.unlink(agent.config.output_dir+"/log.txt")
         print(f"""The log for this run has moved to:
               {d}/{new_folder_name}/{new_file_name}""")
+
+    # We only do this if you have a remote config but didn't upload
+    if not agent.config.shouldUpload and agent.config.is_original_path_remote():
+        print("\n\n\nIMPORTANT: To upload results from this location please run")
+        print(f"verinfast -c {agent.config.cfg_path} -o {agent.config.output_dir} --should_upload --dry")
 
 
 if __name__ == "__main__":
