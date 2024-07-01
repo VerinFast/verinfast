@@ -234,11 +234,10 @@ class Agent:
             signed = True
         else:
             signed = False
-        merge = std_exec(["git", "show", hash, "|", "grep", "'^Merge: .* .*$'"])
-        if len(merge) > 5:
+        merge = False
+        merge1 = std_exec(["git", "show", hash])
+        if merge1.startswith("Merge: "):
             merge = True
-        else:
-            merge = False
         returnVal = {
             "message": trimLineBreaks(message),
             "author": author,
@@ -321,7 +320,7 @@ class Agent:
                     else:
                         if len(lineArr) == 1 and lineArr[0] != '':
                             # Hit next file
-                            if prevHash != '':
+                            if prevHash:
                                 # Not first one
                                 hashObj = self.formatGitHash(prevHash)
                                 hashObj['paths'] = filesArr
