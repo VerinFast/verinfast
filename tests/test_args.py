@@ -35,17 +35,17 @@ def test_arg_should_upload():
 
 def test_is_remote():
     c = Config()
-    c.cfg_path = 'http://www.google.com'
+    c.original_cfg_path = 'http://www.google.com'
     assert c.is_original_path_remote() is True
-    c.cfg_path = 'https://www.google.com'
+    c.original_cfg_path = 'https://www.google.com'
     assert c.is_original_path_remote() is True
-    c.cfg_path = 'config.yaml'
+    c.original_cfg_path = 'config.yaml'
     assert c.is_original_path_remote() is False
-    c.cfg_path = './config.yaml'
+    c.original_cfg_path = './config.yaml'
     assert c.is_original_path_remote() is False
-    c.cfg_path = '//config.yaml'
+    c.original_cfg_path = '//config.yaml'
     assert c.is_original_path_remote() is False
-    c.cfg_path = '/C://config.yaml'
+    c.original_cfg_path = '/C://config.yaml'
     assert c.is_original_path_remote() is False
 
 
