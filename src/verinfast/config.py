@@ -154,6 +154,7 @@ class Config(printable):
     """
     baseUrl: str = ''
     cfg_path: str = ".verinfast.yaml"
+    original_cfg_path: str = ".verinfast.yaml"
     config = FileNotFoundError
     scanId: int = 0
     delete_config_after = False
