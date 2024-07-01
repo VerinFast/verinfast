@@ -89,5 +89,12 @@
         "expected_url": "https://bitbucket.org/foo/bar.git",
         "expected_branch": "develop",
         "test": "Simple Bitbucket HTTPS URL with branch"
+    },
+    {
+        "url": "https://user:password@my.githost.com/repo@branch",
+        "expected_name": "repo",
+        "expected_url": "https://user:password@my.githost.com/repo",
+        "expected_branch": "branch",
+        "test": "HTTPS URL with user and password"
     }
 ]

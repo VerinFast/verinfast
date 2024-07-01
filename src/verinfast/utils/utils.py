@@ -162,9 +162,16 @@ def get_repo_name_url_and_branch(repo_url: str):
     # HTTPS URLs
     if repo_url.startswith("https://") or repo_url.startswith("http://"):
         # Check for branch in URL
-        if len(split_url) > 1:
+        if len(split_url) == 2:
             branch = split_url[1]
             repo_url = split_url[0]
+        elif len(split_url) == 3:
+            # Username and password in URL
+            # e.g. https://user:password@my.githost.com/repo@branch
+            branch = split_url[2]
+            # Remove branch so that the repo name can be extracted
+            # without colliding with /'s in branch name
+            repo_url = repo_url.replace(f"@{branch}", "")
     else:
         # SSH URLs
         # Check for branch in URL
