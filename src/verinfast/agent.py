@@ -858,7 +858,7 @@ def main():
               {d}/{new_folder_name}/{new_file_name}""")
 
     # We only do this if you have a remote config but didn't upload
-    if not agent.config.shouldUpload and agent.config.is_path_remote():
+    if not agent.config.shouldUpload and agent.config.is_original_path_remote():
         print("\n\n\nIMPORTANT: To upload results from this location please run")
         print(f"verinfast -c {agent.config.cfg_path} -o {agent.config.output_dir} --should_upload --dry")
 

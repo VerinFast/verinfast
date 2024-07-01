@@ -191,7 +191,7 @@ class Config(printable):
                 self.original_cfg_path = args.config
 
         # TODO: Support JSON
-        if self.is_path_remote():
+        if self.is_original_path_remote():
             self.delete_config_after = True
             requestx = httpx.Client(http2=True, timeout=None)
             response = requestx.get(self.cfg_path)
@@ -399,7 +399,7 @@ class Config(printable):
             else:
                 self.truncate_findings = False
 
-    def is_path_remote(self) -> bool:
+    def is_original_path_remote(self) -> bool:
         s = self.original_cfg_path
 
         # TODO: Add ftp
