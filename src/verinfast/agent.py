@@ -47,6 +47,7 @@ release = uname.release
 version = uname.version
 machine = uname.machine
 
+
 template_definition = {}
 
 file_path = Path(__file__)
@@ -320,7 +321,6 @@ class Agent:
 
                 with open(git_output_file, 'w') as f:
                     f.write(json.dumps(finalArr, indent=4))
-
                 template_definition["gitlog"] = finalArr
                 # End if not self.config.dry:
 
@@ -357,7 +357,8 @@ class Agent:
                 "metadata": {
                     "env": machine,
                     "real_size": real_size,
-                    "uname": system
+                    "uname": system,
+                    "branch": locals()['branch'] if "branch" in locals() else None
                 }
             }
 
