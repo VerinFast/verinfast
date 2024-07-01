@@ -71,6 +71,12 @@ class Agent:
         self.config.upload_logs = initial_prompt()
         self.directory = save_path()
 
+    # Takes a string and shows it to the user.
+    # Also ensures that string is written to the logs.
+    # No other decoration is allowed.
+    def print_and_log(self, msg: str):
+        self.log(msg=msg, tag="", display=True, timestamp=False)
+
     def create_template(self):
         if not self.config.dry:
             with open(f"{self.config.output_dir}/results.html", "w") as f:
@@ -226,11 +232,22 @@ class Agent:
         author = std_exec(["git", "log", "-n1", "--pretty=format:%aN <%aE>", hash])
         commit = std_exec(["git", "log", "-n1", "--pretty=format:%H", hash])
         date = std_exec(["git", "log", "-n1", "--pretty=format:%aD", hash])
+        signed = std_exec(["git", "show", "--format='%G?'", hash])
+        if signed != 'N':
+            signed = True
+        else:
+            signed = False
+        merge = False
+        merge1 = std_exec(["git", "show", hash])
+        if merge1.startswith("Merge: "):
+            merge = True
         returnVal = {
             "message": trimLineBreaks(message),
             "author": author,
             "commit": commit,
-            "date": escapeChars(date)
+            "date": escapeChars(date),
+            "signed": signed,
+            "merge": merge
         }
         return returnVal
 
@@ -304,7 +321,7 @@ class Agent:
                     else:
                         if len(lineArr) == 1 and lineArr[0] != '':
                             # Hit next file
-                            if prevHash != '':
+                            if prevHash:
                                 # Not first one
                                 hashObj = self.formatGitHash(prevHash)
                                 hashObj['paths'] = filesArr
