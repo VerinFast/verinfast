@@ -56,7 +56,7 @@ templates_folder = str(parent_folder.joinpath("templates"))
 # str_path = str(parent_folder.joinpath('str_conf.yaml').absolute())
 
 curr_dir = os.getcwd()
-temp_dir = os.path.join(curr_dir, "temp_repo")
+temp_dir = Path(os.path.expanduser('~/.verinfast/')).joinpath('temp_repo')
 
 
 class Agent:
@@ -101,10 +101,12 @@ class Agent:
                 else:
                     print("ID only fetched for upload")
                 self.scanRepos()
-                self.create_template()
             if self.config.modules and self.config.modules.cloud and len(self.config.modules.cloud):
                 self.scanCloud()
+            try:
                 self.create_template()
+            except:
+                self.log(tag="ERROR", msg="Template Creation Failed")
         self.log(msg='', tag="Finished")
 
     # Excludes files in .git directories. Takes path of full path with filename
@@ -356,7 +358,7 @@ class Agent:
                     "env": machine,
                     "real_size": real_size,
                     "uname": system,
-                    "branch": branch if branch else None
+                    "branch": locals()['branch'] if "branch" in locals() else None
                 }
             }
 
@@ -514,7 +516,6 @@ class Agent:
                 with open(dependencies_output_file, "r") as f:
                     template_definition["dependencies"] = json.load(f)
             self.log(msg=dependencies_output_file, tag="Dependency File", display=False)
-            template_definition["dependencies"] = json.load(dependencies_output_file)
             self.upload(
                 file=dependencies_output_file,
                 route="dependencies",
@@ -522,6 +523,9 @@ class Agent:
             )
 
     def preflight(self):
+        if self.config.dry:
+            return
+
         # Loop over all remote repositories from config file
         print("\n\n\nChecking your system's compatibility with the scan configuration:\n")
         if 'repos' in self.config.config:
@@ -595,18 +599,11 @@ class Agent:
                             os.makedirs(temp_dir)
                     except:
                         self.log(tag="Directory exists:", msg=temp_dir, display=True)
-                        resp = repeat_boolean_prompt(
-                            "Should we overwrite?",
-                            self.log,
-                            default_val=False
-                        )
-                        if resp:
-                            os.chmod(temp_dir, 0o666)
+                        try:
                             shutil.rmtree(temp_dir)
                             os.makedirs(temp_dir)
-                            os.chmod(temp_dir, 0o666)
-                        else:
-                            self.log(f"Skipping {repo_url} due to existing temp_dir")
+                        except Exception as e:
+                            self.log(tag=f"Failed to delete {temp_dir}", msg=e, display=True)
                             continue
 
                     self.log(msg=repo_url, tag="Repo URL")
@@ -759,7 +756,7 @@ class Agent:
                         )
                     azure_utilization_file = os.path.join(
                         self.config.output_dir,
-                        f'azure-instances-{account_id}-utilization.json'
+                        f'azure-instances-{provider.account}-utilization.json'
                     )
                     if Path(azure_utilization_file).is_file():
                         self.upload(
@@ -840,11 +837,6 @@ def main():
     try:
         agent.preflight()
         agent.scan()
-        # with open(f"{agent.config.output_dir}/results.html", "w") as f:
-        #     jinja_env = Environment(loader=FileSystemLoader(templates_folder))
-        #     jinja_env.globals.update(zip=zip)
-        #     output = jinja_env.get_template("results.j2").render(template_definition)
-        #     f.write(output)
     except Exception as e:
         agent.log(msg=str(e), tag="Main Scan Error Caught")
         if agent.config.upload_logs:
@@ -864,6 +856,11 @@ def main():
         os.unlink(agent.config.output_dir+"/log.txt")
         print(f"""The log for this run has moved to:
               {d}/{new_folder_name}/{new_file_name}""")
+
+    # We only do this if you have a remote config but didn't upload
+    if agent.config.shouldUpload is False and agent.config.is_path_remote():
+        print("To upload results from this location please run")
+        print(f"verinfast -c {agent.config.cfg_path} -o {agent.config.output_dir} --should_upload --dry")
 
 
 if __name__ == "__main__":

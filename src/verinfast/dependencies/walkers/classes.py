@@ -59,10 +59,13 @@ class Walker():
         manifest_type: str,  # "json",
         manifest_files: List[str],  # ["package.json"]
         logger,
-        root_dir: str = "./"
+        root_dir: str = "./",
+        print_name: str = None
     ) -> None:
+        if print_name:
+            logger(print_name)
         self.files = []
-        self.manifest_files = manifest_files
+        self.manifest_files = manifest_files.copy()
         for f in self.manifest_files:
             if "*" in f:
                 expanded = glob.glob(f, root_dir=root_dir)
