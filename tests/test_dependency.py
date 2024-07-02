@@ -211,6 +211,31 @@ def test_composer():
     return None
 
 
+def test_go():
+    folder_path = test_folder.joinpath("fixtures/go_walker").absolute()
+    file_path = folder_path.joinpath('go.sum')
+    assert file_path.exists(), "Manifest doesn't exist"
+
+    output_file_path = test_folder.joinpath("dependencies4.json")
+    try:
+        os.remove(output_file_path)
+    except:  # noqa
+        pass
+
+    output_path = walk(
+        path=folder_path,
+        output_file=output_file_path,
+        logger=enabled_logger(False)
+    )
+    with open(output_path) as output_file:
+        output = json.load(output_file)
+        assert len(output) >= 1
+
+    os.remove(output_path)
+
+    return None
+
+
 @patch('verinfast.user.__get_input__', return_value='y')
 def test_composer_config(self):
     try:

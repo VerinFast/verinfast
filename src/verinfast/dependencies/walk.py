@@ -11,6 +11,7 @@ from verinfast.dependencies.walkers.gemwalker import GemWalker
 from verinfast.dependencies.walkers.nuget import NuGetWalker, c_sharp_matches
 from verinfast.dependencies.walkers.dockerwalker import DockerWalker
 from verinfast.dependencies.walkers.python import PyWalker
+from verinfast.dependencies.walkers.go import GoWalker
 from verinfast.dependencies.walkers.classes import Entry
 
 defusedxml.defuse_stdlib()
@@ -81,7 +82,12 @@ def walk(logger, path: str = "./", output_file="./dependencies.json"):
         logger=logger,
         root_dir=path
     )
-
+    go_walker = GoWalker(
+        manifest_type="sum",
+        manifest_files=["go.sum"],
+        logger=logger,
+        root_dir=path
+    )
     path = str(Path(path).absolute())
     entries: List[Entry] = []
     composer_walker.initialize(root_path=path)
@@ -112,5 +118,7 @@ def walk(logger, path: str = "./", output_file="./dependencies.json"):
     entries += docker_walker.entries
     write_file(output_file=output_file, entries=entries)
     logger(msg="Dependency Scan 100%", display=True)
-
+    go_walker.walk(path=path)
+    entries += go_walker.entries
+    write_file(output_file=output_file, entries=entries)
     return output_file
