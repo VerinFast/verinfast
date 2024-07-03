@@ -166,11 +166,11 @@ cython_debug/
 verinfast/results
 verinfast/log.txt
 verinfast/temp_repo
-results
 tests/node_modules
 tests/dependencies.json
 tests/package-lock.json
 results
+results/**/*
 log.txt
 temp_repo
 VERSION

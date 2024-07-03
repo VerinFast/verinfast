@@ -16,7 +16,7 @@ import httpx
 from jinja2 import Environment, FileSystemLoader
 from pygments_tsx.tsx import patch_pygments
 
-from verinfast.utils.utils import DebugLog, std_exec, trimLineBreaks, escapeChars, truncate, truncate_children
+from verinfast.utils.utils import DebugLog, std_exec, trimLineBreaks, escapeChars, truncate, truncate_children, get_repo_name_url_and_branch
 from verinfast.upload import Uploader
 
 from verinfast.cloud.aws.costs import runAws
@@ -47,6 +47,7 @@ release = uname.release
 version = uname.version
 machine = uname.machine
 
+
 template_definition = {}
 
 file_path = Path(__file__)
@@ -69,6 +70,12 @@ class Agent:
         self.up = self.uploader.make_upload_path
         self.config.upload_logs = initial_prompt()
         self.directory = save_path()
+
+    # Takes a string and shows it to the user.
+    # Also ensures that string is written to the logs.
+    # No other decoration is allowed.
+    def print_and_log(self, msg: str):
+        self.log(msg=msg, tag="", display=True, timestamp=False)
 
     def create_template(self):
         if not self.config.dry:
@@ -225,19 +232,33 @@ class Agent:
         author = std_exec(["git", "log", "-n1", "--pretty=format:%aN <%aE>", hash])
         commit = std_exec(["git", "log", "-n1", "--pretty=format:%H", hash])
         date = std_exec(["git", "log", "-n1", "--pretty=format:%aD", hash])
+        signed = std_exec(["git", "show", "--format='%G?'", hash])
+        if signed != 'N':
+            signed = True
+        else:
+            signed = False
+        merge = False
+        merge1 = std_exec(["git", "show", hash])
+        if merge1.startswith("Merge: "):
+            merge = True
         returnVal = {
             "message": trimLineBreaks(message),
             "author": author,
             "commit": commit,
-            "date": escapeChars(date)
+            "date": escapeChars(date),
+            "signed": signed,
+            "merge": merge
         }
         return returnVal
 
-    def parseRepo(self, path: str, repo_name: str):
+    def parseRepo(self, path: str, repo_name: str, branch: str = None):
         self.log(msg='parseRepo')
 
         if not self.config.dry:
             os.chdir(path)
+
+        if branch is None:
+            branch = "main"
 
         # Adding this for Windows support
         # Appears to fail with blank HEAD
@@ -245,11 +266,6 @@ class Agent:
             std_exec(["git", "init"])
 
         if self.config.runGit and self.checkDependency("git", "Git"):
-            # Get Correct Branch
-            branch = "main"
-            if "@" in repo_name:
-                branch = repo_name.split("@")[1]
-                repo_name = repo_name.split("@")[0]
             try:
                 if not self.config.dry:
                     subprocess.check_call(["git", f"--work-tree={path}", "checkout", branch])
@@ -269,7 +285,6 @@ class Agent:
                             raise Exception("Error checking out branch from git.")
                         else:
                             self.log("Error checking out branch from git.")
-            branch = branch.strip()
 
         # Git Stats
         git_output_file = os.path.join(self.config.output_dir, repo_name + ".git.log.json")
@@ -306,7 +321,7 @@ class Agent:
                     else:
                         if len(lineArr) == 1 and lineArr[0] != '':
                             # Hit next file
-                            if prevHash != '':
+                            if prevHash:
                                 # Not first one
                                 hashObj = self.formatGitHash(prevHash)
                                 hashObj['paths'] = filesArr
@@ -320,7 +335,6 @@ class Agent:
 
                 with open(git_output_file, 'w') as f:
                     f.write(json.dumps(finalArr, indent=4))
-
                 template_definition["gitlog"] = finalArr
                 # End if not self.config.dry:
 
@@ -357,7 +371,8 @@ class Agent:
                 "metadata": {
                     "env": machine,
                     "real_size": real_size,
-                    "uname": system
+                    "uname": system,
+                    "branch": locals()['branch'] if "branch" in locals() else None
                 }
             }
 
@@ -522,6 +537,7 @@ class Agent:
             )
 
     def preflight(self):
+        # If the 'dry' configuration is set, skip the preflight checks
         if self.config.dry:
             return
 
@@ -583,16 +599,13 @@ class Agent:
             repos = self.config.config["repos"]
             if repos:
                 for repo_url in [r for r in repos if len(r) > 0]:       # ignore blank lines from server
-                    match = re.search(r"([^/]*\.git.*)", repo_url)
-                    if match:
-                        repo_name = match.group(1)
-                    else:
-                        repo_name = repo_url.rsplit('/', 1)[-1]
-                    if "@" in repo_name and re.search(r"^.*@.*\..*:", repo_url):
-                        repo_url = "@".join(repo_url.split("@")[0:2])
-                    elif "@" in repo_name:
-                        repo_url = repo_url.split("@")[0]
+                    repo_info = get_repo_name_url_and_branch(repo_url)
+                    repo_name = repo_info["repo_name"]
+                    repo_url = repo_info["repo_url"]
+                    branch = repo_info["branch"]
                     self.log(msg=repo_name, tag="Processing", display=True)
+                    self.log(msg=repo_url, tag="URL", display=True)
+                    self.log(msg=branch, tag="Branch Specified", display=True)
                     try:
                         if not self.config.dry:
                             os.makedirs(temp_dir)
@@ -617,7 +630,7 @@ class Agent:
 
                         self.log(msg=repo_url, tag="Successfully cloned", display=True)
                     try:
-                        self.parseRepo(temp_dir, repo_name)
+                        self.parseRepo(temp_dir, repo_name, branch)
                     except Exception as e:
                         self.log(msg=str(e), tag="parseRepo Error Caught")
                         self.log(tag="", msg=traceback.format_exc())
@@ -857,8 +870,8 @@ def main():
               {d}/{new_folder_name}/{new_file_name}""")
 
     # We only do this if you have a remote config but didn't upload
-    if agent.config.shouldUpload is False and agent.config.is_path_remote():
-        print("To upload results from this location please run")
+    if not agent.config.shouldUpload and agent.config.is_original_path_remote():
+        print("\n\n\nIMPORTANT: To upload results from this location please run")
         print(f"verinfast -c {agent.config.cfg_path} -o {agent.config.output_dir} --should_upload --dry")
 
 
