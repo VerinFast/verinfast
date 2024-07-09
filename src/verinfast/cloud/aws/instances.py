@@ -146,7 +146,7 @@ def get_instance_utilization(
 
 
 def get_instances(sub_id: int, path_to_output: str = "./",
-                  dry=False) -> str | None:
+                  dry=False, log=None) -> str | None:
     if not dry:
         session = boto3.Session()
         profiles = session.available_profiles
@@ -207,15 +207,22 @@ def get_instances(sub_id: int, path_to_output: str = "./",
                             try:
                                 result = {
                                     "id": instance["InstanceId"],
-                                    "name": name,
+                                    "name": name if name else 'n/a',
                                     "state": instance["State"]["Name"],
                                     "type": instance['InstanceType'],
-                                    "zone": zone,
-                                    "region": region,
-                                    "subnet": subnet_id,
+                                    "zone": zone if zone else 'n/a',
+                                    "region": region if region else 'n/a',
+                                    "subnet": (
+                                        subnet_id if subnet_id else 'n/a'
+                                    ),
                                     "architecture": instance['Architecture']
                                 }
-                            except KeyError:
+                            except Exception as e:
+                                if log:
+                                    log(
+                                        tag="AWS Get Instance Error",
+                                        msg=str(e)
+                                    )
                                 continue
                             if "VpcId" in instance:
                                 result["vpc"] = instance['VpcId']
