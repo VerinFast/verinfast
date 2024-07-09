@@ -219,7 +219,7 @@ def test_go():
     output_file_path = test_folder.joinpath("dependencies4.json")
     try:
         os.remove(output_file_path)
-    except:  # noqa
+    except FileNotFoundError:  # noqa
         pass
 
     output_path = walk(

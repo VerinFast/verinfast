@@ -6,7 +6,7 @@ class GoWalker(Walker):
         with open(file, "r") as file:
             for line in file:
                 name, version, hash_string = line.split(" ")
-                if version[-6:] == "go.mod":
+                if version.endswith("go.mod"):
                     version = version.split("/")[0]
                 e = Entry(
                     name=name,
