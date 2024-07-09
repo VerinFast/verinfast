@@ -48,8 +48,15 @@ def list_files(
     return files
 
 
-def std_exec(cmd: List[str]):
-    return subprocess.check_output(cmd).decode('utf-8')
+def std_exec(cmd: List[str], log=None):
+    try:
+        return subprocess.check_output(cmd).decode('utf-8')
+    except (subprocess.CalledProcessError, UnicodeDecodeError) as e:
+        if log is not None:
+            log(tag="std_exec Error", msg=f"{e}, {cmd}")
+        else:
+            print(f"std_exec Error: {e}, {cmd}")
+        return ''
 
 
 def escapeChars(text: str):

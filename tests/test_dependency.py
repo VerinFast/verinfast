@@ -230,6 +230,9 @@ def test_go():
     with open(output_path) as output_file:
         output = json.load(output_file)
         assert len(output) >= 1
+        assert output[0]['name'] == "cloud.google.com/go"
+        assert output[0]['source'] == "Go"
+        assert output[0]['specifier'] == "v0.26.0"
 
     os.remove(output_path)
 
