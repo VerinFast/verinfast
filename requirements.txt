@@ -16,7 +16,7 @@ google-cloud-storage>=2.10.0
 google-cloud-monitoring>=2.15.0
 httpx[http2]~=0.27.0
 Jinja2==3.1.4
-johnnydep~=1.20.4
+johnnydep~=1.20.5
 modernmetric>=1.4.8
 pygments-tsx>=1.0.1
 pytest~=8.2.2
