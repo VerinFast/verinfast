@@ -142,7 +142,11 @@ def get_instances(
                     "vpc": vnet_name
                 }
             except Exception as e:
-                log(tag="Azure Get Instance Error:", msg=e)
+                if log:
+                    log(
+                        tag="Azure Get Instance Error",
+                        msg=str(e)
+                    )
                 continue
             my_instances.append(my_instance)
             m = get_metrics_for_instance(
