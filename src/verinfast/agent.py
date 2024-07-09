@@ -228,17 +228,17 @@ class Agent:
 
     def formatGitHash(self, hash: str):
         hash = hash.replace("'", "").replace('"', "")
-        message = std_exec(["git", "log", "-n1", "--pretty=format:%B", hash])
-        author = std_exec(["git", "log", "-n1", "--pretty=format:%aN <%aE>", hash])
-        commit = std_exec(["git", "log", "-n1", "--pretty=format:%H", hash])
-        date = std_exec(["git", "log", "-n1", "--pretty=format:%aD", hash])
-        signed = std_exec(["git", "show", "--format='%G?'", hash])
+        message = std_exec(["git", "log", "-n1", "--pretty=format:%B", hash], self.log)
+        author = std_exec(["git", "log", "-n1", "--pretty=format:%aN <%aE>", hash], self.log)
+        commit = std_exec(["git", "log", "-n1", "--pretty=format:%H", hash], self.log)
+        date = std_exec(["git", "log", "-n1", "--pretty=format:%aD", hash], self.log)
+        signed = std_exec(["git", "show", "--format='%G?'", hash], self.log)
         if signed != 'N':
             signed = True
         else:
             signed = False
         merge = False
-        merge1 = std_exec(["git", "show", hash])
+        merge1 = std_exec(["git", "show", hash], self.log)
         if merge1.startswith("Merge: "):
             merge = True
         returnVal = {
