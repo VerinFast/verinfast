@@ -68,7 +68,12 @@ def get_metrics_for_instance(
     return data
 
 
-def get_instances(sub_id: str, path_to_output: str = "./", dry=False):
+def get_instances(
+        sub_id: str,
+        path_to_output: str = "./",
+        dry=False,
+        log=None
+        ):
 
     if not dry:
         my_instances = []
@@ -87,7 +92,7 @@ def get_instances(sub_id: str, path_to_output: str = "./", dry=False):
             )
 
         res = client.virtual_machines.list_all()
-        print(my_instances)
+
         for vm in res:
             try:
                 s = vm.storage_profile.os_disk.managed_disk.id
@@ -136,7 +141,12 @@ def get_instances(sub_id: str, path_to_output: str = "./", dry=False):
                     "publicIp": public_ip,
                     "vpc": vnet_name
                 }
-            except KeyError:
+            except Exception as e:
+                if log:
+                    log(
+                        tag="Azure Get Instance Error",
+                        msg=str(e)
+                    )
                 continue
             my_instances.append(my_instance)
             m = get_metrics_for_instance(

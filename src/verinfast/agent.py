@@ -755,7 +755,8 @@ class Agent:
                     azure_instance_file = get_az_instances(
                         sub_id=provider.account,
                         path_to_output=self.config.output_dir,
-                        dry=self.config.dry
+                        dry=self.config.dry,
+                        log=self.log
                     )
                     if azure_instance_file is None:
                         self.log(msg="Error processing Azure instances", tag=provider.account)
