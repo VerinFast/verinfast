@@ -88,7 +88,7 @@ class Agent:
     def scan(self):
         if self.config.modules is not None:
             if self.config.modules.code is not None:
-                
+
                 if self.config.shouldUpload:
                     headers = {
                         'content-type': 'application/json',
