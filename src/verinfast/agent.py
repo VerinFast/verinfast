@@ -88,8 +88,6 @@ class Agent:
     def scan(self):
         if self.config.modules is not None:
             if self.config.modules.code is not None:
-                # Check if Git is installed
-                self.checkDependency("git", "Git")
 
                 if self.config.shouldUpload:
                     headers = {
