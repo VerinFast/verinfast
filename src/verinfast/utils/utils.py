@@ -50,16 +50,8 @@ def list_files(
 
 def std_exec(cmd: List[str], log=None):
     try:
-        return subprocess.check_output(cmd).decode('utf-8')
+        return subprocess.check_output(cmd).decode('utf-8', errors='replace')
     except (subprocess.CalledProcessError, UnicodeDecodeError) as e:
-        try:
-            return subprocess.check_output(
-                cmd, shell=True).decode(encoding='utf-8', errors='replace')
-        except Exception as e2:
-            if log is not None:
-                log(tag="std_exec replace Error", msg=f"{e2}, {cmd}")
-            else:
-                print(f"std_exec replace Error: {e2}, {cmd}")
         if log is not None:
             log(tag="std_exec Error", msg=f"{e}, {cmd}")
         else:
