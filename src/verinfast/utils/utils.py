@@ -52,11 +52,19 @@ def std_exec(cmd: List[str], log=None):
     try:
         return subprocess.check_output(cmd).decode('utf-8')
     except (subprocess.CalledProcessError, UnicodeDecodeError) as e:
-        if log is not None:
-            log(tag="std_exec Error", msg=f"{e}, {cmd}")
-        else:
-            print(f"std_exec Error: {e}, {cmd}")
-        return ''
+        try:
+            return subprocess.check_output(
+                cmd, shell=True).decode(encoding='latin-1')
+        except Exception as e2:
+            if log is not None:
+                log(tag="std_exec replace Error", msg=f"{e2}, {cmd}")
+            else:
+                print(f"std_exec replace Error: {e2}, {cmd}")
+            if log is not None:
+                log(tag="std_exec Error", msg=f"{e}, {cmd}")
+            else:
+                print(f"std_exec Error: {e}, {cmd}")
+            return ''
 
 
 def escapeChars(text: str):
