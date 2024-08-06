@@ -66,6 +66,7 @@ def std_exec(cmd: List[str], log=None):
                 print(f"std_exec Error: {e}, {cmd}")
             return ''
 
+
 def escapeChars(text: str):
     fixedText = re.sub(r'([\"\{\}])', r'\\\1', text)
     return fixedText
