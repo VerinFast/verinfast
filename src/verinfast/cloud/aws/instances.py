@@ -241,7 +241,12 @@ def get_instances(sub_id: int, path_to_output: str = "./",
                                             public_ip = association['PublicIp']
                                             result["publicIp"] = public_ip
                             my_instances.append(result)
-            except botocore.exceptions.ClientError:
+            except Exception as e:
+                if log:
+                    log(
+                        tag="AWS Get Instance Error - Region",
+                        msg=str(e)
+                    )
                 pass
 
         upload = {
