@@ -7,7 +7,12 @@ import shutil
 from verinfast.agent import Agent
 from verinfast.config import Config
 from verinfast.utils.utils import DebugLog
+from verinfast.cloud.aws.costs import runAws
 import verinfast.user
+
+file_path = Path(__file__)
+test_folder = file_path.parent
+aws_cost_file = test_folder.joinpath('fixtures/aws-cost-bar.json')
 
 
 @patch('verinfast.user.__get_input__', return_value='y')
@@ -43,6 +48,9 @@ def test_aws_scan(self):
     with open(results_dir.joinpath(f"aws-cost-{sub_id}.json")) as f:
         costs = json.load(f)
         assert len(costs["data"]) >= 100
+        for cost in costs["data"]:
+            if cost['Group'] == "Savings Plans for AWS Compute usage":
+                assert cost["Cost"] < 0
     # Make sure "aws-cost-foo.json" doesn't exist
     bad_costs_file = Path(results_dir.joinpath("aws-cost-foo.json"))
     assert not bad_costs_file.is_file()
@@ -139,3 +147,15 @@ def test_aws_dash(self):
             if u["name"] == "startupos-test-bucket":
                 v = u["size"]
         assert v >= 262183
+
+
+def test_aws_savings_plan():
+    results = runAws(
+        targeted_account="bar",
+        start="2023-08-01",
+        end="2024-03-01",
+        path_to_output="./",
+        address=aws_cost_file,
+    )
+    print(results)
+    assert results

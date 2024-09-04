@@ -8,9 +8,10 @@ debugLog = DebugLog(os.getcwd())
 
 
 def runAws(targeted_account, start, end, path_to_output,
-           profile=None, log=debugLog.log, dry=False):
+           profile=None, log=debugLog.log, dry=False, address=None):
 
     def _get_costs_and_usage(profile: str, aws_output_file: str):
+        obj = {}
         cmd = f'''
             aws ce get-cost-and-usage \
             --time-period Start={start},End={end} \
@@ -20,27 +21,29 @@ def runAws(targeted_account, start, end, path_to_output,
             --profile="{profile}" \
             --output=json | cat
         '''
+        if address is not None:
+            try:
+                results = subprocess.run(
+                    cmd,
+                    shell=True,
+                    stdout=subprocess.PIPE,
+                    check=True
+                )
 
-        try:
-            results = subprocess.run(
-                cmd,
-                shell=True,
-                stdout=subprocess.PIPE,
-                check=True
-            )
+            except subprocess.CalledProcessError:
+                log(msg="Error getting data from AWS CLI get-cost-and-usage",
+                    tag="AWS CLI")
+                raise Exception("Error getting aws cli data.")
 
-        except subprocess.CalledProcessError:
-            log(msg="Error getting data from AWS CLI get-cost-and-usage",
-                tag="AWS CLI")
-            raise Exception("Error getting aws cli data.")
-
-        text = results.stdout.decode()
-        if text is None or isinstance(text, str) is False:
-            log(msg="No data returned from AWS CLI get-cost-and-usage",
-                tag="AWS CLI")
-            return None
-
-        obj = json.loads(text)
+            text = results.stdout.decode()
+            if text is None or isinstance(text, str) is False:
+                log(msg="No data returned from AWS CLI get-cost-and-usage",
+                    tag="AWS CLI")
+                return None
+            obj = json.loads(text)
+        else:
+            obj = json.loads(address)
+        print(obj)
         results_by_time = obj["ResultsByTime"]
         charges = []
         for charge in results_by_time:
@@ -49,8 +52,12 @@ def runAws(targeted_account, start, end, path_to_output,
                     newCharge = {
                         "Date": charge["TimePeriod"]["Start"],
                         "Group": group["Keys"][0],
-                        "Cost": group["Metrics"]["BlendedCost"]["Amount"],
-                        "Currency": group["Metrics"]["BlendedCost"]["Unit"]
+                        "Cost": (
+                            -group["Metrics"]["BlendedCost"]["Amount"]
+                            if group["Keys"][0] == "Savings Plans for AWS Compute usage"  # noqa: E501
+                            else group["Metrics"]["BlendedCost"]["Amount"]
+                        ),
+                        "Currency": group["Metrics"]["BlendedCost"]["Unit"],
                     }
                     charges.append(newCharge)
         upload = {
