@@ -23,7 +23,7 @@ def getBlocks(sub_id: str, path_to_output: str = "./", dry=False):
         interval = TimeInterval(
             {
                 "end_time": {"seconds": seconds, "nanos": nanos},
-                "start_time": {"seconds": (seconds - 300), "nanos": nanos},
+                "start_time": {"seconds": (seconds - 3000), "nanos": nanos},
             }
         )
 
