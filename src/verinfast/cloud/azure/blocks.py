@@ -82,7 +82,7 @@ def getBlocks(sub_id: str, path_to_output: str = "./", dry=False):
     # End dry block
     azure_output_file = os.path.join(
         path_to_output,
-        f'azure-storage-{sub_id}.json'
+        f'az-storage-{sub_id}.json'
     )
     if not dry:
         with open(azure_output_file, 'w') as outfile:
