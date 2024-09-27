@@ -43,7 +43,7 @@ def getBlocks(sub_id: str, path_to_output: str = "./", dry=False):
             known_buckets[bucket.name] = {
                 "name": bucket.name,
                 "size": 0,
-                "retention": rp,
+                "retention": str(rp),
                 "public": False
             }
             iam = bucket.get_iam_policy()
