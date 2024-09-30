@@ -35,7 +35,7 @@ def runAws(targeted_account, start, end, path_to_output,
             raise Exception("Error getting aws cli data.")
 
         text = results.stdout.decode()
-        if text is None or text == '' or isinstance(text, str) is False:
+        if text is None or text == '' or not isinstance(text, str):
             log(msg="No data returned from AWS CLI get-cost-and-usage",
                 tag="AWS CLI")
             return None
