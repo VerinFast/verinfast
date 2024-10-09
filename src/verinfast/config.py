@@ -242,7 +242,8 @@ class Config(printable):
             "repos" in self.config and
             "modules" in self.config and
             "code" in self.config["modules"] and
-            "git" in self.config["modules"]["code"]
+            "git" in self.config["modules"]["code"] and
+            "run_git" not in self.config["modules"]["code"]
         ):
             self.runGit = True
         self.upload_conf = UploadConfig(
