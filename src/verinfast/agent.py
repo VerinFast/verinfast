@@ -13,13 +13,12 @@ import io
 from uuid import uuid4
 
 from modernmetric.__main__ import main as modernmetric
-import semgrep
+import semgrep.commands.scan as semgrep_scan
 
 import httpx
 from jinja2 import Environment, FileSystemLoader
 from pygments_tsx.tsx import patch_pygments
-import semgrep.commands
-import semgrep.commands.scan
+
 from verinfast.utils.utils import DebugLog, std_exec, trimLineBreaks, escapeChars, truncate, truncate_children, get_repo_name_url_and_branch
 from verinfast.upload import Uploader
 from verinfast.cloud.aws.costs import runAws
@@ -451,7 +450,7 @@ class Agent:
                         ]
                         try:
                             with contextlib.redirect_stdout(io.StringIO()):
-                                semgrep.commands.scan.scan(custom_args)
+                                semgrep_scan.scan(custom_args)
                         except SystemExit:
                             pass
                 except Exception as e:
