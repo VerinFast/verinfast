@@ -13,19 +13,15 @@ import io
 from uuid import uuid4
 
 from modernmetric.__main__ import main as modernmetric
+import semgrep
 
 import httpx
 from jinja2 import Environment, FileSystemLoader
 from pygments_tsx.tsx import patch_pygments
 import semgrep.commands
 import semgrep.commands.scan
-import semgrep.external
-import semgrep.main
-import semgrep.run_scan
-
 from verinfast.utils.utils import DebugLog, std_exec, trimLineBreaks, escapeChars, truncate, truncate_children, get_repo_name_url_and_branch
 from verinfast.upload import Uploader
-
 from verinfast.cloud.aws.costs import runAws
 from verinfast.cloud.aws.get_profile import find_profile
 from verinfast.cloud.azure.costs import runAzure
@@ -37,21 +33,8 @@ from verinfast.cloud.azure.blocks import getBlocks as get_az_blocks
 from verinfast.cloud.gcp.blocks import getBlocks as get_gcp_blocks
 from verinfast.config import Config
 from verinfast.user import initial_prompt, save_path, repeat_boolean_prompt
-
 from verinfast.dependencies.walk import walk as dependency_walk
 
-
-# import sys
-# from semgrep.commands import main as semgrep
-# import semgrep.main as semgrep
-import semgrep
-
-# print(dir(semgrep.scan))
-# help(semgrep.scan)
-# sys.exit(0)
-
-
-# from verinfast.pygments_patch import patch_pygments
 
 patch_pygments()
 
@@ -466,44 +449,11 @@ class Agent:
                             f"--json-output={findings_output_file}",
                             "-q"
                         ]
-                        print("custom_args", custom_args)
-                        # semgrep.run_scan_and_return_json(
-                        #     targets=["."],
-                        #     **custom_args
-                        # )
-                        # semgrep.run_scan.run_scan()
-                        # semgrep.run_scan.run_scan([])
                         try:
                             with contextlib.redirect_stdout(io.StringIO()):
-                                semgrep.commands.scan.scan(
-                                    custom_args
-                                )
+                                semgrep.commands.scan.scan(custom_args)
                         except SystemExit:
                             pass
-
-                        # semgrep.main.main(["scan", "--config", "auto", "--json", "-o", findings_output_file])
-                        # semgrep.main.main()
-                        # semgrep.main.main(custom_args)
-                        # semgrep.main.main(**custom_args)
-                        # semgrep.run_scan(
-                        #     target=["."],
-                        #     output_handler=o,
-                        #     pattern="auto"
-                        # )
-                        # semgrep.run_scan(
-                        #     configs
-                        # )
-                        # semgrep.main(custom_args)
-                        print("here")
-                        # subprocess.check_call([
-                        #     "semgrep",
-                        #     "scan",
-                        #     "--config",
-                        #     "auto",
-                        #     "--json",
-                        #     "-o",
-                        #     findings_output_file,
-                        # ], stderr=e,)
                 except Exception as e:
                     self.log(tag="ERROR", msg="Error in Semgrep")
                     self.log(e)
