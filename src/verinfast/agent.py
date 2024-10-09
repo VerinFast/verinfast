@@ -8,6 +8,8 @@ import re
 import shutil
 import subprocess
 import traceback
+import contextlib
+import io
 from uuid import uuid4
 
 from modernmetric.__main__ import main as modernmetric
@@ -15,6 +17,11 @@ from modernmetric.__main__ import main as modernmetric
 import httpx
 from jinja2 import Environment, FileSystemLoader
 from pygments_tsx.tsx import patch_pygments
+import semgrep.commands
+import semgrep.commands.scan
+import semgrep.external
+import semgrep.main
+import semgrep.run_scan
 
 from verinfast.utils.utils import DebugLog, std_exec, trimLineBreaks, escapeChars, truncate, truncate_children, get_repo_name_url_and_branch
 from verinfast.upload import Uploader
@@ -35,10 +42,14 @@ from verinfast.dependencies.walk import walk as dependency_walk
 
 
 # import sys
-from semgrep.commands import scan as semgrep
-# print(dir(semgrep))
-# help(semgrep)
+# from semgrep.commands import main as semgrep
+# import semgrep.main as semgrep
+import semgrep
+
+# print(dir(semgrep.scan))
+# help(semgrep.scan)
 # sys.exit(0)
+
 
 # from verinfast.pygments_patch import patch_pygments
 
@@ -293,7 +304,7 @@ class Agent:
 
         # Git Stats
         git_output_file = os.path.join(self.config.output_dir, repo_name + ".git.log.json")
-        if self.config.runGit:
+        if self.config.runGitStats:
             self.log(msg=repo_name, tag="Gathering source code statistics for", display=True)
             command = f'''git log \
                 --since="{self.config.modules.code.git.start}" \
@@ -447,16 +458,42 @@ class Agent:
             if not self.config.dry:
                 self.log(msg=repo_name, tag="Scanning repository", display=True)
                 try:
-                    with open(findings_error_file, 'a') as e:
+                    with open(findings_output_file, 'a') as o:
                         custom_args = [
                             "--config",
                             "auto",
                             "--json",
-                            "-o",
-                            findings_output_file
+                            f"--json-output={findings_output_file}",
+                            "-q"
                         ]
                         print("custom_args", custom_args)
-                        semgrep.scan(custom_args)
+                        # semgrep.run_scan_and_return_json(
+                        #     targets=["."],
+                        #     **custom_args
+                        # )
+                        # semgrep.run_scan.run_scan()
+                        # semgrep.run_scan.run_scan([])
+                        try:
+                            with contextlib.redirect_stdout(io.StringIO()):
+                                semgrep.commands.scan.scan(
+                                    custom_args
+                                )
+                        except SystemExit:
+                            pass
+
+                        # semgrep.main.main(["scan", "--config", "auto", "--json", "-o", findings_output_file])
+                        # semgrep.main.main()
+                        # semgrep.main.main(custom_args)
+                        # semgrep.main.main(**custom_args)
+                        # semgrep.run_scan(
+                        #     target=["."],
+                        #     output_handler=o,
+                        #     pattern="auto"
+                        # )
+                        # semgrep.run_scan(
+                        #     configs
+                        # )
+                        # semgrep.main(custom_args)
                         print("here")
                         # subprocess.check_call([
                         #     "semgrep",
