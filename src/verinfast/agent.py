@@ -286,7 +286,7 @@ class Agent:
 
         # Git Stats
         git_output_file = os.path.join(self.config.output_dir, repo_name + ".git.log.json")
-        if self.config.runGitStats:
+        if self.config.runGit:
             self.log(msg=repo_name, tag="Gathering source code statistics for", display=True)
             command = f'''git log \
                 --since="{self.config.modules.code.git.start}" \

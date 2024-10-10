@@ -167,7 +167,6 @@ class Config(printable):
     reportId: int = 0
     runDependencies: bool = True
     runGit: bool = True
-    runGitStats: bool = True
     runScan: bool = True
     runSizes: bool = True
     runStats: bool = True
@@ -466,8 +465,6 @@ class Config(printable):
                     c = m["code"]
                     if "run_git" in c:
                         self.runGit = c["run_git"]
-                    if "run_git_stats" in c:
-                        self.runGitStats = c["run_git_stats"]
                     if "run_scan" in c:
                         self.runScan = c["run_scan"]
                     if "run_sizes" in c:
