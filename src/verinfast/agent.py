@@ -8,9 +8,12 @@ import re
 import shutil
 import subprocess
 import traceback
+import contextlib
+import io
 from uuid import uuid4
 
 from modernmetric.__main__ import main as modernmetric
+import semgrep.commands.scan as semgrep_scan
 
 import httpx
 from jinja2 import Environment, FileSystemLoader
@@ -18,7 +21,6 @@ from pygments_tsx.tsx import patch_pygments
 
 from verinfast.utils.utils import DebugLog, std_exec, trimLineBreaks, escapeChars, truncate, truncate_children, get_repo_name_url_and_branch
 from verinfast.upload import Uploader
-
 from verinfast.cloud.aws.costs import runAws
 from verinfast.cloud.aws.get_profile import find_profile
 from verinfast.cloud.azure.costs import runAzure
@@ -30,10 +32,8 @@ from verinfast.cloud.azure.blocks import getBlocks as get_az_blocks
 from verinfast.cloud.gcp.blocks import getBlocks as get_gcp_blocks
 from verinfast.config import Config
 from verinfast.user import initial_prompt, save_path, repeat_boolean_prompt
-
 from verinfast.dependencies.walk import walk as dependency_walk
 
-# from verinfast.pygments_patch import patch_pygments
 
 patch_pygments()
 
@@ -434,90 +434,93 @@ class Agent:
                 Please see the open issues here:
                 https://github.com/returntocorp/semgrep/issues/1330
                          """)
-            if self.checkDependency('semgrep', "Semgrep"):
-                findings_output_file = os.path.join(self.config.output_dir, repo_name + ".findings.json")
-                findings_error_file = os.path.join(self.config.output_dir, repo_name + ".findings.err")
-                if not self.config.dry:
-                    self.log(msg=repo_name, tag="Scanning repository", display=True)
-                    try:
-                        with open(findings_error_file, 'a') as e:
-                            subprocess.check_call([
-                                "semgrep",
-                                "scan",
-                                "--config",
-                                "auto",
-                                "--json",
-                                "-o",
-                                findings_output_file,
-                            ], stderr=e,)
-                    except subprocess.CalledProcessError as e:
-                        output = e.output
-                        self.log(msg=output, tag="Scanning repository return", display=True)
+
+            findings_output_file = os.path.join(self.config.output_dir, repo_name + ".findings.json")
+            findings_error_file = os.path.join(self.config.output_dir, repo_name + ".findings.err")
+            if not self.config.dry:
+                self.log(msg=repo_name, tag="Scanning repository", display=True)
                 try:
-                    with open(findings_output_file) as f:
-                        findings = json.load(f)
-
-                    # This is on purpose. If you try to read same pointer
-                    # twice, it dies.
-                    with open(findings_output_file) as f:
-                        original_findings = json.load(f)
-
-                    if self.config.truncate_findings:
-                        # Exclusions are set to exclude fields that are not code
-                        truncation_exclusion = [
-                            "cwe",
-                            "owasp",
-                            "path",
-                            "check_id",
-                            "license",
-                            "fingerprint",
-                            "message",
-                            "references",
-                            "url",
-                            "source",
-                            "severity"
+                    with open(findings_output_file, 'a') as o:
+                        custom_args = [
+                            "--config",
+                            "auto",
+                            "--json",
+                            f"--json-output={findings_output_file}",
+                            "-q"
                         ]
-                        self.log(
-                            tag="TRUNCATING",
-                            msg=f"excluding: {truncation_exclusion}"
-                        )
                         try:
-                            findings = truncate_children(
-                                findings,
-                                self.log,
-                                excludes=truncation_exclusion,
-                                max_length=self.config.truncate_findings_length
-                            )
-                        except Exception as e:
-                            self.log(tag="ERROR", msg="Error in Truncation")
-                            self.log(e)
-                            self.log(
-                                json.dumps(
-                                    original_findings,
-                                    indent=4,
-                                    sort_keys=True
-                                )
-                            )
-                    with open(findings_output_file, "w") as f2:
-                        f2.write(json.dumps(
-                            findings, indent=4, sort_keys=True
-                        ))
-                    template_definition["gitfindings"] = findings
+                            with contextlib.redirect_stdout(io.StringIO()):
+                                semgrep_scan.scan(custom_args)
+                        except SystemExit:
+                            pass
                 except Exception as e:
-                    if not self.config.dry:
-                        raise e
-                    else:
-                        self.log(
-                            msg=f'''
-                                Attempted to format/truncate non existent file
-                                {findings_output_file}
-                            '''
+                    self.log(tag="ERROR", msg="Error in Semgrep")
+                    self.log(e)
+            try:
+                with open(findings_output_file) as f:
+                    findings = json.load(f)
+
+                # This is on purpose. If you try to read same pointer
+                # twice, it dies.
+                with open(findings_output_file) as f:
+                    original_findings = json.load(f)
+
+                if self.config.truncate_findings:
+                    # Exclusions are set to exclude fields that are not code
+                    truncation_exclusion = [
+                        "cwe",
+                        "owasp",
+                        "path",
+                        "check_id",
+                        "license",
+                        "fingerprint",
+                        "message",
+                        "references",
+                        "url",
+                        "source",
+                        "severity"
+                    ]
+                    self.log(
+                        tag="TRUNCATING",
+                        msg=f"excluding: {truncation_exclusion}"
+                    )
+                    try:
+                        findings = truncate_children(
+                            findings,
+                            self.log,
+                            excludes=truncation_exclusion,
+                            max_length=self.config.truncate_findings_length
                         )
-                self.upload(
-                    file=findings_output_file,
-                    route="findings",
-                    source=repo_name
-                )
+                    except Exception as e:
+                        self.log(tag="ERROR", msg="Error in Truncation")
+                        self.log(e)
+                        self.log(
+                            json.dumps(
+                                original_findings,
+                                indent=4,
+                                sort_keys=True
+                            )
+                        )
+                with open(findings_output_file, "w") as f2:
+                    f2.write(json.dumps(
+                        findings, indent=4, sort_keys=True
+                    ))
+                template_definition["gitfindings"] = findings
+            except Exception as e:
+                if not self.config.dry:
+                    raise e
+                else:
+                    self.log(
+                        msg=f'''
+                            Attempted to format/truncate non existent file
+                            {findings_output_file}
+                        '''
+                    )
+            self.upload(
+                file=findings_output_file,
+                route="findings",
+                source=repo_name
+            )
 
         # ##### Scan Dependencies ######
         if self.config.runDependencies:
