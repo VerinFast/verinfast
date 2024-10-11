@@ -868,7 +868,9 @@ def main():
 
     # If user opts to upload results, upload and non-uploaded logs
     if agent.config.shouldUpload:
-        for file in os.listdir(agent.config.output_dir):
+        log_list = os.listdir(agent.config.output_dir)
+        log_list.sort() # Upload current log last
+        for file in log_list:
             if file.endswith("log.txt") and not file.startswith("u_"):
                 file_path = os.path.join(agent.config.output_dir, file)
                 agent.upload(
