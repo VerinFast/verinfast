@@ -271,7 +271,8 @@ class Config(printable):
         debugLog = DebugLog(path=self.log_file)
         debugLog.log(msg="VerinFast Scan Started", tag="", display=True)
         debugLog.log(msg=orig_config, tag="Loaded Configuration", display=True)
-        debugLog.log(msg=args, tag="Arguments", display=True)
+        if 'pytest' not in sys.argv[0]:
+            debugLog.log(msg=args, tag="Arguments", display=True)
         debugLog.log(msg=self.config, tag=" Run Configuration", display=True)
 
     def init_argparse(self) -> argparse.ArgumentParser:
