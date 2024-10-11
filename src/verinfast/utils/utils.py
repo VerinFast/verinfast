@@ -147,6 +147,7 @@ class DebugLog:
             debug: bool = False):
         self.path = path
         self.file = file
+        self.logFile = os.path.join(path, "log.txt")  # Default log file
         self.debug = debug
 
     def log(self, msg, tag=None, display=False, timestamp=True):
@@ -163,7 +164,7 @@ class DebugLog:
             output = f"{msg}"
 
         if self.path is not None:
-            with open(os.path.join(self.path, "log.txt"), 'a') as f:
+            with open(self.logFile, 'a') as f:
                 f.write(output+"\n")
         elif self.file is not None:
             with open(self.file, 'a') as f:
