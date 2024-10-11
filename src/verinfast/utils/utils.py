@@ -142,7 +142,6 @@ def chunks(lst, n):
 class DebugLog:
     def __init__(self, path: str, debug: bool = False):
         self.path = path
-        self.logFile = os.path.join(path, "log.txt")
         self.debug = debug
 
     def log(self, msg, tag=None, display=False, timestamp=True):
@@ -158,7 +157,7 @@ class DebugLog:
         else:
             output = f"{msg}"
 
-        with open(self.logFile, 'a') as f:
+        with open(self.path, 'a') as f:
             f.write(output+"\n")
         if display or self.debug:
             print(output)

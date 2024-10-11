@@ -1,7 +1,7 @@
 # stdlib
 import argparse
 from dataclasses import dataclass, field, is_dataclass, asdict
-from datetime import date
+import datetime
 import json
 from typing import List, Optional
 import os
@@ -18,14 +18,14 @@ from verinfast.utils.utils import DebugLog
 
 default_month_delta = 6
 
-default_end_date = date.today()
+default_end_date = datetime.date.today()
 default_start_year = default_end_date.year
 default_start_month = default_end_date.month-default_month_delta
 while default_start_month <= 0:
     default_start_year -= 1
     default_start_month += 12
 
-default_start_date = date(
+default_start_date = datetime.date(
     year=default_start_year,
     month=default_start_month,
     day=1  # TODO: Support arbitrary start days
@@ -51,7 +51,7 @@ class printable:
             if not key.startswith("_") and not callable(x):  # noqa: E501
                 if is_dataclass(x):
                     d[key] = asdict(x)
-                elif isinstance(x, date):
+                elif isinstance(x, datetime.date):
                     d[key] = x.strftime('%Y-%mm-%dd')
                 elif x is None:
                     d[key] = None
@@ -164,6 +164,10 @@ class Config(printable):
     local_scan_path: str = "./"
     modules: ConfigModules | None = None
     output_dir = os.path.join(os.getcwd(), "results")
+    log_file = os.path.join(
+        output_dir,
+        datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_log.txt"
+    )
     reportId: int = 0
     runDependencies: bool = True
     runGit: bool = True
@@ -213,6 +217,10 @@ class Config(printable):
                     parent = curr_path.parent
                     curr_path = parent
         self.handle_config_file()
+        if self.config is not FileNotFoundError:
+            orig_config = self.config
+        else:
+            orig_config = {}
         if 'pytest' not in sys.argv[0]:
             self.handle_args(args)
         if self.config is FileNotFoundError:
@@ -256,8 +264,15 @@ class Config(printable):
             self.upload_conf.code_separator = self.server_code_separator
 
         os.makedirs(self.output_dir, exist_ok=True)
-        debugLog = DebugLog(path=self.output_dir)
-        debugLog.log(msg=self.config, tag="Config", display=True)
+        self.log_file = os.path.join(
+            self.output_dir,
+            datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_log.txt"
+        )
+        debugLog = DebugLog(path=self.log_file)
+        debugLog.log(msg="VerinFast Scan Started", tag="", display=True)
+        debugLog.log(msg=orig_config, tag="Loaded Configuration", display=True)
+        debugLog.log(msg=args, tag="Arguments", display=True)
+        debugLog.log(msg=self.config, tag=" Run Configuration", display=True)
 
     def init_argparse(self) -> argparse.ArgumentParser:
         """config.init_argparse
@@ -370,7 +385,7 @@ class Config(printable):
         config.handle_args overwrites any values stored in the
         current config with the values passed on the command line.
         """
-        print(args)
+
         if "output_dir" in args and args.output_dir is not None:
             self.output_dir = os.path.join(os.getcwd(), args.output_dir)
 
