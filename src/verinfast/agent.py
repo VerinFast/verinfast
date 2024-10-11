@@ -521,8 +521,6 @@ class Agent:
             dependencies_output_file = os.path.join(self.config.output_dir, repo_name + ".dependencies.json")
             self.log(msg=repo_name, tag="Scanning dependencies", display=True)
             if not self.config.dry:
-                print("dependency_walk1")
-                self.log(msg=dependencies_output_file, tag="dependency_walk2", display=False)
                 dependencies_output_file = dependency_walk(output_file=dependencies_output_file, logger=self.log)
                 with open(dependencies_output_file, "r") as f:
                     template_definition["dependencies"] = json.load(f)
@@ -869,7 +867,7 @@ def main():
     # If user opts to upload results, upload and non-uploaded logs
     if agent.config.shouldUpload:
         log_list = os.listdir(agent.config.output_dir)
-        log_list.sort() # Upload current log last
+        log_list.sort()  # Upload current log last
         for file in log_list:
             if file.endswith("log.txt") and not file.startswith("u_"):
                 file_path = os.path.join(agent.config.output_dir, file)
