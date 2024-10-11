@@ -147,7 +147,8 @@ class DebugLog:
             debug: bool = False):
         self.path = path
         self.file = file
-        self.logFile = os.path.join(path, "log.txt")  # Default log file
+        if self.path is not None:
+            self.logFile = os.path.join(path, "log.txt")  # Default log file
         self.debug = debug
 
     def log(self, msg, tag=None, display=False, timestamp=True):
