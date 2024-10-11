@@ -140,8 +140,13 @@ def chunks(lst, n):
 
 
 class DebugLog:
-    def __init__(self, path: str, debug: bool = False):
+    def __init__(
+            self,
+            path: str = None,
+            file: str = None,
+            debug: bool = False):
         self.path = path
+        self.file = file
         self.debug = debug
 
     def log(self, msg, tag=None, display=False, timestamp=True):
@@ -157,8 +162,15 @@ class DebugLog:
         else:
             output = f"{msg}"
 
-        with open(self.path, 'a') as f:
-            f.write(output+"\n")
+        if self.path is not None:
+            with open(os.path.join(self.path, "log.txt"), 'a') as f:
+                f.write(output+"\n")
+        elif self.file is not None:
+            with open(self.file, 'a') as f:
+                f.write(output+"\n")
+        else:
+            print("Error: No log file or path specified")
+
         if display or self.debug:
             print(output)
 

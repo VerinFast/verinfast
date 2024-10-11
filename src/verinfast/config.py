@@ -268,7 +268,7 @@ class Config(printable):
             self.output_dir,
             datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_log.txt"
         )
-        debugLog = DebugLog(path=self.log_file)
+        debugLog = DebugLog(file=self.log_file)
         debugLog.log(msg="VerinFast Scan Started", tag="", display=True)
         debugLog.log(msg=orig_config, tag="Loaded Configuration", display=True)
         if 'pytest' not in sys.argv[0]:

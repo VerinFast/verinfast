@@ -63,7 +63,7 @@ class Agent:
     def __init__(self):
         self.config = Config()
         os.makedirs(self.config.output_dir, exist_ok=True)
-        self.debug = DebugLog(path=self.config.log_file, debug=False)
+        self.debug = DebugLog(file=self.config.log_file, debug=False)
         self.log = self.debug.log
         self.log(msg='', tag="Started")
         self.uploader = Uploader(self.config.upload_conf)
