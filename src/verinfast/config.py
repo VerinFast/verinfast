@@ -1,7 +1,7 @@
 # stdlib
 import argparse
 from dataclasses import dataclass, field, is_dataclass, asdict
-import datetime
+from datetime import date, datetime
 import json
 from typing import List, Optional
 import os
@@ -18,14 +18,14 @@ from verinfast.utils.utils import DebugLog
 
 default_month_delta = 6
 
-default_end_date = datetime.date.today()
+default_end_date = date.today()
 default_start_year = default_end_date.year
 default_start_month = default_end_date.month-default_month_delta
 while default_start_month <= 0:
     default_start_year -= 1
     default_start_month += 12
 
-default_start_date = datetime.date(
+default_start_date = date(
     year=default_start_year,
     month=default_start_month,
     day=1  # TODO: Support arbitrary start days
@@ -51,7 +51,7 @@ class printable:
             if not key.startswith("_") and not callable(x):  # noqa: E501
                 if is_dataclass(x):
                     d[key] = asdict(x)
-                elif isinstance(x, datetime.date):
+                elif isinstance(x, date):
                     d[key] = x.strftime('%Y-%mm-%dd')
                 elif x is None:
                     d[key] = None
@@ -166,7 +166,7 @@ class Config(printable):
     output_dir = os.path.join(os.getcwd(), "results")
     log_file = os.path.join(
         output_dir,
-        datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_log.txt"
+        datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_log.txt"
     )
     reportId: int = 0
     runDependencies: bool = True
@@ -266,7 +266,7 @@ class Config(printable):
         os.makedirs(self.output_dir, exist_ok=True)
         self.log_file = os.path.join(
             self.output_dir,
-            datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_log.txt"
+            datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_log.txt"
         )
         debugLog = DebugLog(file=self.log_file)
         debugLog.log(msg="VerinFast Scan Started", tag="", display=True)

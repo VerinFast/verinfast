@@ -6,7 +6,7 @@ import ssl
 import subprocess
 
 from verinfast.utils.utils import DebugLog
-debugLog = DebugLog(os.getcwd())
+debugLog = DebugLog(path=os.getcwd())
 
 
 def runAzure(subscription_id, start, end, path_to_output, dry=False):

@@ -4,7 +4,7 @@ import subprocess
 
 from verinfast.utils.utils import DebugLog
 from verinfast.cloud.aws.get_profile import find_profile
-debugLog = DebugLog(os.getcwd())
+debugLog = DebugLog(path=os.getcwd())
 
 
 def runAws(targeted_account, start, end, path_to_output,

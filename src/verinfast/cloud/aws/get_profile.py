@@ -5,7 +5,7 @@ import subprocess
 from verinfast.utils.utils import DebugLog
 
 
-debugLog = DebugLog(os.getcwd())
+debugLog = DebugLog(path=os.getcwd())
 
 
 def find_profile(targeted_account: str, log=debugLog.log):
