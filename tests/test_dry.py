@@ -39,7 +39,7 @@ def test_no_config(self):
     assert Path(results_dir).exists()
     files = os.listdir(results_dir)
     assert len(files) == 1
-    with open(agent.debug.logFile) as f:
+    with open(agent.debug.file) as f:
         logText = f.read()
         assert "Error" not in logText
         assert "File does not exist:" in logText
