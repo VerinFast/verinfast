@@ -151,10 +151,10 @@ class DebugLog:
             file: str = None,
             debug: bool = False):
         if path is None and file is None:
-            print("DebugLog: No log file or path specified")
+            raise ValueError("No log file or path specified")
             return
         if path is not None and file is not None:
-            print("DebugLog: Both log file and path specified")
+            raise ValueError("Both log file and path specified")
             return
         if path is not None and file is None:
             self.path = path
