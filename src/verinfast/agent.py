@@ -664,10 +664,7 @@ class Agent:
                         repo_name = match.group(1)
                     else:
                         repo_name = os.path.basename(os.path.normpath(repo_path))
-                    if branch is None:
-                        self.parseRepo(repo_path, repo_name)
-                    else:
-                        self.parseRepo(repo_path, repo_name, branch)
+                    self.parseRepo(repo_path, repo_name, branch)
             else:
                 self.log(msg='', tag="No local repos", display=True)
         else:
