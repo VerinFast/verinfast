@@ -217,10 +217,6 @@ class Config(printable):
                     parent = curr_path.parent
                     curr_path = parent
         self.handle_config_file()
-        if self.config is not FileNotFoundError:
-            orig_config = self.config
-        else:
-            orig_config = {}
         if 'pytest' not in sys.argv[0]:
             self.handle_args(args)
         if self.config is FileNotFoundError:
@@ -270,10 +266,15 @@ class Config(printable):
         )
         debugLog = DebugLog(file=self.log_file)
         debugLog.log(msg="VerinFast Scan Started", tag="", display=True)
-        debugLog.log(msg=orig_config, tag="Loaded Configuration", display=True)
+        debugLog.log(msg=self.config, tag="Loaded Configuration", display=True)
         if 'pytest' not in sys.argv[0]:
             debugLog.log(msg=args, tag="Arguments", display=True)
-        debugLog.log(msg=self.config, tag="Run Configuration", display=True)
+        debugLog.log(msg={
+            "baseurl": self.baseUrl,
+            "should_upload": self.shouldUpload,
+            "dry": self.dry,
+            "uuid": self.reportId,
+        }, tag="Run Configuration", display=True)
 
     def init_argparse(self) -> argparse.ArgumentParser:
         """config.init_argparse

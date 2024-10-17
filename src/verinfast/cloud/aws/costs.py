@@ -1,14 +1,11 @@
 import json
 import os
 import subprocess
-
-from verinfast.utils.utils import DebugLog
 from verinfast.cloud.aws.get_profile import find_profile
-debugLog = DebugLog(path=os.getcwd())
 
 
-def runAws(targeted_account, start, end, path_to_output,
-           profile=None, log=debugLog.log, dry=False):
+def runAws(targeted_account, start, end, path_to_output, log,
+           profile=None, dry=False):
 
     def _get_costs_and_usage(profile: str, aws_output_file: str):
         cmd = f'''

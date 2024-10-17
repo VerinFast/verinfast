@@ -1,14 +1,8 @@
 import json
-import os
 import subprocess
 
-from verinfast.utils.utils import DebugLog
 
-
-debugLog = DebugLog(path=os.getcwd())
-
-
-def find_profile(targeted_account: str, log=debugLog.log):
+def find_profile(targeted_account: str, log):
     profiles = []
     available_accounts = []
     results = subprocess.run(
@@ -37,6 +31,6 @@ def find_profile(targeted_account: str, log=debugLog.log):
         if str(account) == str(targeted_account):
             return line
 
-    debugLog.log(msg=profiles, tag="AWS Profiles")
-    debugLog.log(msg=available_accounts, tag="AWS Available Accounts")
+    log(msg=profiles, tag="AWS Profiles")
+    log(msg=available_accounts, tag="AWS Available Accounts")
     return None

@@ -5,11 +5,8 @@ import re
 import ssl
 import subprocess
 
-from verinfast.utils.utils import DebugLog
-debugLog = DebugLog(path=os.getcwd())
 
-
-def runAzure(subscription_id, start, end, path_to_output, dry=False):
+def runAzure(subscription_id, start, end, path_to_output, log, dry=False):
     if not dry:
         ssl.SSLContext.verify_mode = property(
             lambda self: ssl.CERT_OPTIONAL,
@@ -72,7 +69,7 @@ def runAzure(subscription_id, start, end, path_to_output, dry=False):
         print("Parsing response")
         data = json.loads(response.read().decode())
         if 'error' in data:
-            debugLog.log(msg=json.dumps(data["error"]), tag="Azure error")
+            log(msg=json.dumps(data["error"]), tag="Azure error")
             return
 
         with open(f"{path_to_output}/azure_output_raw.json", "w") as outfile:

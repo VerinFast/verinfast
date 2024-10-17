@@ -736,6 +736,7 @@ class Agent:
                         start=provider.start,
                         end=provider.end,
                         path_to_output=self.config.output_dir,
+                        log=self.log,
                         dry=self.config.dry
                     )
                     if azure_cost_file is None:
