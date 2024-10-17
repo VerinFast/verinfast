@@ -650,13 +650,21 @@ class Agent:
             localrepos = self.config.config['local_repos']
             if localrepos:
                 for repo_path in localrepos:
+
+                    # Check for a branch
+                    split_url = repo_path.split("@")
+                    branch = None
+                    if len(split_url) == 2:
+                        branch = split_url[1]
+                        repo_path = split_url[0]
+
                     a = Path(repo_path).absolute()
                     match = re.search(r"([^/]*\.git.*)", str(a))
                     if match:
                         repo_name = match.group(1)
                     else:
                         repo_name = os.path.basename(os.path.normpath(repo_path))
-                    self.parseRepo(repo_path, repo_name)
+                    self.parseRepo(repo_path, repo_name, branch)
             else:
                 self.log(msg='', tag="No local repos", display=True)
         else:
