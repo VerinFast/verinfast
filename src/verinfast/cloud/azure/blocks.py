@@ -35,12 +35,6 @@ def getBlocks(sub_id: str, path_to_output: str = "./", dry=False):
                     account_name=account.name
                 )
 
-                file_shares = storage_client.file_shares.list(
-                    resource_group_name=group.name,
-                    account_name=account.name
-                )
-
-                # print(containers)
                 d = datetime.timedelta(
                     days=1,
                     seconds=0,
@@ -69,8 +63,6 @@ def getBlocks(sub_id: str, path_to_output: str = "./", dry=False):
                 for c in containers:
                     if c.public_access:
                         known_buckets[account.name]["public"] = True
-                for f in file_shares:
-                    print(f)
         my_buckets = list(known_buckets.values())
         upload = {
                     "metadata": {
