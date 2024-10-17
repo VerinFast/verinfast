@@ -63,19 +63,13 @@ class Agent:
     def __init__(self):
         self.config = Config()
         os.makedirs(self.config.output_dir, exist_ok=True)
-        self.debug = DebugLog(path=self.config.output_dir, debug=False)
+        self.debug = DebugLog(file=self.config.log_file, debug=False)
         self.log = self.debug.log
         self.log(msg='', tag="Started")
         self.uploader = Uploader(self.config.upload_conf)
         self.up = self.uploader.make_upload_path
         self.config.upload_logs = initial_prompt()
         self.directory = save_path()
-
-    # Takes a string and shows it to the user.
-    # Also ensures that string is written to the logs.
-    # No other decoration is allowed.
-    def print_and_log(self, msg: str):
-        self.log(msg=msg, tag="", display=True, timestamp=False)
 
     def create_template(self):
         if not self.config.dry:
@@ -103,7 +97,7 @@ class Agent:
                     else:
                         raise Exception(f"{self.scanId} returned for failed report Id fetch.")
                 else:
-                    print("ID only fetched for upload")
+                    self.log(msg="Scan ID only fetched when uploading enabled", tag="Scan ID", display=True)
                 self.scanRepos()
             if self.config.modules and self.config.modules.cloud and len(self.config.modules.cloud):
                 self.scanCloud()
@@ -750,6 +744,7 @@ class Agent:
                         start=provider.start,
                         end=provider.end,
                         path_to_output=self.config.output_dir,
+                        log=self.log,
                         dry=self.config.dry
                     )
                     if azure_cost_file is None:
@@ -864,8 +859,8 @@ def main():
         if agent.config.upload_logs:
             agent.upload(route="logs", file=agent.config.output_dir+"/log.txt")
         raise e
-    if agent.config.shouldUpload or agent.config.upload_logs:
-        agent.upload(route="logs", file=agent.config.output_dir+"/log.txt", source='logs', isJSON=False)
+
+    # If user opts to upload logs, copy the log to the verinfast directory for future upload
     if agent.config.upload_logs:
         new_folder_name = (
             str(today.year) + str(today.month) + str(today.day)
@@ -874,10 +869,25 @@ def main():
         os.makedirs(f'{d}/{new_folder_name}/', exist_ok=True)
         new_file_name = str(uuid4())+".txt"
         fp = f'{d}/{new_folder_name}/{new_file_name}'
-        shutil.copy2(agent.config.output_dir+"/log.txt", fp)
-        os.unlink(agent.config.output_dir+"/log.txt")
-        print(f"""The log for this run has moved to:
-              {d}/{new_folder_name}/{new_file_name}""")
+        shutil.copy2(agent.config.log_file, fp)
+        print(f"""The log for this run was copied to:
+            {d}/{new_folder_name}/{new_file_name}""")
+
+    # If user opts to upload results, upload and non-uploaded logs
+    if agent.config.shouldUpload:
+        log_list = os.listdir(agent.config.output_dir)
+        log_list.sort()  # Upload current log last
+        for file in log_list:
+            if file.endswith("log.txt") and not file.startswith("u_"):
+                file_path = os.path.join(agent.config.output_dir, file)
+                agent.upload(
+                    route="logs",
+                    file=file_path,
+                    source=file,
+                    isJSON=False
+                )
+                new_path = os.path.join(agent.config.output_dir, "u_"+file)
+                os.rename(file_path, new_path)
 
     # We only do this if you have a remote config but didn't upload
     if not agent.config.shouldUpload and agent.config.is_original_path_remote():

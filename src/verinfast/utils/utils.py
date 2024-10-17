@@ -139,10 +139,28 @@ def chunks(lst, n):
         yield lst[i:i + n]
 
 
+# DebugLog
+# Usage: must pass in full path to a log
+# file as "file" OR pass in a path and the
+# class will create a default log file called
+# "log.txt" in the specified path
 class DebugLog:
-    def __init__(self, path: str, debug: bool = False):
-        self.path = path
-        self.logFile = os.path.join(path, "log.txt")
+    def __init__(
+            self,
+            path: str = None,
+            file: str = None,
+            debug: bool = False):
+        if path is None and file is None:
+            raise ValueError("No log file or path specified")
+            return
+        if path is not None and file is not None:
+            raise ValueError("Both log file and path specified")
+            return
+        if path is not None and file is None:
+            self.path = path
+            self.file = os.path.join(path, "log.txt")  # Default log file
+        if path is None and file is not None:
+            self.file = file
         self.debug = debug
 
     def log(self, msg, tag=None, display=False, timestamp=True):
@@ -158,8 +176,9 @@ class DebugLog:
         else:
             output = f"{msg}"
 
-        with open(self.logFile, 'a') as f:
+        with open(self.file, 'a') as f:
             f.write(output+"\n")
+
         if display or self.debug:
             print(output)
 

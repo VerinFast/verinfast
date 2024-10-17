@@ -1,7 +1,7 @@
 # stdlib
 import argparse
 from dataclasses import dataclass, field, is_dataclass, asdict
-from datetime import date
+from datetime import date, datetime
 import json
 from typing import List, Optional
 import os
@@ -164,6 +164,10 @@ class Config(printable):
     local_scan_path: str = "./"
     modules: ConfigModules | None = None
     output_dir = os.path.join(os.getcwd(), "results")
+    log_file = os.path.join(
+        output_dir,
+        datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_log.txt"
+    )
     reportId: int = 0
     runDependencies: bool = True
     runGit: bool = True
@@ -256,8 +260,21 @@ class Config(printable):
             self.upload_conf.code_separator = self.server_code_separator
 
         os.makedirs(self.output_dir, exist_ok=True)
-        debugLog = DebugLog(path=self.output_dir)
-        debugLog.log(msg=self.config, tag="Config", display=True)
+        self.log_file = os.path.join(
+            self.output_dir,
+            datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_log.txt"
+        )
+        debugLog = DebugLog(file=self.log_file)
+        debugLog.log(msg="VerinFast Scan Started", tag="", display=True)
+        debugLog.log(msg=self.config, tag="Loaded Configuration", display=True)
+        if 'pytest' not in sys.argv[0]:
+            debugLog.log(msg=args, tag="Arguments", display=True)
+        debugLog.log(msg={
+            "baseurl": self.baseUrl,
+            "should_upload": self.shouldUpload,
+            "dry": self.dry,
+            "uuid": self.reportId,
+        }, tag="Run Configuration", display=True)
 
     def init_argparse(self) -> argparse.ArgumentParser:
         """config.init_argparse
@@ -370,7 +387,7 @@ class Config(printable):
         config.handle_args overwrites any values stored in the
         current config with the values passed on the command line.
         """
-        print(args)
+
         if "output_dir" in args and args.output_dir is not None:
             self.output_dir = os.path.join(os.getcwd(), args.output_dir)
 

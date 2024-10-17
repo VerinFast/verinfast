@@ -30,7 +30,7 @@ def test_no_config(self):
     agent.config.shouldUpload = True
     agent.debug = DebugLog(path=agent.config.output_dir, debug=False)
     agent.log = agent.debug.log
-    print(agent.debug.logFile)
+    print(agent.debug.file)
     agent.scan()
     assert Path(results_dir).exists()
     assert results_dir.joinpath("results.html").exists()
