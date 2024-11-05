@@ -5,7 +5,7 @@ azure-mgmt-network~=27.0.0
 azure-mgmt-resource~=23.1.1
 azure-mgmt-storage~=21.2.1
 azure-monitor-query~=1.4.0
-boto3~=1.35.42
+boto3~=1.35.54
 coverage~=7.6.3
 defusedxml~=0.7.1
 flake8~=7.1.1
@@ -16,12 +16,12 @@ google-cloud-storage>=2.10.0
 google-cloud-monitoring>=2.15.0
 httpx[http2]~=0.27.2
 Jinja2==3.1.4
-johnnydep~=1.20.5
+johnnydep~=1.20.6
 modernmetric>=1.4.9
 pygments-tsx>=1.0.1
 pytest~=8.3.3
 pytest-cov~=5.0.0
 pytest-xdist~=3.6.1
 pyyaml~=6.0.2
-semgrep~=1.92.0
+semgrep~=1.95.0
 windows-curses~=2.4.0; sys.platform == 'win32'
