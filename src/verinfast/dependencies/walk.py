@@ -7,6 +7,7 @@ import defusedxml
 from verinfast.dependencies.walkers.composer import ComposerWalker
 from verinfast.dependencies.walkers.maven import MavenWalker
 from verinfast.dependencies.walkers.npm import NodeWalker
+from verinfast.dependencies.walkers.package_lock import PackageWalker
 from verinfast.dependencies.walkers.gemwalker import GemWalker
 from verinfast.dependencies.walkers.nuget import NuGetWalker, c_sharp_matches
 from verinfast.dependencies.walkers.dockerwalker import DockerWalker
@@ -98,7 +99,17 @@ def walk(logger, path: str = "./", output_file="./dependencies.json"):
     write_file(output_file=output_file, entries=entries)
     nodeWalker.initialize(root_path=path)
     logger(msg="Dependency Scan 25%", display=True)
-    entries += nodeWalker.entries
+    if nodeWalker.entries:
+        entries += nodeWalker.entries
+    else:
+        packageWalker = PackageWalker(
+            manifest_type='json',
+            logger=logger,
+            root_dir=path,
+            manifest_files=["package-lock.json"]
+        )
+        packageWalker.walk(path=path)
+        entries += packageWalker.entries
     write_file(output_file=output_file, entries=entries)
     nugetWalker.initialize()
     logger(msg="Dependency Scan 40%", display=True)
