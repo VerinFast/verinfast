@@ -32,6 +32,8 @@ from verinfast.cloud.azure.blocks import getBlocks as get_az_blocks
 from verinfast.cloud.gcp.blocks import getBlocks as get_gcp_blocks
 from verinfast.config import Config
 from verinfast.user import initial_prompt, save_path, repeat_boolean_prompt
+from verinfast.utils.license import report as report_license
+
 from verinfast.dependencies.walk import walk as dependency_walk
 
 
@@ -411,7 +413,9 @@ class Agent:
 
                 template_definition["filelist"] = filelist
                 custom_args = [f"--file={stats_input_file}", f"--output={stats_output_file}"]
-                modernmetric(custom_args)
+                modernmetric(custom_args=custom_args, license_identifier=self.config.reportId)
+                report_license(self.config.reportId, self.config, "modernmetric")
+
                 with open(stats_output_file, 'r') as f:
                     template_definition["stats"] = json.load(f)
             self.upload(
