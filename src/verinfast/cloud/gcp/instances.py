@@ -4,9 +4,17 @@ import os
 import time
 from typing import List
 
-from google.api_core.exceptions import NotFound
-from google.cloud import compute_v1
-from google.cloud.monitoring_v3 import Aggregation, MetricServiceClient, TimeInterval, ListTimeSeriesRequest  # noqa: E501
+try:
+    from google.api_core.exceptions import NotFound
+    from google.cloud import compute_v1
+    from google.cloud.monitoring_v3 import Aggregation, MetricServiceClient, TimeInterval, ListTimeSeriesRequest  # noqa: E501
+except ImportError:
+    print("Google Cloud libraries not imported. Skipping GCP instances.")
+    compute_v1 = None
+    MetricServiceClient = None
+    Aggregation = None
+    TimeInterval = None
+    ListTimeSeriesRequest = None
 
 from verinfast.cloud.gcp.zones import zones
 from verinfast.cloud.cloud_dataclass import \
@@ -66,6 +74,8 @@ aggregations = {
 
 
 def get_metrics_for_instance(sub_id: str, instance_name: str) -> List[Datum]:
+    if not MetricServiceClient:
+        return []
     metrics_client = MetricServiceClient()
     results_dict = {}
     for m in metric_identifiers:
