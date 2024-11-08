@@ -1,7 +1,7 @@
 import json
 import os
 import time
-import subprocess
+from utils import std_exec
 
 from google.cloud.monitoring_v3 import MetricServiceClient, TimeInterval, ListTimeSeriesRequest  # noqa: E501
 from google.cloud import storage
@@ -9,20 +9,15 @@ from google.cloud import storage
 
 def get_bucket_size(bucket_name):
     try:
-        result = subprocess.run(
-            ["gcloud", "storage", "du", f"gs://{bucket_name}", "--summarize"],
-            capture_output=True,
-            text=True,
-            check=True
-        )
-        output = result.stdout
+        cmd = ["gcloud", "storage", "du", f"gs://{bucket_name}", "--summarize"]
+        output = std_exec(cmd)
         # Extracting size from the output
         for line in output.splitlines():
             if line.startswith("Total Size:"):
                 size_str = line.split(":")[1].strip()
                 size_bytes = int(size_str.split()[0])
                 return size_bytes
-    except subprocess.CalledProcessError as e:
+    except Exception as e:
         print(f"Error getting size for bucket {bucket_name}: {e}")
     return 0
 
