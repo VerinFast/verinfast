@@ -1,10 +1,11 @@
 import json
 import os
 import time
-from utils import std_exec
 
 from google.cloud.monitoring_v3 import MetricServiceClient, TimeInterval, ListTimeSeriesRequest  # noqa: E501
 from google.cloud import storage
+
+from verinfast.utils.utils import std_exec
 
 
 def get_bucket_size(bucket_name):
