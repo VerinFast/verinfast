@@ -105,6 +105,9 @@ jobs:
       - name: Style Guide
         run: flake8
   build-and-publish:
+    permissions:
+      contents: 'read'
+      id-token: 'write'
     name: Build and publish Python 🐍 distributions 📦 to PyPI and TestPyPI
     needs: unit-tests
     runs-on: ubuntu-latest
