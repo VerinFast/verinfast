@@ -8,12 +8,12 @@ class PackageWalker(Walker):
         resp = None
         license_resp = self.getUrl(f"https://registry.npmjs.org/{entry.name}/{entry.specifier}/")  # NOQA:E501
         resp = json.loads(license_resp)
-        if not isinstance(resp, dict):
+        if isinstance(resp, dict):
+            entry.license = resp.get("license", "License not available")
+            entry.summary = resp.get("description", "No description provided.")
+        else:
             self.log(f"Error with {entry.name} {entry.specifier} response")
             self.log(license_resp)
-            return
-        entry.license = resp.get("license", "License not available")
-        entry.summary = resp.get("description", "No description provided.")
 
     def parse(self, file: str, expand=False):
         try:
