@@ -23,16 +23,15 @@ class PackageWalker(Walker):
                     dependencies = d["dependencies"]
                     for dependency in dependencies:
                         try:
-                            if isinstance(dependencies[dependency], dict):
-                                e = Entry(
-                                    name=dependency,
-                                    specifier=dependencies[dependency].get(
-                                        "version", "Version not found"
-                                    ),
-                                    source="package-lock.json"
-                                )
-                                self.remote_decorate(entry=e)
-                                self.entries.append(e)
+                            e = Entry(
+                                name=dependency,
+                                specifier=dependencies[dependency].get(
+                                    "version", "Version not found"
+                                ),
+                                source="package-lock.json"
+                            )
+                            self.remote_decorate(entry=e)
+                            self.entries.append(e)
                         except Exception as error:
                             self.log(f"error parsing {dependency}")
                             self.log(error)
