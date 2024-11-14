@@ -11,6 +11,7 @@ class PackageWalker(Walker):
         if not isinstance(resp, dict):
             self.log(f"Error with {entry.name} {entry.specifier} response")
             self.log(license_resp)
+            return
         entry.license = resp.get("license", "License not available")
         entry.summary = resp.get("description", "No description provided.")
 
