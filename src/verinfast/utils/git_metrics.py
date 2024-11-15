@@ -11,7 +11,7 @@ class MetricArgs:
 
 
 def analyze_git_diff(commit_id: str, file_name: str, log=None) -> Optional[Dict[str, Any]]:
-   
+
     cmd: List[str] = [
         "git",
         "show",
@@ -50,4 +50,5 @@ def analyze_git_diff(commit_id: str, file_name: str, log=None) -> Optional[Dict[
             log(tag="git_metrics Error", msg=f"Error analyzing git diff: {str(e)}")
         else:
             print(f"Error analyzing git diff: {str(e)}")
-        return None 
+        return None
+    
