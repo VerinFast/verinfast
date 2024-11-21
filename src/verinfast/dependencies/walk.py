@@ -60,7 +60,12 @@ def walk(logger, path: str = "./", output_file="./dependencies.json"):
     )
 
     py_walker = PyWalker(
-        manifest_files=["requirements.txt", "requirements-dev.txt", "pyproject.toml", "poetry.lock"],
+        manifest_files=[
+            "requirements.txt",
+            "requirements-dev.txt",
+            "pyproject.toml",
+            "poetry.lock"
+        ],
         manifest_type="txt",
         logger=logger,
         root_dir=path
