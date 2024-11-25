@@ -6,8 +6,15 @@ from verinfast.dependencies.walkers.classes import Walker, Entry
 class PackageWalker(Walker):
     def remote_decorate(self, entry: Entry) -> str:
         resp = None
-        license_resp = self.getUrl(f"https://registry.npmjs.org/{entry.name}/{entry.specifier}/")  # NOQA:E501
-        resp = json.loads(license_resp)
+        try:
+            license_resp = self.getUrl(f"https://registry.npmjs.org/{entry.name}/{entry.specifier}/")  # NOQA:E501
+            resp = json.loads(license_resp)
+        except Exception as e:
+            self.log(
+                f"License not found for: {entry.name}@{entry.specifier}",
+                display=False
+            )
+            self.log(e, display=False)
         if isinstance(resp, dict):
             entry.license = resp.get("license", "License not available")
             entry.summary = resp.get("description", "No description provided.")

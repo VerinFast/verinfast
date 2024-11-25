@@ -7,16 +7,23 @@ from verinfast.dependencies.walkers.classes import Walker, Entry
 class NuGetWalker(Walker):
     def initialize(self, command: str = None):
         discoveryUrl = 'https://api.nuget.org/v3/index.json'
-        uselessList = json.loads(
-            self.getUrl(discoveryUrl)
-        )
-        for r in uselessList["resources"]:
-            if "Catalog" in r["@type"]:
-                self.catalogUrl = r["@id"]
-            elif r["@type"] == "RegistrationsBaseUrl":
-                self.registrationUrl = r["@id"]
-        if command:
-            return super().initialize(command)
+        try:
+            resp = self.getUrl(discoveryUrl)
+            uselessList = json.loads(resp)
+            for r in uselessList["resources"]:
+                if "Catalog" in r["@type"]:
+                    self.catalogUrl = r["@id"]
+                elif r["@type"] == "RegistrationsBaseUrl":
+                    self.registrationUrl = r["@id"]
+            if command:
+                return super().initialize(command)
+        except Exception as e:
+            self.log(
+                f"NuGet API not found for: {discoveryUrl}",
+                display=False
+            )
+            self.log(e, display=False)
+            return None
 
     def get_license(self, name: str, version: str) -> str:
         resp = None

@@ -89,13 +89,20 @@ class Walker():
         )
 
     def getUrl(self, url: str, headers: dict = {}):
-        return  (  # noqa: E271
-                    self
-                        .requestx  # NOQA: E131
-                        .get(url=url, headers=headers)
-                        .content
-                        .decode('utf-8-sig')
-                )
+        try:
+            return  (  # noqa: E271
+                        self
+                            .requestx  # NOQA: E131
+                            .get(url=url, headers=headers)
+                            .content
+                            .decode('utf-8-sig')
+                    )
+        except Exception as e:
+            self.loggerFunc(
+                f"Failed to get URL: {url}, {e}",
+                display=False
+            )
+            return None
 
     def walk(self,
              path: str = "./",
