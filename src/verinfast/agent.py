@@ -526,7 +526,6 @@ class Agent:
                 )
 
         # ##### Scan Dependencies ######
-        print("self.config.runDependencies", self.config.runDependencies)
         if self.config.runDependencies:
             dependencies_output_file = os.path.join(self.config.output_dir, repo_name + ".dependencies.json")
             self.log(msg=repo_name, tag="Scanning dependencies", display=True)
