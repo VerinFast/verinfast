@@ -452,8 +452,11 @@ class Agent:
                                 semgrep_scan.scan(custom_args)
                             findings_success = True
                         except SystemExit as e:
-                            self.log(tag="ERROR", msg="SystemExit in Semgrep")
-                            self.log(e)
+                            if e.code == 0:
+                                findings_success = True
+                            else:
+                                self.log(tag="ERROR", msg="SystemExit in Semgrep")
+                                self.log(e)
                 except Exception as e:
                     self.log(tag="ERROR", msg="Error in Semgrep")
                     self.log(e)
