@@ -10,7 +10,11 @@ class MetricArgs:
         self.dump = False
 
 
-def analyze_git_diff(commit_id: str, file_name: str, log=None) -> Optional[Dict[str, Any]]:
+def analyze_git_diff(
+    commit_id: str,
+    file_name: str,
+    log=None
+) -> Optional[Dict[str, Any]]:
 
     cmd: List[str] = [
         "git",
@@ -26,18 +30,43 @@ def analyze_git_diff(commit_id: str, file_name: str, log=None) -> Optional[Dict[
         # Get diff output using std_exec
         diff_output = std_exec(cmd, log=log)
 
+        # We're skipping the first 4 lines of git diff output
+        # because they only contain metadata
         diff_lines = diff_output.splitlines()[4:]
-        diff_content = '\n'.join(diff_lines)
+
+        # Separate added and deleted lines
+        added_lines = []
+        deleted_lines = []
+
+        for line in diff_lines:
+            # Skip diff header lines that start with @
+            if line.startswith('@'):
+                continue
+            # Added lines start with +
+            elif line.startswith('+'):
+                added_lines.append(line[1:])
+            # Deleted lines start with -
+            elif line.startswith('-'):
+                deleted_lines.append(line[1:])
+
+        added_content = '\n'.join(added_lines)
+        deleted_content = '\n'.join(deleted_lines)
 
         args = MetricArgs()
 
         results = process_diff_content(
-            _content=diff_content,
+            _content={
+                'added': added_content,
+                'deleted': deleted_content
+            },
             _file=file_name,
             _args=args,
             _importer={}
         )
 
+        # skipping index 3 which contains
+        # temporary processing data (raw lexer tokens)
+        # that isn't needed in the final output.
         return {
             'metrics': results[0],
             'file': results[1],
@@ -47,8 +76,8 @@ def analyze_git_diff(commit_id: str, file_name: str, log=None) -> Optional[Dict[
 
     except Exception as e:
         if log is not None:
-            log(tag="git_metrics Error", msg=f"Error analyzing git diff: {str(e)}")
+            log(tag="git_metrics Error",
+                msg=f"Error analyzing git diff: {str(e)}")
         else:
             print(f"Error analyzing git diff: {str(e)}")
         return None
-    
