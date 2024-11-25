@@ -435,6 +435,7 @@ class Agent:
 
             findings_output_file = os.path.join(self.config.output_dir, repo_name + ".findings.json")
             findings_error_file = os.path.join(self.config.output_dir, repo_name + ".findings.err")
+            findings_success = False
             if not self.config.dry:
                 self.log(msg=repo_name, tag="Scanning repository", display=True)
                 try:
@@ -449,76 +450,83 @@ class Agent:
                         try:
                             with contextlib.redirect_stdout(io.StringIO()):
                                 semgrep_scan.scan(custom_args)
-                        except SystemExit:
-                            pass
+                            findings_success = True
+                        except SystemExit as e:
+                            if e.code == 0:
+                                findings_success = True
+                            else:
+                                self.log(tag="ERROR", msg="SystemExit in Semgrep")
+                                self.log(e)
                 except Exception as e:
                     self.log(tag="ERROR", msg="Error in Semgrep")
                     self.log(e)
-            try:
-                with open(findings_output_file) as f:
-                    findings = json.load(f)
+            if findings_success:
+                try:
+                    with open(findings_output_file) as f:
+                        findings = json.load(f)
 
-                # This is on purpose. If you try to read same pointer
-                # twice, it dies.
-                with open(findings_output_file) as f:
-                    original_findings = json.load(f)
+                    # This is on purpose. If you try to read same pointer
+                    # twice, it dies.
+                    with open(findings_output_file) as f:
+                        original_findings = json.load(f)
 
-                if self.config.truncate_findings:
-                    # Exclusions are set to exclude fields that are not code
-                    truncation_exclusion = [
-                        "cwe",
-                        "owasp",
-                        "path",
-                        "check_id",
-                        "license",
-                        "fingerprint",
-                        "message",
-                        "references",
-                        "url",
-                        "source",
-                        "severity"
-                    ]
-                    self.log(
-                        tag="TRUNCATING",
-                        msg=f"excluding: {truncation_exclusion}"
-                    )
-                    try:
-                        findings = truncate_children(
-                            findings,
-                            self.log,
-                            excludes=truncation_exclusion,
-                            max_length=self.config.truncate_findings_length
-                        )
-                    except Exception as e:
-                        self.log(tag="ERROR", msg="Error in Truncation")
-                        self.log(e)
+                    if self.config.truncate_findings:
+                        # Exclusions are set to exclude fields that are not code
+                        truncation_exclusion = [
+                            "cwe",
+                            "owasp",
+                            "path",
+                            "check_id",
+                            "license",
+                            "fingerprint",
+                            "message",
+                            "references",
+                            "url",
+                            "source",
+                            "severity"
+                        ]
                         self.log(
-                            json.dumps(
-                                original_findings,
-                                indent=4,
-                                sort_keys=True
-                            )
+                            tag="TRUNCATING",
+                            msg=f"excluding: {truncation_exclusion}"
                         )
-                with open(findings_output_file, "w") as f2:
-                    f2.write(json.dumps(
-                        findings, indent=4, sort_keys=True
-                    ))
-                template_definition["gitfindings"] = findings
-            except Exception as e:
-                if not self.config.dry:
-                    raise e
-                else:
-                    self.log(
-                        msg=f'''
-                            Attempted to format/truncate non existent file
-                            {findings_output_file}
-                        '''
-                    )
-            self.upload(
-                file=findings_output_file,
-                route="findings",
-                source=repo_name
-            )
+                        try:
+                            findings = truncate_children(
+                                findings,
+                                self.log,
+                                excludes=truncation_exclusion,
+                                max_length=self.config.truncate_findings_length
+                            )
+                        except Exception as e:
+                            self.log(tag="ERROR", msg="Error in Truncation")
+                            self.log(e)
+                            self.log(
+                                json.dumps(
+                                    original_findings,
+                                    indent=4,
+                                    sort_keys=True
+                                )
+                            )
+                    with open(findings_output_file, "w") as f2:
+                        f2.write(json.dumps(
+                            findings, indent=4, sort_keys=True
+                        ))
+                    template_definition["gitfindings"] = findings
+                except Exception as e:
+                    if not self.config.dry:
+                        self.log(tag="ERROR", msg="Error in findings post-processing")
+                        self.log(e)
+                    else:
+                        self.log(
+                            msg=f'''
+                                Attempted to format/truncate non existent file
+                                {findings_output_file}
+                            '''
+                        )
+                self.upload(
+                    file=findings_output_file,
+                    route="findings",
+                    source=repo_name
+                )
 
         # ##### Scan Dependencies ######
         if self.config.runDependencies:
