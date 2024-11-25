@@ -54,24 +54,34 @@ def analyze_git_diff(
 
         args = MetricArgs()
 
-        results = process_diff_content(
-            _content={
-                'added': added_content,
-                'deleted': deleted_content
-            },
+        added_results = process_diff_content(
+            _content=added_content,
             _file=file_name,
             _args=args,
             _importer={}
         )
 
-        # skipping index 3 which contains
-        # temporary processing data (raw lexer tokens)
-        # that isn't needed in the final output.
+        deleted_results = process_diff_content(
+            _content=deleted_content,
+            _file=file_name,
+            _args=args,
+            _importer={}
+        )
+
+        # Combine metrics
+        combined_metrics = {}
+        for metric_name, added_value in added_results[0].items():
+            deleted_value = deleted_results[0].get(metric_name, 0)
+            combined_metrics[metric_name] = added_value + deleted_value
+
         return {
-            'metrics': results[0],
-            'file': results[1],
-            'language': results[2],
-            'store': results[4]
+            'metrics': combined_metrics,
+            'file': file_name,
+            'language': added_results[2],  # same language 4 added and deleted
+            'store': {
+                'added': added_results[4],
+                'deleted': deleted_results[4]
+            }
         }
 
     except Exception as e:
