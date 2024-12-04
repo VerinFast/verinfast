@@ -7,11 +7,12 @@ from verinfast.cloud.aws.get_profile import find_profile
 def runAws(targeted_account, start, end, path_to_output, log,
            profile=None, dry=False):
 
-    def _get_costs_and_usage(profile: str, aws_output_file: str):
+    def _get_costs_and_usage(profile: str, aws_output_file: str,
+                             granularity='MONTHLY'):
         cmd = f'''
             aws ce get-cost-and-usage \
             --time-period Start={start},End={end} \
-            --granularity=DAILY \
+            --granularity={granularity} \
             --metrics "BlendedCost" \
             --group-by Type=DIMENSION,Key=SERVICE \
             --profile="{profile}" \
