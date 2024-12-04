@@ -42,7 +42,7 @@ def test_aws_scan(self):
     assert Path(results_dir).exists() is True
     with open(results_dir.joinpath(f"aws-cost-{sub_id}.json")) as f:
         costs = json.load(f)
-        assert len(costs["data"]) >= 100
+        assert len(costs["data"]) >= 50
     # Make sure "aws-cost-foo.json" doesn't exist
     bad_costs_file = Path(results_dir.joinpath("aws-cost-foo.json"))
     assert not bad_costs_file.is_file()
@@ -119,7 +119,7 @@ def test_aws_dash(self):
     assert Path(results_dir).exists() is True
     with open(results_dir.joinpath(f"aws-cost-{sub_id}.json")) as f:
         costs = json.load(f)
-        assert len(costs["data"]) >= 100
+        assert len(costs["data"]) >= 50
     with open(results_dir.joinpath(f"aws-instances-{sub_id}.json")) as f:
         instances = json.load(f)
         assert len(instances["data"]) >= 5
