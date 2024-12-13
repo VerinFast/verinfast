@@ -14,7 +14,7 @@ gemfileparser~=0.8.0
 google-cloud-compute>=1.14.0
 google-cloud-storage>=2.10.0
 google-cloud-monitoring>=2.15.0
-httpx[http2]~=0.28.0
+httpx[http2]~=0.28.1
 Jinja2==3.1.4
 johnnydep~=1.20.6
 modernmetric>=1.5.1
@@ -23,5 +23,5 @@ pytest~=8.3.4
 pytest-cov~=6.0.0
 pytest-xdist~=3.6.1
 pyyaml~=6.0.2
-semgrep~=1.97.0
+semgrep~=1.100.0
 windows-curses~=2.4.0; sys.platform == 'win32'
