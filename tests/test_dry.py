@@ -37,8 +37,13 @@ def test_no_config(self):
     assert get_url == "/report/uuid/9a6e8696-f93a-4402-a64e-342ccb37592b/CorsisCode", get_url  # noqa: E501
     agent.scan()
     assert Path(results_dir).exists()
-    files = os.listdir(results_dir)
-    assert len(files) == 1
+    # Make sure there are no .json results files
+    results_path = Path(results_dir)
+    assert results_path.exists()
+
+    # Check if there are any JSON files
+    json_files = list(results_path.glob("*.json"))
+    assert not json_files, f"Found JSON files: {json_files}"
     with open(agent.debug.file) as f:
         logText = f.read()
         assert "Error" not in logText

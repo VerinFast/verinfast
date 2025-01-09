@@ -458,9 +458,16 @@ class Agent:
             ]
 
             findings_success = False
+            if not self.config.dry:
+                self.log(msg=repo_name, tag="Scanning repository", display=True)
             try:
                 with contextlib.redirect_stdout(io.StringIO()):
-                    semgrep_scan.scan(custom_args)
+                    if not self.config.dry:
+                        semgrep_scan.scan(custom_args)
+                    if os.path.exists(findings_file):
+                        with open(findings_file) as f:
+                            results = json.load(f)
+                            self.cache.set(findings_file, results)
                 findings_success = True
             except SystemExit as e:
                 if e.code == 0:
@@ -597,7 +604,7 @@ class Agent:
                     else:
                         repo_name = repo_url.rsplit('/', 1)[-1]
                     if "@" in repo_name and re.search(r"^.*@.*\..*:", repo_url):
-                        repo_url = "@".join(repo_url.split("@")[0:2]) 
+                        repo_url = "@".join(repo_url.split("@")[0:2])
                     elif "@" in repo_name:
                         repo_url = repo_url.split("@")[0]
                     try:
@@ -620,7 +627,7 @@ class Agent:
         if cloud_config is not None:
             for provider in cloud_config:
                 try:
-                    if (provider.provider == "aws" and 
+                    if (provider.provider == "aws" and
                             self.checkDependency("aws", "AWS Command-line tool")):
                         account_id = str(provider.account).replace('-', '')
                         if find_profile(account_id, self.log) is None:
