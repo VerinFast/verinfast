@@ -561,7 +561,7 @@ class Agent:
             # Upload findings always, in case of dry run
             # .upload checks should_upload
             self.upload(
-                file=findings_output_file,
+                file=findings_file,
                 route="findings",
                 source=repo_name
             )
