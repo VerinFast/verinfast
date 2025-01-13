@@ -344,12 +344,12 @@ class Agent:
                 template_definition["gitlog"] = finalArr
                 # End if not self.config.dry:
 
-        if Path(git_output_file).exists():
-            self.upload(
-                file=git_output_file,
-                route="git",
-                source=repo_name
-            )
+        # if Path(git_output_file).exists():
+        self.upload(
+            file=git_output_file,
+            route="git",
+            source=repo_name
+        )
 
         # Manual File Sizes and Info
         sizes_output_file = os.path.join(self.config.output_dir, repo_name + ".sizes.json")
@@ -555,11 +555,16 @@ class Agent:
                                 {findings_file}
                             '''
                         )
-                self.upload(
-                    file=findings_file,
-                    route="findings",
-                    source=repo_name
-                )
+
+            # End if findings_success is True
+
+            # Upload findings always, in case of dry run
+            # .upload checks should_upload
+            self.upload(
+                file=findings_output_file,
+                route="findings",
+                source=repo_name
+            )
 
         # ##### Scan Dependencies ######
         if self.config.runDependencies:
@@ -691,7 +696,6 @@ class Agent:
                             subprocess.check_output(["git", "clone", repo_url, temp_dir])
                         except subprocess.CalledProcessError:
                             self.log(msg=repo_url, tag="Failed to clone", display=True)
-                            exit(1)
                             continue
 
                         self.log(msg=repo_url, tag="Successfully cloned", display=True)
