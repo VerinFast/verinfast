@@ -635,7 +635,6 @@ class Agent:
                             subprocess.check_output(["git", "clone", repo_url, temp_dir])
                         except subprocess.CalledProcessError:
                             self.log(msg=repo_url, tag="Failed to clone", display=True)
-                            exit(1)
                             continue
 
                         self.log(msg=repo_url, tag="Successfully cloned", display=True)
