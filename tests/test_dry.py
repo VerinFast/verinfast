@@ -60,7 +60,7 @@ def test_no_config(self):
     upload_fail_prefix = upload_fail_prefix + str(results_dir) + "/"
     assert upload_fail_prefix + "small-test-repo.git.git.log.json" in logText
     assert upload_fail_prefix + "small-test-repo.git.sizes.json" in logText
-    assert upload_fail_prefix + "small-test-repo.git.files.json" in logText
+    assert upload_fail_prefix + "small-test-repo.git.stats.json" in logText
     assert upload_fail_prefix + "small-test-repo.git.finding.json" in logText
     assert (upload_fail_prefix + "small-test-repo.git.dependencies.json"
             in logText)
