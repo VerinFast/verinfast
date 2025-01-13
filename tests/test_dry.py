@@ -9,7 +9,8 @@ from verinfast.utils.utils import DebugLog
 
 file_path = Path(__file__)
 test_folder = file_path.parent.absolute()
-results_dir = test_folder.joinpath("results").absolute()
+# To run unit tests in parallel, this test needs its own results directory
+results_dir = test_folder.joinpath("results_dry").absolute()
 str_path = str(test_folder.joinpath('str_conf.yaml').absolute())
 
 
