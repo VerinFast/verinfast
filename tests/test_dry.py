@@ -61,6 +61,6 @@ def test_no_config(self):
     assert upload_fail_prefix + "small-test-repo.git.git.log.json" in logText
     assert upload_fail_prefix + "small-test-repo.git.sizes.json" in logText
     assert upload_fail_prefix + "small-test-repo.git.stats.json" in logText
-    assert upload_fail_prefix + "small-test-repo.git.finding.json" in logText
+    assert upload_fail_prefix + "small-test-repo.git.findings.json" in logText
     assert (upload_fail_prefix + "small-test-repo.git.dependencies.json"
             in logText)
