@@ -434,7 +434,6 @@ class Agent:
                          """)
 
             findings_output_file = os.path.join(self.config.output_dir, repo_name + ".findings.json")
-            findings_error_file = os.path.join(self.config.output_dir, repo_name + ".findings.err")
             findings_success = False
             if not self.config.dry:
                 self.log(msg=repo_name, tag="Scanning repository", display=True)
@@ -522,11 +521,15 @@ class Agent:
                                 {findings_output_file}
                             '''
                         )
-                self.upload(
-                    file=findings_output_file,
-                    route="findings",
-                    source=repo_name
-                )
+            # End if findings_success is True
+
+            # Upload findings always, in case of dry run
+            # .upload checks should_upload
+            self.upload(
+                file=findings_output_file,
+                route="findings",
+                source=repo_name
+            )
 
         # ##### Scan Dependencies ######
         if self.config.runDependencies:
