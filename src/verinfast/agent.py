@@ -21,7 +21,7 @@ from pygments_tsx.tsx import patch_pygments
 
 from verinfast.utils.utils import DebugLog, std_exec, trimLineBreaks, escapeChars, truncate, truncate_children, get_repo_name_url_and_branch
 from verinfast.upload import Uploader
-from verinfast.cloud.aws.costs import runAws
+from verinfast.cloud.aws.costs import get_aws_costs
 from verinfast.cloud.aws.get_profile import find_profile
 from verinfast.cloud.azure.costs import runAzure
 from verinfast.cloud.aws.instances import get_instances as get_aws_instances
@@ -691,7 +691,7 @@ class Agent:
                 # Check if AWS-CLI is installed
                 if provider.provider == "aws" and self.checkDependency("aws", "AWS Command-line tool"):
                     account_id = str(provider.account).replace('-', '')
-                    aws_cost_file = runAws(
+                    aws_cost_file = get_aws_costs(
                         targeted_account=account_id,
                         start=provider.start,
                         end=provider.end,

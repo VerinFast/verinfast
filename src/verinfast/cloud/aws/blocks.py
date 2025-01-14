@@ -7,11 +7,18 @@ import boto3
 import botocore.exceptions
 
 import verinfast.cloud.aws.regions as r
-
+from verinfast.cloud.aws.get_profile import find_profile
 regions = r.regions
 
 
-def getBlocks(sub_id: str, log, path_to_output: str = "./", dry=False):
+def getBlocks(sub_id: str, profile: str = None, log=None,
+              path_to_output: str = "./", dry=False):
+    if profile is None:
+        profile = find_profile(targeted_account=sub_id, log=log)
+
+    if profile is None:
+        log(msg="No matching profiles found", tag=sub_id)
+        return None
 
     if not dry:
         session = boto3.Session()
@@ -41,7 +48,8 @@ def getBlocks(sub_id: str, log, path_to_output: str = "./", dry=False):
             permissions = []
             public = False
             try:
-                policy_status_resp = s3.get_bucket_policy_status(Bucket=bucket_name)
+                policy_status_resp = s3.get_bucket_policy_status(
+                    Bucket=bucket_name)
                 public = policy_status_resp["PolicyStatus"]["IsPublic"]
 
                 if "Policy" in policy_status_resp:
@@ -56,7 +64,8 @@ def getBlocks(sub_id: str, log, path_to_output: str = "./", dry=False):
 
             versioning = None
             try:
-                versioning_response = s3.get_bucket_versioning(Bucket=bucket_name)
+                versioning_response = s3.get_bucket_versioning(
+                    Bucket=bucket_name)
                 if "Status" in versioning_response:
                     versioning = versioning_response["Status"]
 
@@ -67,7 +76,10 @@ def getBlocks(sub_id: str, log, path_to_output: str = "./", dry=False):
             # print(region)
             if region:
                 # print('Have region')
-                cloudwatch = right_session.client('cloudwatch', region_name=region)
+                cloudwatch = right_session.client(
+                    'cloudwatch',
+                    region_name=region
+                )
             else:
                 cloudwatch = right_session.client(
                     'cloudwatch',
