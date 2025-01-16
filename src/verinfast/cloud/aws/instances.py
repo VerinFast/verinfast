@@ -156,21 +156,7 @@ def get_instances(sub_id: str, profile: str = None, log=None,
         return None
 
     if not dry:
-        session = boto3.Session()
-        profiles = session.available_profiles
-        right_session = None
-        for profile in profiles:
-            s2 = boto3.Session(profile_name=profile)
-            sts = s2.client('sts')
-            try:
-                id = sts.get_caller_identity()
-            except botocore.exceptions.ClientError:
-                continue
-            if str(id['Account']) == str(sub_id):
-                right_session = s2
-                break
-        if right_session is None:
-            return None
+        right_session = boto3.Session(profile_name=profile)
         my_instances = []
         metrics = []
         for region in regions:
