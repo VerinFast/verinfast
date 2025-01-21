@@ -44,6 +44,7 @@ def test_no_config(self):
     # Check if there are any JSON files
     json_files = list(results_path.glob("*.json"))
     assert not json_files, f"Found JSON files: {json_files}"
+
     # Since this test creates it's on DebubLog, the results
     # dir will have two log files. One is timestamped and is
     # the start of the regular log the the agent creates on start.
