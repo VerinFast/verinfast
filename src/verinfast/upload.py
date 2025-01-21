@@ -39,7 +39,8 @@ class Uploader:
             "scan_id": f"{report}{code_sep}",
             "logs": f"{report}/agent_logs",
             "err_stats": f"{report}/agent_err/stats_err",
-            "err_findings": f"{report}/agent_err/findings_err"
+            "err_findings": f"{report}/agent_err/findings_err",
+            "system_info": f"{report}/system_info"
         }
 
         if report is None:
