@@ -1,0 +1,5 @@
+modules:
+  cloud:
+    - provider: aws
+      account: "436708548746"
+      profile: "default"
