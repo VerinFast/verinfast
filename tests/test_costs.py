@@ -2,7 +2,7 @@ import json
 import os
 import pytest
 from unittest.mock import patch, MagicMock
-from verinfast.cloud.aws.costs import runAws
+from verinfast.cloud.aws.costs import get_aws_costs
 
 # Mock AWS CLI responses
 MOCK_RESPONSE_1 = {
@@ -66,7 +66,7 @@ def test_aws_costs_pagination(mock_subprocess_run, tmp_path):
     mock_logger = MagicMock()
 
     # Run the function
-    output_file = runAws(
+    output_file = get_aws_costs(
         targeted_account="123456789",
         start="2024-01-01",
         end="2024-01-31",
@@ -109,7 +109,7 @@ def test_aws_costs_no_pagination(mock_subprocess_run, tmp_path):
 
     mock_logger = MagicMock()
 
-    output_file = runAws(
+    output_file = get_aws_costs(
         targeted_account="123456789",
         start="2024-01-01",
         end="2024-01-31",

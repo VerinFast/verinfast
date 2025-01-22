@@ -4,8 +4,8 @@ import subprocess
 from verinfast.cloud.aws.get_profile import find_profile
 
 
-def runAws(targeted_account, start, end, path_to_output, log,
-           profile=None, dry=False):
+def get_aws_costs(targeted_account, start, end, path_to_output, log,
+                  profile=None, dry=False):
 
     def _get_costs_and_usage(profile: str,
                              aws_output_file: str, next_token=None):

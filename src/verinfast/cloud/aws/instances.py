@@ -7,6 +7,7 @@ import boto3
 import botocore
 
 import verinfast.cloud.aws.regions as r
+from verinfast.cloud.aws.get_profile import find_profile
 from verinfast.cloud.cloud_dataclass import (
     Utilization_Datapoint as Datapoint,
     Utilization_Datum as Datum
@@ -145,24 +146,17 @@ def get_instance_utilization(
     return data
 
 
-def get_instances(sub_id: int, path_to_output: str = "./",
-                  dry=False, log=None) -> str | None:
+def get_instances(sub_id: str, profile: str = None, log=None,
+                  path_to_output: str = "./", dry=False):
+    if profile is None:
+        profile = find_profile(targeted_account=sub_id, log=log)
+
+    if profile is None:
+        log(msg="No matching profiles found", tag=sub_id)
+        return None
+
     if not dry:
-        session = boto3.Session()
-        profiles = session.available_profiles
-        right_session = None
-        for profile in profiles:
-            s2 = boto3.Session(profile_name=profile)
-            sts = s2.client('sts')
-            try:
-                id = sts.get_caller_identity()
-            except botocore.exceptions.ClientError:
-                continue
-            if str(id['Account']) == str(sub_id):
-                right_session = s2
-                break
-        if right_session is None:
-            return None
+        right_session = boto3.Session(profile_name=profile)
         my_instances = []
         metrics = []
         for region in regions:
