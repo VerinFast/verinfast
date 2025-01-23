@@ -19,6 +19,8 @@ class PackageWalker(Walker):
             entry.license = resp.get("license", "License not available")
             entry.summary = resp.get("description", "No description provided.")
         else:
+            entry.license = "License not available"
+            entry.summary = "No description provided."
             self.log(f"Error with {entry.name} {entry.specifier} response")
             self.log(license_resp)
 
