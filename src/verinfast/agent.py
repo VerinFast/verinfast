@@ -14,7 +14,8 @@ import io
 from uuid import uuid4
 
 from modernmetric.__main__ import main as modernmetric
-import semgrep.commands.scan as semgrep_scan
+# import semgrep.commands.scan as semgrep_scan
+from verinfast.sast.opengrep import check_opengrep
 
 import httpx
 from jinja2 import Environment, FileSystemLoader, select_autoescape
@@ -436,7 +437,7 @@ class Agent:
                 source=repo_name
             )
 
-        # Run SEMGrep
+        # Run SAST
         if self.config.runScan:
             if system.lower() == 'windows':
                 self.log("""
@@ -461,9 +462,22 @@ class Agent:
             if not self.config.dry:
                 self.log(msg=repo_name, tag="Scanning repository", display=True)
             try:
+                sast_install_dir = Path(os.path.expanduser('~/.verinfast/'))
+                self.log(msg=sast_install_dir, tag="SAST Install Directory", display=True)
+                sast_path = check_opengrep(sast_install_dir)
+                self.log(msg=f"Using {sast_path}", tag="SAST Path")
                 with contextlib.redirect_stdout(io.StringIO()):
                     if not self.config.dry:
-                        semgrep_scan.scan(custom_args)
+                        # opengrep scan --sarif-output=sarif.json -f rules code
+                        command = f'''{sast_path} scan \
+                            --sarif-output=sarif.json \
+                            -f rules code
+                        '''
+                        with open(findings_file, 'wb') as out_file:
+                            subprocess.run(command, shell=True, stdout=out_file, check=True)
+                        # results = subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+                        # findings = results.stdout.decode()
+                        # subprocess.run([sast_path, *custom_args], check=True)
                     if os.path.exists(findings_file):
                         with open(findings_file) as f:
                             results = json.load(f)
@@ -473,10 +487,10 @@ class Agent:
                 if e.code == 0:
                     findings_success = True
                 else:
-                    self.log(tag="ERROR", msg="SystemExit in Semgrep")
+                    self.log(tag="ERROR", msg="SystemExit in SAST")
                     self.log(e)
             except Exception as e:
-                self.log(tag="ERROR", msg="Error in Semgrep")
+                self.log(tag="ERROR", msg="Error in SAST")
                 self.log(e)
 
             # Only try to cache if scan was successful and file exists
