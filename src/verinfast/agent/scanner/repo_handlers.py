@@ -3,7 +3,6 @@ import traceback
 from pathlib import Path
 import re
 import shutil
-import subprocess
 
 from verinfast.utils.utils import get_repo_name_url_and_branch
 
