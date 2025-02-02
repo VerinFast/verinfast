@@ -17,7 +17,6 @@ def test_gcp_scan(self):
     test_folder = file_path.parent.absolute()
     results_dir = test_folder.joinpath("results").absolute()
     cfg_path = test_folder.joinpath("gcp_conf.yaml").absolute()
-    agent = Agent()
     config = Config(cfg_path=str(cfg_path))
     assert config.cfg_path == str(cfg_path)
     assert config.config is not FileNotFoundError
@@ -25,7 +24,8 @@ def test_gcp_scan(self):
     sub_id = config.config["modules"]["cloud"][0]["account"]
     config.output_dir = str(results_dir)
     config.runGit = False
-    agent.config = config
+
+    agent = Agent(config=config)
     agent.debug = DebugLog(path=agent.config.output_dir, debug=False)
     agent.log = agent.debug.log
     assert agent.config.output_dir == str(results_dir)

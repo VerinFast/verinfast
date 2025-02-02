@@ -92,10 +92,10 @@ def test_no_truncate(self):
         print(e)
         pass
     os.makedirs(results_dir, exist_ok=True)
-    agent = Agent()
     config = Config(str_path)
     config.output_dir = results_dir
-    agent.config = config
+
+    agent = Agent(config=config)
     agent.config.dry = False
     agent.config.shouldUpload = False
     agent.debug = DebugLog(path=agent.config.output_dir, debug=False)
@@ -137,12 +137,12 @@ def test_truncate(self):
         print(e)
         pass
     os.makedirs(results_dir, exist_ok=True)
-    agent = Agent()
     config = Config(str_path)
     config.output_dir = results_dir
     assert config.runGit is True
     assert config.runScan is True
-    agent.config = config
+
+    agent = Agent(config=config)
     agent.config.dry = False
     agent.config.shouldUpload = False
     agent.config.truncate_findings = True
@@ -174,7 +174,6 @@ def test_truncate_from_args(self):
         print(e)
         pass
     os.makedirs(results_dir, exist_ok=True)
-    agent = Agent()
     config = Config(str_path)
     parser = config.init_argparse()
     args = parser.parse_args(['--truncate_findings=30'])
@@ -185,7 +184,8 @@ def test_truncate_from_args(self):
     assert config.truncate_findings is True
     assert config.truncate_findings_length == 30
     config.output_dir = results_dir
-    agent.config = config
+
+    agent = Agent(config=config)
     assert agent.config.truncate_findings is True
     assert agent.config.truncate_findings_length == 30
     agent.config.dry = False

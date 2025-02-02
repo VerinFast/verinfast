@@ -8,14 +8,16 @@ from verinfast.config import Config
 def print_cloud(config_file: str):
     file_path = Path(__file__)
     test_folder = file_path.parent.absolute()
-    agent = Agent()
-    config = Config()
-    config.cfg_path = str(test_folder.joinpath(config_file).absolute())
-    config.__init__()
-    # Test not overwritten
-    assert config.cfg_path == str(test_folder.joinpath(config_file).absolute())  # noqa: E501
+
+    # Create config with the correct path from the start
+    config = Config(cfg_path=str(test_folder.joinpath(config_file).absolute()))
+
+    # Verify config was loaded correctly
+    assert config.cfg_path == str(test_folder.joinpath(config_file).absolute())
     assert config.modules.cloud
-    agent.config = config
+
+    # create agent with config
+    agent = Agent(config=config)
     for provider in agent.config.modules.cloud:
         print(provider)
 
