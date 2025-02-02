@@ -21,11 +21,11 @@ def test_no_config(self):
         print(e)
         pass
     os.makedirs(results_dir, exist_ok=True)
-    agent = Agent()
     config = Config(str_path)
     config.output_dir = results_dir
+
+    agent = Agent(config=config)
     print(agent.config.output_dir)
-    agent.config = config
     assert agent.config.use_uuid is True
     agent.config.dry = True
     agent.config.shouldUpload = True

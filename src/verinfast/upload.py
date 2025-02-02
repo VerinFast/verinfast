@@ -23,6 +23,9 @@ class Uploader:
             code (Union[str, int]) :
         """
 
+        if path_type == "scan_id":
+            return f"/report/uuid/{report}/CorsisCode"
+
         code_sep = self.config.code_separator if self.config.code_separator else ''  # noqa: E501
         cost_sep = self.config.cost_separator if self.config.cost_separator else ''  # noqa: E501
 

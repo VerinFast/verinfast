@@ -21,14 +21,13 @@ def test_no_config(self):
 def test_file(self):
     file_path = Path(__file__)
     test_folder = file_path.parent.absolute()
-    agent = Agent()
-    config = Config()
-    config.cfg_path = str(test_folder.joinpath("config.yaml").absolute())
-    config.__init__()
+    config = Config(str(test_folder.joinpath("config.yaml").absolute()))
+
     # Test not overwritten
     assert config.cfg_path == str(test_folder.joinpath("config.yaml").absolute())  # noqa: E501
     assert config.modules.cloud == []
-    agent.config = config
+
+    agent = Agent(config=config)
     assert agent.config.dry is True
     assert agent.config.runDependencies is False
     assert agent.config.reportId == 0
@@ -37,7 +36,7 @@ def test_file(self):
     agent.uploader = Uploader(agent.config.upload_conf)
     agent.up = agent.uploader.make_upload_path
     assert agent.up("logs", report=0) == '/report/0/agent_logs'
-    assert agent.getloc(config.cfg_path) >= 9
+    assert agent.scanner.getloc(config.cfg_path) >= 9
 
 
 @patch('verinfast.user.__get_input__', return_value='y')
@@ -46,11 +45,11 @@ def test_str_results_from_file(self):
     file_path = Path(__file__)
     test_folder = file_path.parent.absolute()
     results_dir = test_folder.joinpath("results").absolute()
-    agent = Agent()
     config = Config(str(test_folder.joinpath("str_conf.yaml").absolute()))
     config.output_dir = str(results_dir)
+
     assert config.runGit
-    agent.config = config
+    agent = Agent(config=config)
     agent.debug = DebugLog(path=agent.config.output_dir, debug=False)
     agent.log = agent.debug.log
     assert agent.config.output_dir == str(results_dir)

@@ -7,11 +7,12 @@ import boto3
 
 import verinfast.cloud.aws.regions as r
 from verinfast.cloud.aws.get_profile import find_profile
+
 regions = r.regions
 
 
-def getBlocks(sub_id: str, profile: str = None, log=None,
-              path_to_output: str = "./", dry=False):
+def get_aws_blocks(sub_id: str, profile: str = None, log=None,
+                   path_to_output: str = "./", dry=False):
     if profile is None:
         profile = find_profile(targeted_account=sub_id, log=log)
 

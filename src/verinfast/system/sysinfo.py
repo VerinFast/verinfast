@@ -12,7 +12,7 @@ def get_system_info() -> Dict[str, Any]:
     Falls back to basic system info if hyfetch fails.
     """
     try:
-        # Run hyfetch with a 5 second timeout
+        # Run hyfetch
         result = subprocess.run(
             ["hyfetch"],
             capture_output=True,
