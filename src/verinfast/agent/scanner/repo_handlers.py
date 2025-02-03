@@ -9,14 +9,14 @@ from verinfast.utils.utils import get_repo_name_url_and_branch
 
 class RepoHandlers:
     def _scan_remote_repos(self):
-        print(self.config.config, 'self.config.config') # noqa: E501
-        if 'repos' not in self.config.config:
-            self.log(msg='', tag="No remote repos", display=True)
+        print(self.config.config, "self.config.config")  # noqa: E501
+        if "repos" not in self.config.config:
+            self.log(msg="", tag="No remote repos", display=True)
             return
 
         repos = self.config.config["repos"]
         if not repos:
-            self.log(msg='', tag="No remote repos", display=True)
+            self.log(msg="", tag="No remote repos", display=True)
             return
 
         for repo_url in [r for r in repos if len(r) > 0]:
@@ -47,13 +47,13 @@ class RepoHandlers:
                 shutil.rmtree(self.temp_dir)
 
     def _scan_local_repos(self):
-        if 'local_repos' not in self.config.config:
-            self.log(msg='', tag="No local repos", display=True)
+        if "local_repos" not in self.config.config:
+            self.log(msg="", tag="No local repos", display=True)
             return
 
-        localrepos = self.config.config['local_repos']
+        localrepos = self.config.config["local_repos"]
         if not localrepos:
-            self.log(msg='', tag="No local repos", display=True)
+            self.log(msg="", tag="No local repos", display=True)
             return
 
         for repo_path in localrepos:

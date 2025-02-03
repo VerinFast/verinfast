@@ -5,6 +5,7 @@ import json
 
 class Printable:
     """Base class providing string representation for config classes"""
+
     def __str__(self):
         d = {}
         for key in dir(self):
@@ -13,7 +14,7 @@ class Printable:
                 if is_dataclass(x):
                     d[key] = asdict(x)
                 elif isinstance(x, date):
-                    d[key] = x.strftime('%Y-%mm-%dd')
+                    d[key] = x.strftime("%Y-%mm-%dd")
                 elif x is None:
                     d[key] = None
                 else:

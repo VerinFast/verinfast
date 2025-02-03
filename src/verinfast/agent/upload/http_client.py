@@ -12,13 +12,11 @@ class HttpClient:
         try:
             headers = {
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {self.config.token}"
+                "Authorization": f"Bearer {self.config.token}",
             }
 
             response = self.client.post(
-                f"{self.config.baseUrl}/upload/{route}",
-                headers=headers,
-                json=file_data
+                f"{self.config.baseUrl}/upload/{route}", headers=headers, json=file_data
             )
 
             if response.status_code != 200:
@@ -35,11 +33,7 @@ class HttpClient:
         """Upload file to pre-signed URL"""
         try:
             headers = {"Content-Type": "application/json"}
-            response = self.client.put(
-                upload_url,
-                headers=headers,
-                json=file_data
-            )
+            response = self.client.put(upload_url, headers=headers, json=file_data)
 
             if response.status_code != 200:
                 self.log(msg=f"Upload failed: {response.text}", tag="ERROR")
@@ -56,12 +50,11 @@ class HttpClient:
         try:
             headers = {
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {self.config.token}"
+                "Authorization": f"Bearer {self.config.token}",
             }
 
             response = self.client.get(
-                f"{self.config.baseUrl}/scan_id",
-                headers=headers
+                f"{self.config.baseUrl}/scan_id", headers=headers
             )
 
             if response.status_code != 200:
@@ -77,16 +70,13 @@ class HttpClient:
     def fetch_scan_id(self, url, headers):
         """Fetch scan ID from URL"""
         try:
-            response = self.client.get(
-                f"{self.config.baseUrl}{url}",
-                headers=headers
-            )
+            response = self.client.get(f"{self.config.baseUrl}{url}", headers=headers)
 
             if response.status_code != 200:
                 self.log(msg=f"Failed to fetch scan ID: {response.text}", tag="ERROR")
                 return None
 
-            return response.text.replace("'", "").replace('"', '')
+            return response.text.replace("'", "").replace('"', "")
 
         except Exception as e:
             self.log(msg=f"Error fetching scan ID: {str(e)}", tag="ERROR")

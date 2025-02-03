@@ -15,54 +15,61 @@ from verinfast.utils.license import report as report_license
 class ScannerTools:
     def _run_stats_scan(self, path, repo_name):
         """Run modernmetric stats scan"""
-        stats_input_file = os.path.join(self.config.output_dir, repo_name + ".filelist.json")
-        stats_output_file = os.path.join(self.config.output_dir, repo_name + ".stats.json")
+        stats_input_file = os.path.join(
+            self.config.output_dir, repo_name + ".filelist.json"
+        )
+        stats_output_file = os.path.join(
+            self.config.output_dir, repo_name + ".stats.json"
+        )
 
         if not self.config.dry:
-            self.log(msg=repo_name, tag="Analyzing repository with Modernmetric", display=True)
+            self.log(
+                msg=repo_name,
+                tag="Analyzing repository with Modernmetric",
+                display=True,
+            )
             filelist = self._get_file_list(path)
 
-            with open(stats_input_file, 'w') as f:
+            with open(stats_input_file, "w") as f:
                 f.write(json.dumps(filelist, indent=4))
 
-            custom_args = [f"--file={stats_input_file}", f"--output={stats_output_file}"]
-            modernmetric(custom_args=custom_args, license_identifier=self.config.reportId)
+            custom_args = [
+                f"--file={stats_input_file}",
+                f"--output={stats_output_file}",
+            ]
+            modernmetric(
+                custom_args=custom_args, license_identifier=self.config.reportId
+            )
             report_license(self.config.reportId, self.config, "modernmetric")
 
             # Load stats into template definition
             try:
-                with open(stats_output_file, 'r') as f:
+                with open(stats_output_file, "r") as f:
                     self._update_template_definition("stats", json.load(f))
             except Exception as e:
-                self.log(tag="ERROR", msg=f"Failed to load stats into template: {str(e)}")
+                self.log(
+                    tag="ERROR", msg=f"Failed to load stats into template: {str(e)}"
+                )
 
-        self.agent.upload(
-            file=stats_output_file,
-            route="stats",
-            source=repo_name
-        )
+        self.agent.upload(file=stats_output_file, route="stats", source=repo_name)
 
     def _run_semgrep_scan(self, repo_name):
         """Run semgrep security scan"""
-        if platform.system().lower() == 'windows':
-            self.log("""
+        if platform.system().lower() == "windows":
+            self.log(
+                """
             Windows does not support Semgrep.
             Please see the open issues here:
             https://github.com/returntocorp/semgrep/issues/1330
-                     """)
+                     """
+            )
             return
 
         findings_file = os.path.join(
-            self.config.output_dir,
-            f"{repo_name}.findings.json"
+            self.config.output_dir, f"{repo_name}.findings.json"
         )
 
-        custom_args = [
-            "--config", "auto",
-            "--json",
-            f"--json-output={findings_file}",
-            "-q"
-        ]
+        custom_args = ["--config", "auto", "--json", f"--output={findings_file}", "-q"]
 
         findings_success = False
         if not self.config.dry:
@@ -90,21 +97,14 @@ class ScannerTools:
         if findings_success and os.path.exists(findings_file):
             self._process_findings(findings_file)
 
-        self.agent.upload(
-            file=findings_file,
-            route="findings",
-            source=repo_name
-        )
+        self.agent.upload(file=findings_file, route="findings", source=repo_name)
 
     def _cache_findings(self, file_path, findings):
         """Helper method to cache findings"""
         try:
             self.cache.set(file_path, findings)
         except Exception as e:
-            self.log(
-                tag="Cache Error",
-                msg=f"Failed to cache results: {str(e)}"
-            )
+            self.log(tag="Cache Error", msg=f"Failed to cache results: {str(e)}")
 
     def _process_findings(self, findings_file):
         """Process and potentially truncate semgrep findings"""
@@ -117,20 +117,25 @@ class ScannerTools:
 
             if self.config.truncate_findings:
                 truncation_exclusion = [
-                    "cwe", "owasp", "path", "check_id", "license",
-                    "fingerprint", "message", "references", "url",
-                    "source", "severity"
+                    "cwe",
+                    "owasp",
+                    "path",
+                    "check_id",
+                    "license",
+                    "fingerprint",
+                    "message",
+                    "references",
+                    "url",
+                    "source",
+                    "severity",
                 ]
-                self.log(
-                    tag="TRUNCATING",
-                    msg=f"excluding: {truncation_exclusion}"
-                )
+                self.log(tag="TRUNCATING", msg=f"excluding: {truncation_exclusion}")
                 try:
                     findings = truncate_children(
                         findings,
                         self.log,
                         excludes=truncation_exclusion,
-                        max_length=self.config.truncate_findings_length
+                        max_length=self.config.truncate_findings_length,
                     )
                 except Exception as e:
                     self.log(tag="ERROR", msg="Error in Truncation")
@@ -148,19 +153,19 @@ class ScannerTools:
                 self.log(tag="ERROR", msg="Error in findings post-processing")
                 self.log(e)
             else:
-                self.log(msg=f"Attempted to format/truncate non existent file {findings_file}")
+                self.log(
+                    msg=f"Attempted to format/truncate non existent file {findings_file}"
+                )
 
     def _scan_dependencies(self, repo_name):
         """Scan repository dependencies"""
         dependencies_output_file = os.path.join(
-            self.config.output_dir,
-            f"{repo_name}.dependencies.json"
+            self.config.output_dir, f"{repo_name}.dependencies.json"
         )
         self.log(msg=repo_name, tag="Scanning dependencies", display=True)
         if not self.config.dry:
             dependencies_output_file = dependency_walk(
-                output_file=dependencies_output_file,
-                logger=self.log
+                output_file=dependencies_output_file, logger=self.log
             )
 
             # Load dependencies into template definition
@@ -168,11 +173,12 @@ class ScannerTools:
                 with open(dependencies_output_file, "r") as f:
                     self._update_template_definition("dependencies", json.load(f))
             except Exception as e:
-                self.log(tag="ERROR", msg=f"Failed to load dependencies into template: {str(e)}")
+                self.log(
+                    tag="ERROR",
+                    msg=f"Failed to load dependencies into template: {str(e)}",
+                )
 
         self.log(msg=dependencies_output_file, tag="Dependency File", display=False)
         self.agent.upload(
-            file=dependencies_output_file,
-            route="dependencies",
-            source=repo_name
+            file=dependencies_output_file, route="dependencies", source=repo_name
         )

@@ -1,14 +1,15 @@
 """AWS CloudWatch Metrics Module"""
+
 from datetime import datetime, timedelta
 import json
 import os
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Union
 import boto3
 import botocore
 
 from verinfast.cloud.cloud_dataclass import (
     Utilization_Datapoint as Datapoint,
-    Utilization_Datum as Datum
+    Utilization_Datum as Datum,
 )
 
 
@@ -16,52 +17,48 @@ def get_instance_utilization(
     sub_id: str,
     instances: List[Dict[str, Any]],
     session: boto3.Session,
-    path_to_output: str
+    path_to_output: str,
 ) -> None:
     """Get CloudWatch metrics for instances"""
     utilization_data = []
 
     for instance in instances:
         instance_id = instance["id"]
-        metrics = _get_instance_metrics(instance_id, session, instance.get("region", ""))
+        metrics = _get_instance_metrics(
+            instance_id, session, instance.get("region", "")
+        )
 
         if metrics:
-            utilization_data.append({
-                "id": instance_id,
-                "metrics": [metric.dict for metric in metrics]
-            })
+            utilization_data.append(
+                {"id": instance_id, "metrics": [metric.dict for metric in metrics]}
+            )
 
     _save_utilization_data(sub_id, utilization_data, path_to_output)
 
 
 def _get_instance_metrics(
-    instance_id: str,
-    session: boto3.Session,
-    region: str
+    instance_id: str, session: boto3.Session, region: str
 ) -> Optional[List[Datum]]:
     """Get CloudWatch metrics for a specific instance"""
     # Get metrics for CPU, memory, and disk
     cpu_resp = _get_metric_data(
-        metric='CPUUtilization',
-        instance_id=instance_id,
-        session=session,
-        region=region
+        metric="CPUUtilization", instance_id=instance_id, session=session, region=region
     )
 
     mem_resp = _get_metric_data(
-        metric='mem_used_percent',
+        metric="mem_used_percent",
         instance_id=instance_id,
-        namespace='CWAgent',
+        namespace="CWAgent",
         session=session,
-        region=region
+        region=region,
     )
 
     hdd_resp = _get_metric_data(
-        metric='disk_used_percent',
+        metric="disk_used_percent",
         instance_id=instance_id,
-        namespace='CWAgent',
+        namespace="CWAgent",
         session=session,
-        region=region
+        region=region,
     )
 
     # Process metrics
@@ -78,27 +75,27 @@ def _get_metric_data(
     instance_id: str,
     session: boto3.Session,
     region: str,
-    namespace: str = 'AWS/EC2',
-    unit: str = 'Percent'
+    namespace: str = "AWS/EC2",
+    unit: str = "Percent",
 ) -> Optional[Dict[str, Any]]:
     """Get raw metric data from CloudWatch"""
     try:
-        client = session.client('cloudwatch', region_name=region)
+        client = session.client("cloudwatch", region_name=region)
         return client.get_metric_statistics(
             Namespace=namespace,
             MetricName=metric,
-            Dimensions=[{'Name': 'InstanceId', 'Value': instance_id}],
+            Dimensions=[{"Name": "InstanceId", "Value": instance_id}],
             StartTime=datetime.utcnow() - timedelta(days=30),
             EndTime=datetime.utcnow(),
-            Period=60*60,
-            Statistics=['Average', 'Maximum', 'Minimum'],
-            Unit=unit
+            Period=60 * 60,
+            Statistics=["Average", "Maximum", "Minimum"],
+            Unit=unit,
         )
     except botocore.exceptions.ClientError:
         return None
 
 
-def _parse_multi(datapoint: Dict[str, Any] | List[Dict[str, Any]]) -> Datapoint:
+def _parse_multi(datapoint: Union[Dict[str, Any], List[Dict[str, Any]]]) -> Datapoint:
     """Parse multiple datapoints into a single summary"""
     dp_sum: float = 0
     dp_count: int = 0
@@ -106,20 +103,20 @@ def _parse_multi(datapoint: Dict[str, Any] | List[Dict[str, Any]]) -> Datapoint:
     dp_max: float = 0
 
     my_datapoint = Datapoint()
-    my_datapoint.Timestamp = datapoint['Timestamp']
+    my_datapoint.Timestamp = datapoint["Timestamp"]
 
     if not isinstance(datapoint, list):
         datapoint = [datapoint]
 
     for entry in datapoint:
-        if 'Average' in entry:
-            e = entry['Average']
+        if "Average" in entry:
+            e = entry["Average"]
             dp_sum += e
             dp_count += 1
-        if 'Minimum' in entry:
-            dp_min += entry['Minimum']
-        if 'Maximum' in entry:
-            dp_max += entry['Maximum']
+        if "Minimum" in entry:
+            dp_min += entry["Minimum"]
+        if "Maximum" in entry:
+            dp_max += entry["Maximum"]
 
     dp_count = max(dp_count, 1)
     my_datapoint.Average = dp_sum / dp_count
@@ -131,29 +128,27 @@ def _parse_multi(datapoint: Dict[str, Any] | List[Dict[str, Any]]) -> Datapoint:
 
 def _process_cpu_metrics(response: Optional[Dict[str, Any]]) -> List[Datapoint]:
     """Process CPU metrics"""
-    if not response or 'Datapoints' not in response:
+    if not response or "Datapoints" not in response:
         return []
-    return [_parse_multi(dp) for dp in response['Datapoints']]
+    return [_parse_multi(dp) for dp in response["Datapoints"]]
 
 
 def _process_memory_metrics(response: Optional[Dict[str, Any]]) -> List[Datapoint]:
     """Process memory metrics"""
-    if not response or 'Datapoints' not in response:
+    if not response or "Datapoints" not in response:
         return []
-    return [Datapoint.From(dp) for dp in response['Datapoints']]
+    return [Datapoint.From(dp) for dp in response["Datapoints"]]
 
 
 def _process_disk_metrics(response: Optional[Dict[str, Any]]) -> List[Datapoint]:
     """Process disk metrics"""
-    if not response or 'Datapoints' not in response:
+    if not response or "Datapoints" not in response:
         return []
-    return [_parse_multi(dp) for dp in response['Datapoints']]
+    return [_parse_multi(dp) for dp in response["Datapoints"]]
 
 
 def _combine_metrics(
-    cpu_stats: List[Datapoint],
-    mem_stats: List[Datapoint],
-    hdd_stats: List[Datapoint]
+    cpu_stats: List[Datapoint], mem_stats: List[Datapoint], hdd_stats: List[Datapoint]
 ) -> List[Datum]:
     """Combine different metrics into unified data points"""
     data = []
@@ -173,19 +168,16 @@ def _combine_metrics(
 
 
 def _save_utilization_data(
-    sub_id: str,
-    utilization_data: List[Dict[str, Any]],
-    path_to_output: str
+    sub_id: str, utilization_data: List[Dict[str, Any]], path_to_output: str
 ) -> None:
     """Save utilization data to file"""
     output = {
-        "metadata": {
-            "provider": "aws",
-            "account": str(sub_id)
-        },
-        "data": utilization_data
+        "metadata": {"provider": "aws", "account": str(sub_id)},
+        "data": utilization_data,
     }
 
-    output_file = os.path.join(path_to_output, f"aws-instances-{sub_id}-utilization.json")
-    with open(output_file, 'w') as f:
+    output_file = os.path.join(
+        path_to_output, f"aws-instances-{sub_id}-utilization.json"
+    )
+    with open(output_file, "w") as f:
         json.dump(output, f, indent=4)

@@ -13,6 +13,7 @@ class UploadConfig(Printable):
         code_separator (str): Code path separator
         cost_separator (str): Cost path separator
     """
+
     uuid: bool = False
     prefix: Optional[str] = "/report/"
     code_separator: Optional[str] = "/CorsisCode"
@@ -23,5 +24,5 @@ class UploadConfig(Printable):
         if self.prefix:
             if not isinstance(self.prefix, str):
                 raise TypeError("prefix must be a string")
-            if not self.prefix.startswith('/'):
+            if not self.prefix.startswith("/"):
                 self.prefix = f"/{self.prefix}"

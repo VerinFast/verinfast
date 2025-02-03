@@ -10,10 +10,10 @@ from verinfast.utils.utils import DebugLog
 file_path = Path(__file__)
 test_folder = file_path.parent.absolute()
 results_dir = test_folder.joinpath("results").absolute()
-str_path = str(test_folder.joinpath('str_conf.yaml').absolute())
+str_path = str(test_folder.joinpath("str_conf.yaml").absolute())
 
 
-@patch('verinfast.user.__get_input__', return_value='y')
+@patch("verinfast.user.__get_input__", return_value="y")
 def test_no_config(self):
     try:
         shutil.rmtree(results_dir)
@@ -23,7 +23,7 @@ def test_no_config(self):
     os.makedirs(results_dir, exist_ok=True)
     config = Config(str_path)
     config.output_dir = results_dir
-    print(config.output_dir, 'config.output_dir')
+    print(config.output_dir, "config.output_dir")
 
     # create agent with config
     agent = Agent(config=config)
@@ -31,7 +31,7 @@ def test_no_config(self):
     agent.config.shouldUpload = True
     agent.debug = DebugLog(path=agent.config.output_dir, debug=False)
     agent.log = agent.debug.log
-    print(agent.debug.file, 'agent.debug.file')
+    print(agent.debug.file, "agent.debug.file")
     agent.scan()
     assert Path(results_dir).exists()
     assert results_dir.joinpath("results.html").exists()

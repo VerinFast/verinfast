@@ -22,21 +22,21 @@ def print_cloud(config_file: str):
         print(provider)
 
 
-@patch('verinfast.user.__get_input__', return_value='y')
+@patch("verinfast.user.__get_input__", return_value="y")
 def test_gcp(self):
     config_file = "gcp_conf.yaml"
     print_cloud(config_file=config_file)
     assert True
 
 
-@patch('verinfast.user.__get_input__', return_value='y')
+@patch("verinfast.user.__get_input__", return_value="y")
 def test_aws(self):
     config_file = "aws_conf.yaml"
     print_cloud(config_file=config_file)
     assert True
 
 
-@patch('verinfast.user.__get_input__', return_value='y')
+@patch("verinfast.user.__get_input__", return_value="y")
 def test_aws_dash(self):
     config_file = "aws_dash.yaml"
     print_cloud(config_file=config_file)

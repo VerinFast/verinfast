@@ -1,4 +1,5 @@
 """AWS Instance Management Module"""
+
 import json
 import os
 from typing import Optional, List, Dict, Any
@@ -15,7 +16,7 @@ def get_instances(
     profile: str = None,
     log=None,
     path_to_output: str = "./",
-    dry: bool = False
+    dry: bool = False,
 ) -> Optional[str]:
     """Get AWS EC2 instance information"""
     if dry:
@@ -38,7 +39,7 @@ def get_instances(
         return None
 
     # Save instance data
-    output_file = os.path.join(path_to_output, f'aws-instances-{sub_id}.json')
+    output_file = os.path.join(path_to_output, f"aws-instances-{sub_id}.json")
     _save_instance_data(sub_id, instances_data, output_file)
 
     # Get and save utilization data
@@ -47,21 +48,18 @@ def get_instances(
     return output_file
 
 
-def _collect_instances_data(
-    session: boto3.Session,
-    log
-) -> List[Dict[str, Any]]:
+def _collect_instances_data(session: boto3.Session, log) -> List[Dict[str, Any]]:
     """Collect instance data from all regions"""
     instances = []
 
     for region in regions.regions:
         try:
-            client = session.client('ec2', region_name=region)
-            paginator = client.get_paginator('describe_instances')
+            client = session.client("ec2", region_name=region)
+            paginator = client.get_paginator("describe_instances")
 
             for page in paginator.paginate():
-                for reservation in page['Reservations']:
-                    for instance in reservation['Instances']:
+                for reservation in page["Reservations"]:
+                    for instance in reservation["Instances"]:
                         try:
                             instance_info = process_instance_data(instance, region)
                             instances.append(instance_info)
@@ -77,18 +75,13 @@ def _collect_instances_data(
 
 
 def _save_instance_data(
-    sub_id: str,
-    instances: List[Dict[str, Any]],
-    output_file: str
+    sub_id: str, instances: List[Dict[str, Any]], output_file: str
 ) -> None:
     """Save instance data to file"""
     output = {
-        "metadata": {
-            "provider": "aws",
-            "account": str(sub_id)
-        },
-        "data": instances
+        "metadata": {"provider": "aws", "account": str(sub_id)},
+        "data": instances,
     }
 
-    with open(output_file, 'w') as f:
+    with open(output_file, "w") as f:
         json.dump(output, f, indent=4)

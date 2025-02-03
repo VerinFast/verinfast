@@ -17,9 +17,11 @@ def parse_date(date_str: str) -> date:
         ValueError: If date string is invalid
     """
     try:
-        return datetime.strptime(date_str, '%Y-%m-%d').date()
+        return datetime.strptime(date_str, "%Y-%m-%d").date()
     except ValueError as e:
-        raise ValueError(f"Invalid date format. Expected YYYY-MM-DD, got {date_str}") from e
+        raise ValueError(
+            f"Invalid date format. Expected YYYY-MM-DD, got {date_str}"
+        ) from e
 
 
 def format_date(d: date) -> str:
@@ -31,12 +33,11 @@ def format_date(d: date) -> str:
     Returns:
         str: Formatted date string
     """
-    return d.strftime('%Y-%m-%d')
+    return d.strftime("%Y-%m-%d")
 
 
 def validate_date_range(
-    start: Optional[str] = None,
-    end: Optional[str] = None
+    start: Optional[str] = None, end: Optional[str] = None
 ) -> Tuple[str, str]:
     """Validate and normalize date range
 
@@ -60,8 +61,6 @@ def validate_date_range(
 
     # Validate range
     if end_date < start_date:
-        raise ValueError(
-            f"End date ({end}) cannot be before start date ({start})"
-        )
+        raise ValueError(f"End date ({end}) cannot be before start date ({start})")
 
     return format_date(start_date), format_date(end_date)

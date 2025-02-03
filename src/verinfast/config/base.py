@@ -1,20 +1,22 @@
 import os
 import sys
 from datetime import datetime
-from pathlib import Path
 from typing import Optional
 
 from verinfast.utils.utils import DebugLog
 
 from .constants import DEFAULT_CONFIG_PATH, DEFAULT_SCAN_PATH
-from .modules import ConfigModules, CodeModule, GitModule
+from .modules import ConfigModules
+from .modules.code import CodeModule, GitModule
 from .modules.upload import UploadConfig
 from .parsers.args import init_argparse, handle_args
 from .parsers.file import (
-    is_remote_path, fetch_remote_config,
-    find_config_file, parse_config_file
+    is_remote_path,
+    fetch_remote_config,
+    find_config_file,
+    parse_config_file,
 )
-from .utils.printable import Printable
+from .utils import Printable
 
 
 class Config(Printable):
@@ -29,7 +31,7 @@ class Config(Printable):
 
     def __init__(self, cfg_path: Optional[str] = None) -> None:
         # Initialize basic attributes
-        self.baseUrl: str = ''
+        self.baseUrl: str = ""
         self.cfg_path: str = cfg_path or DEFAULT_CONFIG_PATH
         self.original_cfg_path: str = self.cfg_path
         self.config = FileNotFoundError
@@ -39,16 +41,12 @@ class Config(Printable):
         self.delete_temp = True
         self.dry: bool = False
         self.local_scan_path: str = DEFAULT_SCAN_PATH
-        self.modules = ConfigModules(
-                    code=CodeModule(git=GitModule()),
-                    cloud=[]
-                )
+        self.modules = ConfigModules(code=CodeModule(git=GitModule()), cloud=[])
 
         # Set up paths
         self.output_dir = os.path.join(os.getcwd(), "results")
         self.log_file = os.path.join(
-            self.output_dir,
-            datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_log.txt"
+            self.output_dir, datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_log.txt"
         )
 
         # Initialize flags
@@ -90,7 +88,7 @@ class Config(Printable):
         supported_protocols = ["http", "https"]
         ps = "://"
         for sp in supported_protocols:
-            if s.lower().startswith(sp+ps):
+            if s.lower().startswith(sp + ps):
                 return True
         return False
 
@@ -98,7 +96,7 @@ class Config(Printable):
         """Initialize configuration from file and arguments"""
         # Parse command line arguments if not in test mode
         args = None
-        if 'pytest' not in sys.argv[0]:
+        if "pytest" not in sys.argv[0]:
             parser = init_argparse()
             args = parser.parse_args()
             if args.config:
@@ -121,12 +119,9 @@ class Config(Printable):
 
         # Set default local repository if no targets specified
         if (
-            "repos" not in self.config and
-            "local_repos" not in self.config and
-            (
-                "modules" not in self.config or
-                "cloud" not in self.config["modules"]
-            )
+            "repos" not in self.config
+            and "local_repos" not in self.config
+            and ("modules" not in self.config or "cloud" not in self.config["modules"])
         ):
             self.config["local_repos"] = [self.local_scan_path]
             gm = GitModule()
@@ -135,7 +130,7 @@ class Config(Printable):
             self.runGit = False
 
         # Apply command line arguments
-        if args and 'pytest' not in sys.argv[0]:
+        if args and "pytest" not in sys.argv[0]:
             handle_args(self, args)
         # Set up logging
         self._initialize_logging(args)
@@ -146,10 +141,6 @@ class Config(Printable):
         # Initialize upload configuration
         self._initialize_upload_config()
 
-    def handle_config_file(self) -> None:
-        """Parse and apply configuration from file"""
-        self.config = parse_config_file(self, self.cfg_path)
-
     def _set_default_config(self) -> None:
         """Set default configuration if none provided"""
         if self.config is FileNotFoundError:
@@ -157,12 +148,9 @@ class Config(Printable):
 
         # Set default local repository if no targets specified
         if (
-            "repos" not in self.config and
-            "local_repos" not in self.config and
-            (
-                "modules" not in self.config or
-                "cloud" not in self.config["modules"]
-            )
+            "repos" not in self.config
+            and "local_repos" not in self.config
+            and ("modules" not in self.config or "cloud" not in self.config["modules"])
         ):
             self.config["local_repos"] = [self.local_scan_path]
             gm = GitModule()
@@ -170,10 +158,10 @@ class Config(Printable):
             self.modules = ConfigModules(code=cm, cloud=[])
             self.runGit = False
         elif (
-            "repos" in self.config and
-            "modules" in self.config and
-            "code" in self.config["modules"] and
-            "git" in self.config["modules"]["code"]
+            "repos" in self.config
+            and "modules" in self.config
+            and "code" in self.config["modules"]
+            and "git" in self.config["modules"]["code"]
         ):
             self.runGit = True
 
@@ -193,20 +181,23 @@ class Config(Printable):
         """Initialize logging configuration"""
         os.makedirs(self.output_dir, exist_ok=True)
         self.log_file = os.path.join(
-            self.output_dir,
-            datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_log.txt"
+            self.output_dir, datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_log.txt"
         )
 
         debugLog = DebugLog(file=self.log_file)
         debugLog.log(msg="VerinFast Scan Started", tag="", display=True)
         debugLog.log(msg=self.config, tag="Loaded Configuration", display=True)
 
-        if 'pytest' not in sys.argv[0]:
+        if "pytest" not in sys.argv[0]:
             debugLog.log(msg=args, tag="Arguments", display=True)
 
-        debugLog.log(msg={
-            "baseurl": self.baseUrl,
-            "should_upload": self.shouldUpload,
-            "dry": self.dry,
-            "uuid": self.reportId,
-        }, tag="Run Configuration", display=True)
+        debugLog.log(
+            msg={
+                "baseurl": self.baseUrl,
+                "should_upload": self.shouldUpload,
+                "dry": self.dry,
+                "uuid": self.reportId,
+            },
+            tag="Run Configuration",
+            display=True,
+        )

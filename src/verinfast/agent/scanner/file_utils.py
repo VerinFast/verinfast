@@ -9,10 +9,7 @@ class FileUtils:
             for name in files:
                 fp = os.path.join(filepath, name)
                 if self._is_allowed_file(fp):
-                    filelist.append({
-                        "name": name,
-                        "path": fp
-                    })
+                    filelist.append({"name": name, "path": fp})
         return filelist
 
     def _is_allowed_file(self, path, allow_dir=False):
@@ -20,19 +17,19 @@ class FileUtils:
         normpath = os.path.normpath(path)
         dirlist = normpath.split(os.sep)
         return (
-            "node_modules" not in dirlist and
-            ".git" not in dirlist and
-            not os.path.islink(path) and
-            (os.path.isfile(path) or allow_dir)
+            "node_modules" not in dirlist
+            and ".git" not in dirlist
+            and not os.path.islink(path)
+            and (os.path.isfile(path) or allow_dir)
         )
 
-    def get_raw_size(self, start_path='.'):
+    def get_raw_size(self, start_path="."):
         """Get recursive size of a directory"""
         total_size = 0
         for dirpath, dirnames, filenames in os.walk(start_path):
             for f in filenames:
                 fp = os.path.join(dirpath, f)
-                if (os.path.isfile(fp) and not os.path.islink(fp)):
+                if os.path.isfile(fp) and not os.path.islink(fp):
                     total_size += os.path.getsize(fp)
         return total_size
 
@@ -45,5 +42,6 @@ class FileUtils:
                     if line.strip():
                         count += 1
             return count
-        except:
+        except Exception as e:
+            self.log(tag="ERROR", msg=f"Error getting lines of code: {str(e)}")
             return 0
