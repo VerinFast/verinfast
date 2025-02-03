@@ -1,10 +1,11 @@
 import os
 import yaml
-from typing import Dict, Any, List
+from typing import Dict, Any
 from pathlib import Path
 import httpx
 from uuid import uuid4
 
+from verinfast.config.modules import ConfigModules
 from ..constants import SUPPORTED_PROTOCOLS, PROTOCOL_SEPARATOR
 from ..modules.code import GitModule, CodeModule
 from ..modules.cloud import CloudProvider
@@ -42,7 +43,7 @@ def fetch_remote_config(path: str) -> str:
         response.raise_for_status()
 
         local_path = str(uuid4()) + ".yaml"
-        with open(local_path, 'wb') as f:
+        with open(local_path, "wb") as f:
             f.write(response.content)
 
         return local_path
@@ -133,29 +134,32 @@ def _parse_modules(config: Any, modules: Dict) -> None:
         config: Config instance to update
         modules: Module configuration dictionary
     """
-    git_module = GitModule()
-    code_module = CodeModule(git=git_module)
-    cloud_modules: List[CloudProvider] = []
+    cloud_modules = []
+    if "cloud" in modules:
+        for provider_config in modules["cloud"]:
+            try:
+                provider = CloudProvider(**provider_config)
+                cloud_modules.append(provider)
+            except Exception as e:
+                config.log(f"Error parsing cloud provider config: {str(e)}")
 
+    code_module = None
     if "code" in modules:
         code = modules["code"]
-        # Update run flags
-        config.runGit = code.get("run_git", config.runGit)
-        config.runScan = code.get("run_scan", config.runScan)
-        config.runSizes = code.get("run_sizes", config.runSizes)
-        config.runStats = code.get("run_stats", config.runStats)
+        git_module = GitModule()
 
         if "git" in code:
             git_config = code["git"]
             if "start" in git_config:
                 git_module.start = git_config["start"]
 
+        code_module = CodeModule(git=git_module)
+
+        # Update run flags
+        config.runGit = code.get("run_git", False)
+        config.runScan = code.get("run_scan", config.runScan)
+        config.runSizes = code.get("run_sizes", config.runSizes)
+        config.runStats = code.get("run_stats", config.runStats)
         config.runDependencies = code.get("dependencies", config.runDependencies)
 
-    if "cloud" in modules:
-        for provider_config in modules["cloud"]:
-            provider = CloudProvider(**provider_config)
-            cloud_modules.append(provider)
-
-    config.modules.code = code_module
-    config.modules.cloud = cloud_modules
+    config.modules = ConfigModules(code=code_module, cloud=cloud_modules)

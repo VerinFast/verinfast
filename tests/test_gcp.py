@@ -10,7 +10,7 @@ from verinfast.utils.utils import DebugLog
 import verinfast.user
 
 
-@patch('verinfast.user.__get_input__', return_value='y')
+@patch("verinfast.user.__get_input__", return_value="y")
 def test_gcp_scan(self):
     assert verinfast.user.initial_prompt is not None
     file_path = Path(__file__)
@@ -43,9 +43,7 @@ def test_gcp_scan(self):
     with open(results_dir.joinpath(f"gcp-instances-{sub_id}.json")) as f:
         instances = json.load(f)
         assert len(instances["data"]) >= 1
-    with open(
-        results_dir.joinpath(f"gcp-instances-{sub_id}-utilization.json")
-    ) as f:
+    with open(results_dir.joinpath(f"gcp-instances-{sub_id}-utilization.json")) as f:
         utilization = json.load(f)
         for u in utilization["data"]:
             assert isinstance(u["id"], str)

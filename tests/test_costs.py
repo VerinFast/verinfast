@@ -12,17 +12,12 @@ MOCK_RESPONSE_1 = {
             "Groups": [
                 {
                     "Keys": ["AWS Service 1"],
-                    "Metrics": {
-                        "BlendedCost": {
-                            "Amount": "100.00",
-                            "Unit": "USD"
-                        }
-                    }
+                    "Metrics": {"BlendedCost": {"Amount": "100.00", "Unit": "USD"}},
                 }
-            ]
+            ],
         }
     ],
-    "NextPageToken": "mock-token-123"
+    "NextPageToken": "mock-token-123",
 }
 
 MOCK_RESPONSE_2 = {
@@ -32,14 +27,9 @@ MOCK_RESPONSE_2 = {
             "Groups": [
                 {
                     "Keys": ["AWS Service 2"],
-                    "Metrics": {
-                        "BlendedCost": {
-                            "Amount": "200.00",
-                            "Unit": "USD"
-                        }
-                    }
+                    "Metrics": {"BlendedCost": {"Amount": "200.00", "Unit": "USD"}},
                 }
-            ]
+            ],
         }
     ]
 }
@@ -47,15 +37,14 @@ MOCK_RESPONSE_2 = {
 
 @pytest.fixture
 def mock_subprocess_run():
-    with patch('subprocess.run') as mock_run:
+    with patch("subprocess.run") as mock_run:
         # First call returns response with NextPageToken
         first_response = MagicMock()
         first_response.stdout.decode.return_value = json.dumps(MOCK_RESPONSE_1)
 
         # Second call returns response without NextPageToken
         second_response = MagicMock()
-        second_response.stdout.decode.return_value = json.dumps(
-            MOCK_RESPONSE_2)
+        second_response.stdout.decode.return_value = json.dumps(MOCK_RESPONSE_2)
 
         mock_run.side_effect = [first_response, second_response]
         yield mock_run
@@ -72,7 +61,7 @@ def test_aws_costs_pagination(mock_subprocess_run, tmp_path):
         end="2024-01-31",
         path_to_output=str(tmp_path),
         log=mock_logger,
-        profile="test-profile"
+        profile="test-profile",
     )
 
     # Verify subprocess.run was called twice (pagination)
@@ -85,7 +74,7 @@ def test_aws_costs_pagination(mock_subprocess_run, tmp_path):
     # Verify the output file exists and contains combined data
     assert os.path.exists(output_file)
 
-    with open(output_file, 'r') as f:
+    with open(output_file, "r") as f:
         result = json.load(f)
 
     # Verify metadata
@@ -115,7 +104,7 @@ def test_aws_costs_no_pagination(mock_subprocess_run, tmp_path):
         end="2024-01-31",
         path_to_output=str(tmp_path),
         log=mock_logger,
-        profile="test-profile"
+        profile="test-profile",
     )
 
     # Verify subprocess.run was called only once (no pagination)
@@ -124,7 +113,7 @@ def test_aws_costs_no_pagination(mock_subprocess_run, tmp_path):
     # Verify the output file exists and contains correct data
     assert os.path.exists(output_file)
 
-    with open(output_file, 'r') as f:
+    with open(output_file, "r") as f:
         result = json.load(f)
 
     # Verify data

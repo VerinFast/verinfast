@@ -53,7 +53,7 @@ class Uploader:
         try:
             headers = {
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {self.config.token}"
+                "Authorization": f"Bearer {self.config.token}",
             }
 
             get_url = self.http_client.get_scan_id_url()

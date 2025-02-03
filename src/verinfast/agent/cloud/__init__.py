@@ -1,3 +1,3 @@
 from .base import CloudScanner
 
-__all__ = ['CloudScanner']
+__all__ = ["CloudScanner"]

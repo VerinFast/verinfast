@@ -4,7 +4,7 @@ from typing import Optional, Union
 
 
 @dataclass
-class Utilization_Datapoint():
+class Utilization_Datapoint:
     Minimum: Optional[float] = None
     Average: Optional[float] = None
     Maximum: Optional[float] = None
@@ -13,11 +13,7 @@ class Utilization_Datapoint():
     @property
     def dict(self):
         o = {}
-        if (
-            self.Minimum is None and
-            self.Average is None and
-            self.Maximum is None
-        ):
+        if self.Minimum is None and self.Average is None and self.Maximum is None:
             return None
 
         if self.Minimum is not None:
@@ -32,15 +28,14 @@ class Utilization_Datapoint():
     def From(i: dict):
         if {"Minimum", "Average", "Maximum"} <= i.keys():
             return Utilization_Datapoint(
-                Minimum=i["Minimum"],
-                Average=i["Average"],
-                Maximum=i["Maximum"])
+                Minimum=i["Minimum"], Average=i["Average"], Maximum=i["Maximum"]
+            )
         else:
             raise Exception("Invalid Datapoint")
 
 
 @dataclass
-class Utilization_Datum():
+class Utilization_Datum:
     Timestamp: Union[datetime, float]
     cpu: Optional[Utilization_Datapoint] = None
     mem: Optional[Utilization_Datapoint] = None

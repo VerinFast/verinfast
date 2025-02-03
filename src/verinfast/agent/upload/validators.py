@@ -43,13 +43,13 @@ def validate_upload_params(route, file, log):
 def validate_route(route):
     """Validate upload route"""
     valid_routes = [
-        'findings',
-        'stats',
-        'dependencies',
-        'costs',
-        'instances',
-        'storage',
-        'utilization'
+        "findings",
+        "stats",
+        "dependencies",
+        "costs",
+        "instances",
+        "storage",
+        "utilization",
     ]
     return route in valid_routes
 
@@ -65,5 +65,5 @@ def validate_file_name(filename):
 
 def validate_json_content(content):
     """Validate JSON content structure"""
-    required_fields = ['filename', 'size', 'id', 'source']
+    required_fields = ["filename", "size", "id", "source"]
     return all(field in content for field in required_fields)

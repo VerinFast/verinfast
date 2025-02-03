@@ -19,11 +19,14 @@ class CloudScanner:
         self.config = agent.config
         self.log = agent.log
 
-    def scanCloud(self):
+    def scanCloud(self, config=None):
         """Main cloud scanning method"""
-        self.log(msg='', tag="Doing cloud scan", display=True)
+        # Need to reset config if it has changed
+        if config:
+            self.config = config
+        self.log(msg="", tag="Doing cloud scan", display=True)
         cloud_config = self.config.modules.cloud
-        self.log(msg=cloud_config, tag='Cloud Config')
+        self.log(msg=cloud_config, tag="Cloud Config")
 
         if cloud_config is None:
             return
@@ -52,15 +55,13 @@ class CloudScanner:
             self.log(
                 msg=f"{name} is required but it's not installed.",
                 tag=f"{name} status",
-                display=True
+                display=True,
             )
             if kill:
                 raise RuntimeError(f"{name} is required but it's not installed.")
             return False
         self.log(
-            msg=f"{name} is installed at {which}.",
-            tag=f"{name} status",
-            display=True
+            msg=f"{name} is installed at {which}.", tag=f"{name} status", display=True
         )
         return True
 
@@ -69,14 +70,14 @@ class CloudScanner:
         if not self._check_dependency("aws", "AWS Command-line tool"):
             return
 
-        account_id = str(provider.account).replace('-', '')
+        account_id = str(provider.account).replace("-", "")
         # Verify AWS profile access
         if find_profile(account_id, self.log) is None:
             self.log(
                 tag=f"No matching AWS CLI profiles found for {provider.account}",
                 msg="Account can't be scanned.",
                 display=True,
-                timestamp=False
+                timestamp=False,
             )
             return
         else:
@@ -84,7 +85,7 @@ class CloudScanner:
                 tag="AWS account access confirmed",
                 msg=account_id,
                 display=True,
-                timestamp=False
+                timestamp=False,
             )
         # Costs
         aws_cost_file = get_aws_costs(
@@ -94,7 +95,7 @@ class CloudScanner:
             profile=provider.profile,
             path_to_output=self.config.output_dir,
             log=self.log,
-            dry=self.config.dry
+            dry=self.config.dry,
         )
         if aws_cost_file:
             self.log(msg=aws_cost_file, tag="AWS Costs")
@@ -103,24 +104,25 @@ class CloudScanner:
         aws_instance_file = get_aws_instances(
             sub_id=account_id,
             path_to_output=self.config.output_dir,
-            dry=self.config.dry
+            dry=self.config.dry,
         )
         if aws_instance_file:
             self.log(msg=aws_instance_file, tag="AWS Instances")
             self.agent.upload(file=aws_instance_file, route="instances", source="AWS")
         # Utilization
         aws_utilization_file = os.path.join(
-            self.config.output_dir,
-            f'aws-instances-{account_id}-utilization.json'
+            self.config.output_dir, f"aws-instances-{account_id}-utilization.json"
         )
         if Path(aws_utilization_file).is_file():
-            self.agent.upload(file=aws_utilization_file, route="utilization", source="AWS")
+            self.agent.upload(
+                file=aws_utilization_file, route="utilization", source="AWS"
+            )
         # Storage blocks
         aws_block_file = get_aws_blocks(
             sub_id=account_id,
             path_to_output=self.config.output_dir,
             log=self.log,
-            dry=self.config.dry
+            dry=self.config.dry,
         )
         if aws_block_file:
             self.log(msg=aws_block_file, tag="AWS Storage")
@@ -137,7 +139,7 @@ class CloudScanner:
             end=provider.end,
             path_to_output=self.config.output_dir,
             log=self.log,
-            dry=self.config.dry
+            dry=self.config.dry,
         )
         if azure_cost_file:
             self.log(msg=azure_cost_file, tag="Azure Costs")
@@ -147,23 +149,26 @@ class CloudScanner:
             sub_id=provider.account,
             path_to_output=self.config.output_dir,
             dry=self.config.dry,
-            log=self.log
+            log=self.log,
         )
         if azure_instance_file:
             self.log(msg=azure_instance_file, tag="Azure instances")
-            self.agent.upload(file=azure_instance_file, route="instances", source="Azure")
+            self.agent.upload(
+                file=azure_instance_file, route="instances", source="Azure"
+            )
         # Utilization
         azure_utilization_file = os.path.join(
-            self.config.output_dir,
-            f'az-instances-{provider.account}-utilization.json'
+            self.config.output_dir, f"az-instances-{provider.account}-utilization.json"
         )
         if Path(azure_utilization_file).is_file():
-            self.agent.upload(file=azure_utilization_file, route="utilization", source="Azure")
+            self.agent.upload(
+                file=azure_utilization_file, route="utilization", source="Azure"
+            )
         # Storage blocks
         azure_block_file = get_az_blocks(
             sub_id=provider.account,
             path_to_output=self.config.output_dir,
-            dry=self.config.dry
+            dry=self.config.dry,
         )
         if azure_block_file:
             self.log(msg=azure_block_file, tag="Azure Storage")
@@ -177,23 +182,24 @@ class CloudScanner:
         gcp_instance_file = get_gcp_instances(
             sub_id=provider.account,
             path_to_output=self.config.output_dir,
-            dry=self.config.dry
+            dry=self.config.dry,
         )
         if gcp_instance_file:
             self.log(msg=gcp_instance_file, tag="GCP instances")
             self.agent.upload(file=gcp_instance_file, route="instances", source="GCP")
         # Utilization
         gcp_utilization_file = os.path.join(
-            self.config.output_dir,
-            f'gcp-instances-{provider.account}-utilization.json'
+            self.config.output_dir, f"gcp-instances-{provider.account}-utilization.json"
         )
         if Path(gcp_utilization_file).is_file():
-            self.agent.upload(file=gcp_utilization_file, route="utilization", source="GCP")
+            self.agent.upload(
+                file=gcp_utilization_file, route="utilization", source="GCP"
+            )
         # Storage blocks
         gcp_block_file = get_gcp_blocks(
             sub_id=provider.account,
             path_to_output=self.config.output_dir,
-            dry=self.config.dry
+            dry=self.config.dry,
         )
         if gcp_block_file:
             self.log(msg=gcp_block_file, tag="GCP Storage")

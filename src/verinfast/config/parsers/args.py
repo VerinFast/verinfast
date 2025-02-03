@@ -10,24 +10,25 @@ def init_argparse() -> argparse.ArgumentParser:
     overwriting config file values
     """
     parser = argparse.ArgumentParser(
-        prog="verinfast",
-        usage="%(prog)s [OPTION] [FILE]..."
+        prog="verinfast", usage="%(prog)s [OPTION] [FILE]..."
     )
 
     parser.add_argument(
-        "-c", "--config",
-        dest="config",
-        help="Path to config file (local or remote)"
+        "-c", "--config", dest="config", help="Path to config file (local or remote)"
     )
 
     parser.add_argument(
-        "-o", "--output", "--output_dir",
+        "-o",
+        "--output",
+        "--output_dir",
         dest="output_dir",
-        help="Output directory for results"
+        help="Output directory for results",
     )
 
     parser.add_argument(
-        "-t", "--truncate", "--truncate_findings",
+        "-t",
+        "--truncate",
+        "--truncate_findings",
         dest="truncate_findings",
         type=int,
         help="""This flag will further enhance privacy by capping
@@ -36,50 +37,46 @@ def init_argparse() -> argparse.ArgumentParser:
 
                 <0 = unlimited
                 We recommend 30 as good balance between privacy and utility
-                """
-        )
+                """,
+    )
 
     parser.add_argument(
-        "-d", "--dry",
+        "-d",
+        "--dry",
         dest="dry",
         action="store_true",
-        help="Skip scans, only attempt uploads"
+        help="Skip scans, only attempt uploads",
     )
 
     parser.add_argument(
         "--should_upload",
         action="store_true",
         dest="should_upload",
-        help="Enable result upload to specified base_url"
+        help="Enable result upload to specified base_url",
     )
 
     parser.add_argument(
-        "--base_url",
-        type=str,
-        dest="base_url",
-        help="Server URL for uploading results"
+        "--base_url", type=str, dest="base_url", help="Server URL for uploading results"
     )
 
     parser.add_argument(
-        "--uuid",
-        type=str,
-        dest="uuid",
-        help="Secret key for server identification"
+        "--uuid", type=str, dest="uuid", help="Secret key for server identification"
     )
 
     parser.add_argument(
         "--path",
         type=str,
         dest="local_scan_path",
-        help="Single path to scan (ignored if config specifies repos)"
+        help="Single path to scan (ignored if config specifies repos)",
     )
 
     parser.add_argument(
-        "--should_git", "-g",
+        "--should_git",
+        "-g",
         action="store_true",
         dest="should_git",
         help="""Used to skip contributions and only run a
-                    code quality scan."""
+                    code quality scan.""",
     )
 
     return parser
