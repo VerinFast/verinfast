@@ -1,3 +1,4 @@
-from .core import Agent
+"""Agent initialization module"""
+from .core import Agent, main
 
-__all__ = ['Agent']
+__all__ = ['Agent', 'main']

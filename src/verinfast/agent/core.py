@@ -1,17 +1,24 @@
 #!/usr/bin/env python3
+from datetime import date
+import json
 from pathlib import Path
+import shutil
 from typing import Optional
 import os
+from uuid import uuid4
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 import httpx
 
 from verinfast.utils.utils import DebugLog
+from verinfast.system.sysinfo import get_system_info
 from verinfast.upload import Uploader
 from verinfast.config import Config
 from verinfast.user import initial_prompt, save_path
 from cachehash.main import Cache
 from .scanner import RepositoryScanner
 from .cloud import CloudScanner
+
+today = date.today()
 
 
 requestx = httpx.Client(http2=True, timeout=None)
@@ -36,7 +43,7 @@ class Agent:
         self.template_definition = {}
         # Set up template environment
         file_path = Path(__file__)
-        parent_folder = file_path.parent.absolute()
+        parent_folder = file_path.parent.parent.absolute()
         self.templates_folder = str(parent_folder.joinpath("templates"))
 
         # Initialize cache
@@ -122,8 +129,9 @@ class Agent:
                         source=source+" Error Logs",
                         isJSON=False
                     )
-            except:
-                pass
+            except Exception as e:
+                self.log(tag="ERROR", msg=f"Error uploading error logs: {str(e)}")
+
             return True
         else:
             self.log(
@@ -136,7 +144,18 @@ class Agent:
     def scan(self):
         """Main scan orchestration method"""
         if self.config.modules is not None:
-            print(self.config.modules, 'self.config.modules 000--->')
+            self.system_info = get_system_info()
+
+            self.log(msg=json.dumps(self.system_info, indent=4), tag="System Information")
+            if not self.config.dry:
+                system_info_file = os.path.join(self.config.output_dir, "system_info.json")
+                try:
+                    with open(system_info_file, 'w') as f:
+                        json.dump(self.system_info, f, indent=4)
+                except IOError as e:
+                    self.log(f"Failed to write system info to {system_info_file}: {str(e)}")
+                    raise RuntimeError(f"Failed to write system information: {str(e)}") from e
+
             if self.config.modules.code is not None:
                 if self.config.shouldUpload:
                     headers = {
@@ -166,3 +185,54 @@ class Agent:
                          msg=f"Template Creation Failed: {str(e)}")
 
         self.log(msg='', tag="Finished")
+
+
+def main():
+    """Main entry point for verinfast CLI"""
+    agent = Agent()
+    try:
+        agent.scan()
+    except Exception as e:
+        agent.log(msg=str(e), tag="Main Scan Error Caught")
+        if agent.config.upload_logs:
+            agent.upload(route="logs", file=agent.config.output_dir+"/log.txt")
+        raise e
+
+    # Handle log uploads
+    if agent.config.upload_logs:
+        today = date.today()
+        new_folder_name = (
+            str(today.year) + str(today.month) + str(today.day)
+        )
+        d = agent.directory
+        os.makedirs(f'{d}/{new_folder_name}/', exist_ok=True)
+        new_file_name = str(uuid4())+".txt"
+        fp = f'{d}/{new_folder_name}/{new_file_name}'
+        shutil.copy2(agent.config.log_file, fp)
+        print(f"""The log for this run was copied to:
+            {d}/{new_folder_name}/{new_file_name}""")
+
+    # Handle results upload
+    if agent.config.shouldUpload:
+        log_list = os.listdir(agent.config.output_dir)
+        log_list.sort()  # Upload current log last
+        for file in log_list:
+            if file.endswith("log.txt") and not file.startswith("u_"):
+                file_path = os.path.join(agent.config.output_dir, file)
+                agent.upload(
+                    route="logs",
+                    file=file_path,
+                    source=file,
+                    isJSON=False
+                )
+                new_path = os.path.join(agent.config.output_dir, "u_"+file)
+                os.rename(file_path, new_path)
+
+    # Show upload reminder for remote configs
+    if not agent.config.shouldUpload and agent.config.is_original_path_remote():
+        print("\n\n\nIMPORTANT: To upload results from this location please run")
+        print(f"verinfast -c {agent.config.cfg_path} -o {agent.config.output_dir} --should_upload --dry")
+
+
+if __name__ == "__main__":
+    main()

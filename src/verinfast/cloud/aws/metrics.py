@@ -2,7 +2,7 @@
 from datetime import datetime, timedelta
 import json
 import os
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Union
 import boto3
 import botocore
 
@@ -98,7 +98,7 @@ def _get_metric_data(
         return None
 
 
-def _parse_multi(datapoint: Dict[str, Any] | List[Dict[str, Any]]) -> Datapoint:
+def _parse_multi(datapoint: Union[Dict[str, Any], List[Dict[str, Any]]]) -> Datapoint:
     """Parse multiple datapoints into a single summary"""
     dp_sum: float = 0
     dp_count: int = 0

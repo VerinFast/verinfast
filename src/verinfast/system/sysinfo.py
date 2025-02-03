@@ -1,71 +1,28 @@
-import json
-import subprocess
 from typing import Dict, Any
 import platform
-import os
+import psutil
+import shutil
 
 
 def get_system_info() -> Dict[str, Any]:
     """
-    Collects system information using hyfetch and
+    Collects system information and
     returns it as a JSON-compatible dictionary.
-    Falls back to basic system info if hyfetch fails.
     """
-    try:
-        # Run hyfetch
-        result = subprocess.run(
-            ["hyfetch"],
-            capture_output=True,
-            text=True,
-            # check=True,
-            timeout=15  # 15 second timeout
-        )
-
-        # Process the output
-        lines = result.stdout.split("\n")
-        info = {}
-
-        for line in lines:
-            if ":" in line:
-                key, value = line.split(":", 1)
-                # Convert keys to snake_case and remove spaces
-                key = key.strip().lower().replace(" ", "_")
-                info[key] = value.strip()
-
-        # Add additional system information
-        info.update(_get_additional_info())
-
-        print(json.dumps(info, indent=4))
-
-    except (subprocess.CalledProcessError, FileNotFoundError,
-            subprocess.TimeoutExpired) as e:
-        # Fallback to basic system info if hyfetch fails,
-        #  isn't installed, or times out
-        info = {
-            "error": f"Failed to run hyfetch: {str(e)}",
-            "system_info": _get_additional_info()
-        }
-
-    return info
-
-
-def _get_additional_info() -> Dict[str, Any]:
-    """
-    Collects additional system information
-    using platform (Python's built-in libraries.
-    """
-    uname = platform.uname()
-
     return {
-        "os": uname.system,
-        "os_release": uname.release,
-        "os_version": uname.version,
-        "architecture": uname.machine,
-        "processor": uname.processor,
-        "hostname": uname.node,
-        "python_version": platform.python_version(),
-        "cpu_count": os.cpu_count(),
-        "platform": platform.platform(),
-        "cpu_architecture": platform.machine(),
-        "python_implementation": platform.python_implementation()
+        "OS": platform.system(),
+        "OS Version": platform.version(),
+        "OS Release": platform.release(),
+        "Machine": platform.machine(),
+        "Processor": platform.processor(),
+        "Hostname": platform.node(),
+        "CPU Cores": psutil.cpu_count(logical=False),
+        "Logical CPUs": psutil.cpu_count(logical=True),
+        "Total RAM": f"{round(psutil.virtual_memory().total / (1024**3), 2)} GB",
+        "Available RAM": f"{round(psutil.virtual_memory().available / (1024**3), 2)} GB",
+        "Used RAM": f"{round(psutil.virtual_memory().used / (1024**3), 2)} GB",
+        "Disk Size": f"{round(shutil.disk_usage('/').total / (1024**3), 2)} GB",
+        "Disk Used": f"{round(shutil.disk_usage('/').used / (1024**3), 2)} GB",
+        "Disk Free": f"{round(shutil.disk_usage('/').free / (1024**3), 2)} GB",
+        "Python Version": platform.python_version(),
     }

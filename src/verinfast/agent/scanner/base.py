@@ -1,10 +1,20 @@
 from pathlib import Path
+import json
+import platform
 import os
+import re
 
 from .git_utils import GitUtils
 from .repo_handlers import RepoHandlers
 from .scanners import ScannerTools
 from .file_utils import FileUtils
+
+uname = platform.uname()
+system = uname.system
+node = uname.node
+release = uname.release
+version = uname.version
+machine = uname.machine
 
 
 class RepositoryScanner(GitUtils, RepoHandlers, ScannerTools, FileUtils):
@@ -38,6 +48,24 @@ class RepositoryScanner(GitUtils, RepoHandlers, ScannerTools, FileUtils):
         if self.config.runGit:
             self._initialize_git(path, branch)
 
+        git_output_file = os.path.join(self.config.output_dir, f"{repo_name}.git.log.json")
+        self.log(msg=repo_name, tag="Gathering source code statistics for", display=True)
+
+        git_results = self._process_git_log(branch)
+
+        if not self.config.dry:
+            with open(git_output_file, 'w') as f:
+                f.write(json.dumps(git_results, indent=4))
+            self.template_definition["gitlog"] = git_results
+
+        self.agent.upload(
+            file=git_output_file,
+            route="git",
+            source=repo_name
+        )
+
+        self._run_file_size_scan(path, repo_name)
+
         # Run configured scans
         if self.config.runStats:
             self._run_stats_scan(path, repo_name)
@@ -67,3 +95,66 @@ class RepositoryScanner(GitUtils, RepoHandlers, ScannerTools, FileUtils):
                 route=route,
                 source=repo_name
             )
+
+    def _run_file_size_scan(self, path, repo_name):
+        """Run file size analysis"""
+        sizes_output_file = os.path.join(self.agent.config.output_dir, f"{repo_name}.sizes.json")
+
+        if not self.config.dry:
+            self.log(msg=repo_name, tag="Gathering file sizes for", display=True)
+
+            # Using inherited FileUtils methods
+            repo_size = self.get_raw_size(".")
+            git_size = self.get_raw_size("./.git")
+            real_size = repo_size - git_size
+
+            self.log(msg=repo_size, tag="Repo Size")
+            self.log(msg=git_size, tag="Git Size")
+
+            sizes = {
+                "files": {
+                    ".": {
+                        "size": repo_size,
+                        "loc": 0,
+                        "ext": None,
+                        "directory": True
+                    }
+                },
+                "metadata": {
+                    "env": machine,
+                    "real_size": real_size,
+                    "uname": system,
+                    "branch": locals()['branch'] if "branch" in locals() else None
+                }
+            }
+
+            # Get list of files using FileUtils method
+            filelist = self._get_file_list(path)
+
+            # Process files for sizes if needed
+            if self.config.shouldManualFileScan:
+                for file_info in filelist:
+                    fp = file_info["path"]
+                    name = file_info["name"]
+                    extRe = re.search(r"^[^\.]*\.(.*)", name)
+                    ext = extRe.group(1) if extRe else ''
+
+                    sizes["files"][fp] = {
+                        "size": os.path.getsize(fp),
+                        "loc": self.getloc(fp),
+                        "ext": ext,
+                        "directory": False
+                    }
+
+            with open(sizes_output_file, 'w') as f:
+                f.write(json.dumps(sizes, indent=4))
+
+            self._update_template_definition("current_dir_size", sizes["files"].pop("."))
+            self._update_template_definition("sizes", sizes)
+            self._update_template_definition("filelist", filelist)
+
+        self.agent.upload(
+            file=sizes_output_file,
+            route="sizes",
+            source=repo_name
+        )

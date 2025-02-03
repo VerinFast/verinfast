@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Union
 from ..utils.printable import Printable
 from ..constants import DEFAULT_START, DEFAULT_END
 
@@ -16,7 +16,7 @@ class CloudProvider(Printable):
         end (str): End date (YYYY-MM-DD)
     """
     provider: str
-    account: str | int
+    account: Union[str, int]
     profile: Optional[str] = None
     start: str = DEFAULT_START
     end: str = DEFAULT_END
