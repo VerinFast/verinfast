@@ -60,7 +60,7 @@ class ScannerTools:
         custom_args = [
             "--config", "auto",
             "--json",
-            f"--json-output={findings_file}",
+            f"--output={findings_file}",
             "-q"
         ]
 

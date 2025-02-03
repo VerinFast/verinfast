@@ -1,20 +1,20 @@
 import os
 import sys
 from datetime import datetime
-from pathlib import Path
 from typing import Optional
 
 from verinfast.utils.utils import DebugLog
 
 from .constants import DEFAULT_CONFIG_PATH, DEFAULT_SCAN_PATH
-from .modules import ConfigModules, CodeModule, GitModule
+from .modules import ConfigModules
+from .modules.code import CodeModule, GitModule
 from .modules.upload import UploadConfig
 from .parsers.args import init_argparse, handle_args
 from .parsers.file import (
     is_remote_path, fetch_remote_config,
     find_config_file, parse_config_file
 )
-from .utils.printable import Printable
+from .utils import Printable
 
 
 class Config(Printable):
@@ -145,10 +145,6 @@ class Config(Printable):
 
         # Initialize upload configuration
         self._initialize_upload_config()
-
-    def handle_config_file(self) -> None:
-        """Parse and apply configuration from file"""
-        self.config = parse_config_file(self, self.cfg_path)
 
     def _set_default_config(self) -> None:
         """Set default configuration if none provided"""
