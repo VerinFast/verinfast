@@ -9,13 +9,13 @@ class GitUtils:
         try:
             if not self.config.dry:
                 os.makedirs(self.temp_dir)
-        except:
-            self.log(tag="Directory exists:", msg=self.temp_dir, display=True)
+        except Exception as e:
+            self.log(tag="Directory exists:", msg=self.temp_dir, display=True,)
             try:
                 shutil.rmtree(self.temp_dir)
                 os.makedirs(self.temp_dir)
             except Exception as e:
-                self.log(tag=f"Failed to delete {self.temp_dir}", msg=e, display=True)
+                self.log(tag=f"Failed to delete {self.temp_dir}", msg=e, display=True,)
                 return False
         return True
 

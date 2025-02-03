@@ -45,5 +45,6 @@ class FileUtils:
                     if line.strip():
                         count += 1
             return count
-        except:
+        except Exception as e:
+            self.log(tag="ERROR", msg=f"Error getting lines of code: {str(e)}")
             return 0

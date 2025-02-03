@@ -122,8 +122,9 @@ class Agent:
                         source=source+" Error Logs",
                         isJSON=False
                     )
-            except:
-                pass
+            except Exception as e:
+                self.log(tag="ERROR", msg=f"Error uploading error logs: {str(e)}")
+
             return True
         else:
             self.log(

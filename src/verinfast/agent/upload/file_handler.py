@@ -31,7 +31,7 @@ class FileHandler:
                 "filename": file_path.name,
                 "size": file_size,
                 "id": str(uuid4()),
-                "source": source if source else file_path.stem
+                "source": source or file_path.stem
             }
 
             # Handle JSON files
