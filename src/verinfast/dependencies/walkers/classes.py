@@ -68,7 +68,7 @@ class Walker():
         self.manifest_files = manifest_files.copy()
         for f in self.manifest_files:
             if "*" in f:
-                expanded = glob.glob(f, root_dir=root_dir)
+                expanded = glob.glob(root_dir + f)
                 self.manifest_files.remove(f)
                 self.manifest_files += expanded
         self.manifest_type = manifest_type
