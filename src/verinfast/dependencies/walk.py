@@ -118,7 +118,7 @@ def walk(logger, path: str = "./", output_file="./dependencies.json"):
     write_file(output_file=output_file, entries=entries)
     nugetWalker.initialize()
     logger(msg="Dependency Scan 40%", display=True)
-    print("Running NuGetWalker")
+    print("Running NuGetWalker", nugetWalker.manifest_files)
     nugetWalker.walk(path=path)
     entries += nugetWalker.entries
     write_file(output_file=output_file, entries=entries)

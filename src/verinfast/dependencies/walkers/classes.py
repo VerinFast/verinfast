@@ -3,7 +3,7 @@ import json
 import subprocess
 from pathlib import Path
 from typing import List
-
+import os
 import httpx
 
 
@@ -65,12 +65,22 @@ class Walker():
         if print_name:
             logger(print_name)
         self.files = []
-        self.manifest_files = manifest_files.copy()
-        for f in self.manifest_files:
+        new_files = []
+        for f in manifest_files:
+            print("f:", f)
+            print("root_dir", root_dir)
             if "*" in f:
-                expanded = glob.glob(str(root_dir) + f)
-                self.manifest_files.remove(f)
-                self.manifest_files += expanded
+                 # Expand the wildcard to get full paths
+                full_paths = glob.glob(os.path.join(root_dir, f))
+                print("full_paths", full_paths)
+                # Convert each full path to just the file name
+                expanded = [os.path.basename(p) for p in full_paths]
+                # Add all the matched files
+                new_files.extend(expanded)
+            else:
+                new_files.append(f)
+        self.manifest_files = new_files.copy()
+        print(self.manifest_files)
         self.manifest_type = manifest_type
         self.entries = []
         self.requestx = httpx.Client(http2=True, timeout=None)
@@ -108,10 +118,13 @@ class Walker():
              path: str = "./",
              parse: bool = True,
              expand: bool = False,
-             debug: int = 0):
+             debug: int = 2):
         for p in Path(path).rglob('**/*'):
             if debug > 1:
                 self.log(F"EVALUATING: {p}", display=(debug > 2))
+                print("p.name", p.name)
+                print("self.maninfest_files", self.manifest_files)
+                print(p.name in self.manifest_files)
             if p.name in self.manifest_files:
                 if debug > 0:
                     self.log(f"FOUND: {p.name}", display=True)
