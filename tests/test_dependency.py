@@ -80,7 +80,7 @@ def test_entity():
     output_path = walk(
         path=str(folder_path),
         output_file=output_file,
-        logger=enabled_logger(False)
+        logger=enabled_logger(True)
     )
     with open(output_path) as output_file:
         output = json.load(output_file)
