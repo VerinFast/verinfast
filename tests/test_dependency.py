@@ -84,7 +84,7 @@ def test_entity():
     )
     with open(output_path) as output_file:
         output = json.load(output_file)
-        assert len(output) >= 1, f"Output is empty: {output}"
+        assert len(output) >= 1, f"Output is empty: {output_file}"
         first_dep = output[0]
         e = Entry(**first_dep)
         assert e.license == "MIT"
