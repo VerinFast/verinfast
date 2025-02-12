@@ -1,4 +1,5 @@
 from verinfast.config import UploadConfig
+from typing import Union
 
 
 class Uploader:
@@ -8,8 +9,8 @@ class Uploader:
     def make_upload_path(
             self,
             path_type: str,
-            report: int | str,
-            code: int | str = None,
+            report: Union[str, int],
+            code: Union[str, int] = None,
             repo_name: str = None,
     ) -> str:
         """make_upload_path
@@ -18,8 +19,8 @@ class Uploader:
 
         Args:
             path_type (str) : specifies the scan action triggering the upload
-            report (str | int): specifies the identifier the server uses for this scan  # noqa: E501
-            code (int | str) :
+            report (Union[str, int]): specifies the identifier the server uses for this scan  # noqa: E501
+            code (Union[str, int]) :
         """
 
         code_sep = self.config.code_separator if self.config.code_separator else ''  # noqa: E501

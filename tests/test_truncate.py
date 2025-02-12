@@ -9,6 +9,8 @@ import pytest
 from verinfast.agent import Agent
 from verinfast.config import Config
 from verinfast.utils.utils import DebugLog
+from typing import Union
+
 
 file_path = Path(__file__)
 test_folder = file_path.parent.absolute()
@@ -19,7 +21,7 @@ MAX_RECURSION_DEPTH = 10
 
 
 def check_children(
-            i: str | dict | list,
+            i: Union[str, dict, list],
             max_length=30,
             recursion_depth=0,
             # This list must match agent.py

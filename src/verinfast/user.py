@@ -1,9 +1,8 @@
 from pathlib import Path
 import os
-
 import yaml
+from typing import List, Callable, Union
 
-from typing import List, Callable
 
 user_home = os.path.expanduser('~')
 
@@ -14,7 +13,7 @@ def __get_input__(t: str):
 
 def repeat_boolean_prompt(
         prompt: str,
-        logger: Callable | None = None,
+        logger: Union[Callable, None] = None,
         default_val: bool = False
 ):
     valid_strs = ["y", "n"]
@@ -34,7 +33,7 @@ def repeat_boolean_prompt(
 def repeat_prompt(
         prompt: str,
         valid: List[str],
-        default_val: str | None = None
+        default_val: Union[str, None] = None
 ):
     prompt += "\n"
     resp = __get_input__(prompt).lower()
