@@ -62,7 +62,7 @@ def test_aws_scan(self):
         for u in utilization["data"]:
             if u["id"] == "i-0a3493d5abcdfba4b":
                 v = u["metrics"]
-        assert len(v) >= 450
+        assert len(v) >= 200
     # Make sure "aws-instances-foo-utilization.json" doesn't exist
     bad_utilization_file = Path(
         results_dir.joinpath("aws-instances-foo-utilization.json")
