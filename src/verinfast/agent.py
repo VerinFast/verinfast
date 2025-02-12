@@ -98,15 +98,15 @@ class Agent:
         if self.config.modules is not None:
             self.system_info = get_system_info()
 
-            system_info_file = os.path.join(self.config.output_dir, "system_info.json")
-            with open(system_info_file, 'w') as f:
-                json.dump(self.system_info, f, indent=4)
-
-            self.upload(
-                file=system_info_file,
-                route="system_info",
-                source="System Information"
-            )
+            self.log(msg=json.dumps(self.system_info, indent=4), tag="System Information")
+            if not self.config.dry:
+                system_info_file = os.path.join(self.config.output_dir, "system_info.json")
+                try:
+                    with open(system_info_file, 'w') as f:
+                        json.dump(self.system_info, f, indent=4)
+                except IOError as e:
+                    self.log(f"Failed to write system info to {system_info_file}: {str(e)}")
+                    raise RuntimeError(f"Failed to write system information: {str(e)}") from e
 
             if self.config.modules.code is not None:
 
