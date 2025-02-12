@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import subprocess
 import shutil
 import platform
@@ -80,17 +81,65 @@ def check_opengrep(install_dir="/tmp/opengrep_install"):
 
 
 def get_opengrep_path():
-    system = platform.system().lower()    # "linux", "darwin", ...
-    machine = platform.machine().lower()  # "x86_64", "arm64", "aarch64", ...
+    """
+    Determines the appropriate opengrep binary based on the
+    current system and architecture.
+    Assumes the binaries are located in /verinfast/bin relative
+    to the package's root directory.
 
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    print(f"base_dir: {base_dir}")
+    :return: Absolute path to the opengrep executable.
+    :raises OSError: If the platform or architecture is unsupported.
+    :raises FileNotFoundError: If the opengrep binary is not found
+    in the expected location.
+    """
+    # Detect the operating system and machine architecture
+    system = platform.system().lower()         # e.g., "linux", "darwin"
+    machine = platform.machine().lower()       # e.g., "x86_64", "arm64"
 
-    if system == "linux" and machine == "x86_64":
-        return os.path.join(base_dir, "bin", "opengrep_linux_x86_64")
-    elif system == "darwin" and machine == "x86_64":
-        return os.path.join(base_dir, "bin", "opengrep_macos_x86_64")
-    elif system == "darwin" and (machine == "arm64" or machine == "aarch64"):
-        return os.path.join(base_dir, "bin", "opengrep_macos_arm64")
-    else:
-        raise OSError(f"Unsupported platform: {system}/{machine}")
+    current_file = Path(__file__).resolve()
+    # Navigate up three levels to reach /verinfast/
+    # /verinfast/src/verinfast/sast/opengrid.py
+    # -> parents[0] = /verinfast/src/verinfast/sast
+    # parents[1] = /verinfast/src/verinfast
+    # parents[2] = /verinfast/src
+    # parents[3] = /verinfast
+    verinfast_dir = current_file.parents[3]
+    bin_dir = verinfast_dir / 'bin'
+
+    # Define the mapping of (system, machine) to the
+    # corresponding binary filenames
+    binary_map = {
+        ("linux", "x86_64"): "opengrep_manylinux_x86",
+        ("darwin", "arm64"): "opengrep_osx_arm64"
+    }
+
+    # Retrieve the binary name based on the current system and machine
+    binary_name = binary_map.get((system, machine))
+
+    if not binary_name:
+        raise OSError(
+            f"Unsupported platform or architecture: {system}/{machine}"
+        )
+
+    # Construct the full path to the opengrep binary
+    opengrep_path = bin_dir / binary_name
+
+    # Check if the binary exists
+    if not opengrep_path.exists():
+        raise FileNotFoundError(
+            f"opengrep binary not found at {opengrep_path}. "
+            "Please ensure the binary is downloaded and placed in the "
+            "'bin' directory."
+        )
+
+    # Ensure the binary has execute permissions
+    if not os.access(opengrep_path, os.X_OK):
+        try:
+            os.chmod(opengrep_path, 0o755)
+        except PermissionError as e:
+            raise PermissionError(
+                f"Cannot make opengrep executable at {opengrep_path}. "
+                f"Please check your permissions."
+            ) from e
+
+    return str(opengrep_path)

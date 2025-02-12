@@ -15,7 +15,7 @@ from uuid import uuid4
 
 from modernmetric.__main__ import main as modernmetric
 # import semgrep.commands.scan as semgrep_scan
-from verinfast.sast.opengrep import check_opengrep
+from verinfast.sast.opengrep import get_opengrep_path
 
 import httpx
 from jinja2 import Environment, FileSystemLoader, select_autoescape
@@ -464,7 +464,8 @@ class Agent:
             try:
                 sast_install_dir = Path(os.path.expanduser('~/.verinfast/'))
                 self.log(msg=sast_install_dir, tag="SAST Install Directory", display=True)
-                sast_path = check_opengrep(sast_install_dir)
+                # sast_path = check_opengrep(sast_install_dir)
+                sast_path = get_opengrep_path()
                 self.log(msg=f"Using {sast_path}", tag="SAST Path")
                 with contextlib.redirect_stdout(io.StringIO()):
                     if not self.config.dry:
