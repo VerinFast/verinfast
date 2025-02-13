@@ -70,7 +70,7 @@ class Walker():
             print("f:", f)
             print("root_dir", root_dir)
             if "*" in f:
-                 # Expand the wildcard to get full paths
+                # Expand the wildcard to get full paths
                 full_paths = glob.glob(os.path.join(root_dir, f))
                 print("full_paths", full_paths)
                 # Convert each full path to just the file name
