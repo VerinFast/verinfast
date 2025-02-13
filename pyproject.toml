@@ -32,6 +32,14 @@ dynamic = ["dependencies", "version"]
 [project.scripts]
 verinfast = "verinfast.agent:main"
 
+[tool.black]
+line-length = 88
+target-version = ['py310', 'py311', 'py312']
+include = '\.pyi?$'
+extend-exclude = '''
+^/VERSION\.py$
+'''
+
 [tool.pytest.ini_options]
 addopts = [
     "--import-mode=importlib",
