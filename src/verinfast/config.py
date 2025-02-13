@@ -94,7 +94,6 @@ class UploadConfig(printable):
     """
     uuid: bool = False
     prefix: Union[str, None] = "/report/"
-    prefix: Union[str, None] = "/report/"
     code_separator: Union[str, None] = "/CorsisCode"
     cost_separator: Union[str, None] = None
 
