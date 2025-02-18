@@ -23,7 +23,7 @@ def test_local_scan(self):
     os.makedirs(agent.config.output_dir, exist_ok=True)
     agent.config.config["local_repos"] = [tsx_path.absolute().as_posix()]
 
-    agent.scanRepos()
+    agent.scanner.scanRepos()
 
     with open(output_path) as output_file:
         output = json.load(output_file)
@@ -52,7 +52,7 @@ def test_local_scan_branch(self):
         tsx_path.absolute().as_posix() + "@main"
     ]
 
-    agent.scanRepos()
+    agent.scanner.scanRepos
 
     with open(output_path) as output_file:
         output = json.load(output_file)

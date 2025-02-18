@@ -21,16 +21,17 @@ def test_no_config(self):
         print(e)
         pass
     os.makedirs(results_dir, exist_ok=True)
-    agent = Agent()
     config = Config(str_path)
     config.output_dir = results_dir
-    print(agent.config.output_dir)
-    agent.config = config
+    print(config.output_dir, 'config.output_dir')
+
+    # create agent with config
+    agent = Agent(config=config)
     assert agent.config.use_uuid is True
     agent.config.shouldUpload = True
     agent.debug = DebugLog(path=agent.config.output_dir, debug=False)
     agent.log = agent.debug.log
-    print(agent.debug.file)
+    print(agent.debug.file, 'agent.debug.file')
     agent.scan()
     assert Path(results_dir).exists()
     assert results_dir.joinpath("results.html").exists()

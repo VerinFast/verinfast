@@ -1,3 +1,4 @@
+from datetime import date
 import json
 from unittest.mock import patch
 import os
@@ -248,14 +249,28 @@ def test_composer_config(self):
         pass
     assert verinfast.user.initial_prompt is not None
     os.makedirs(results_dir, exist_ok=True)
-    agent = Agent()
+
     config = Config(composer_config_path)
+    agent = Agent(config=config)
+
     config.output_dir = results_dir
-    agent.config = config
+    config.reportId = 'test-report-id'
+    config.scanId = 'test-scan-id'
+    config.baseUrl = "https://test-url"
+
+    config.modules.code.run_scan = True
+    config.modules.code.dependencies = True
+    config.modules.code.git.start = date.today()
+
+    config.runGit = True
+    config.dry = False
+
     agent.config.shouldUpload = False
     agent.debug = DebugLog(path=agent.config.output_dir, debug=False)
     agent.log = agent.debug.log
+
     agent.scan()
+
     assert Path(results_dir).exists() is True
     expected_files = [
         "CssToInlineStyles.git.dependencies.json",
