@@ -3,8 +3,8 @@ import json
 import subprocess
 from pathlib import Path
 from typing import List
-import os
 import httpx
+import os
 
 
 class Entry(dict):
@@ -68,7 +68,8 @@ class Walker():
         new_files = []
         for f in manifest_files:
             if "*" in f:
-                expanded = glob.glob(str(Path(root_dir).absolute()) + f)
+                full_paths = glob.glob(os.path.join(root_dir, f))
+                expanded = [os.path.basename(p) for p in full_paths]
                 new_files.extend(expanded)
             else:
                 new_files.append(f)
