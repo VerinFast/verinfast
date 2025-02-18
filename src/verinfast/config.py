@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import sys
 from uuid import uuid4
+from typing import Union
 
 # external
 import httpx
@@ -92,9 +93,9 @@ class UploadConfig(printable):
             prefix (str) : defaults to "/report" if not specified
     """
     uuid: bool = False
-    prefix: str | None = "/report/"
-    code_separator: str | None = "/CorsisCode"
-    cost_separator: str | None = None
+    prefix: Union[str, None] = "/report/"
+    code_separator: Union[str, None] = "/CorsisCode"
+    cost_separator: Union[str, None] = None
 
 
 @dataclass
@@ -120,14 +121,14 @@ class CloudProvider(printable):
     Args:
         provider (str): A string representing a provider.
                         Today either 'aws','gcp', or 'azure'.
-        account (str | int): The account identifier for the provider.
+        account (Union[str, int]): The account identifier for the provider.
         profile (str): Profile credentials to use.
         start (str): A date in the format 'YYYY-MM-DD'
         end (str): A date in the format 'YYYY-MM-DD'
 
     """
     provider: str
-    account: str | int
+    account: Union[str, int]
     profile: Optional[str] = None
     start: str = default_start
     end: str = default_end
@@ -162,7 +163,7 @@ class Config(printable):
     # Flag to not run scans, just upload files (if shouldUpload==True)
     dry: bool = False
     local_scan_path: str = "./"
-    modules: ConfigModules | None = None
+    modules: Union[ConfigModules, None] = None
     output_dir = os.path.join(os.getcwd(), "results")
     log_file = os.path.join(
         output_dir,
@@ -174,9 +175,9 @@ class Config(printable):
     runScan: bool = True
     runSizes: bool = True
     runStats: bool = True
-    server_prefix: str | None = None
-    server_code_separator: str | None = None
-    server_cost_separator: str | None = None
+    server_prefix: Union[str, None] = None
+    server_code_separator: Union[str, None] = None
+    server_cost_separator: Union[str, None] = None
     shouldUpload: bool = False
     shouldManualFileScan: bool = True
     truncate_findings = False
