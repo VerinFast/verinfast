@@ -68,11 +68,7 @@ class Walker():
         new_files = []
         for f in manifest_files:
             if "*" in f:
-                # Expand the wildcard to get full paths
-                full_paths = glob.glob(os.path.join(root_dir, f))
-                # Convert each full path to just the file name
-                expanded = [os.path.basename(p) for p in full_paths]
-                # Add all the matched files
+                expanded = glob.glob(str(Path(root_dir).absolute()) + f)
                 new_files.extend(expanded)
             else:
                 new_files.append(f)
