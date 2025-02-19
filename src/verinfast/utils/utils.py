@@ -5,8 +5,8 @@ import re
 from glob import glob
 import subprocess
 import time
+from typing import List, Union
 
-from typing import List
 
 STD_EXCLUDE_LIST = [
                 "**/.git/**",
@@ -83,7 +83,7 @@ def truncate(text, length=100):
 
 
 def truncate_children(
-            obj: dict | list,
+            obj: Union[dict, list],
             log,
             excludes=[],
             max_length=30,

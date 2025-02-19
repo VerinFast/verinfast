@@ -1,8 +1,9 @@
 from verinfast.dependencies.walkers.classes import Walker, Entry
+from typing import Union
 
 
 class DockerWalker(Walker):
-    def clean_str(self, s: str | bytes):
+    def clean_str(self, s: Union[str, bytes]) -> str:
         bad_chars = ["\n", "\r", "\t"]
         s = str(s).lower().strip()
         for char in bad_chars:

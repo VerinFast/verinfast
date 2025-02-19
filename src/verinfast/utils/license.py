@@ -1,11 +1,12 @@
 import httpx
-
 from verinfast.config import Config
+from typing import Union
+
 
 requestx = httpx.Client(http2=True, timeout=None)
 
 
-def report(identifier: str | int, config: Config, product: str):
+def report(identifier: Union[str, int], config: Config, product: str):
     """
     License reporter reports back usage of some commercial features to help
     keep users safe.

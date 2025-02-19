@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import json
 import os
-from typing import List
+from typing import List, Union
 
 import boto3
 import botocore
@@ -50,7 +50,7 @@ def get_metric_for_instance(
         pass
 
 
-def parse_multi(datapoint: dict | List[dict]) -> Datapoint:
+def parse_multi(datapoint: Union[dict, List[dict]]) -> Datapoint:
     dp_sum: float = 0
     dp_count: int = 0
     dp_min: float = 0
