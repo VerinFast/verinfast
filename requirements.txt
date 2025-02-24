@@ -22,6 +22,7 @@ pygments-tsx>=1.0.1
 pytest~=8.3.4
 pytest-cov~=6.0.0
 pytest-xdist~=3.6.1
+psutil~=5.9.8
 pyyaml~=6.0.2
 # If Python == 3.9, install Semgrep 1.52.0
 semgrep==1.52.0; python_version == "3.9"
