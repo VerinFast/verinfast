@@ -37,6 +37,7 @@ class RepositoryScanner(GitUtils, RepoHandlers, ScannerTools, FileUtils):
         if config:
             self.config = config
         self._scan_remote_repos()
+        # sys.exit(1)
         self._scan_local_repos()
         self.log(msg='', tag="Finished repo scans")
 
