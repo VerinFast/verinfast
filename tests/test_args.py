@@ -16,6 +16,7 @@ test_folder = file_path.parent.absolute()
 
 def test_always_work():
     true_var = True
+    print("This is not a real test")
     assert true_var is True
 
 # def test_arg_dry():
