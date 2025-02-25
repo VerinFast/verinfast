@@ -6,9 +6,7 @@ def find_profile(targeted_account: str, log):
     profiles = []
     available_accounts = []
     results = subprocess.run(
-        "aws configure list-profiles",
-        shell=True,
-        stdout=subprocess.PIPE
+        "aws configure list-profiles", shell=True, stdout=subprocess.PIPE
     )
     text = results.stdout.decode()
     for line in text.splitlines():
@@ -16,10 +14,7 @@ def find_profile(targeted_account: str, log):
         cmd = f'aws sts get-caller-identity --profile="{line}" --output=json'
         try:
             results = subprocess.run(
-                cmd,
-                shell=True,
-                stdout=subprocess.PIPE,
-                check=True
+                cmd, shell=True, stdout=subprocess.PIPE, check=True
             )
         except subprocess.CalledProcessError:
             # TODO make some log message that makes sense

@@ -25,5 +25,5 @@ regions = [
     "eu-central-2",
     "me-south-1",
     "me-central-1",
-    "sa-east-1"
+    "sa-east-1",
 ]

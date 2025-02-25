@@ -110,5 +110,5 @@ zones = [
     "us-west3-c",
     "us-west4-a",
     "us-west4-b",
-    "us-west4-c"
+    "us-west4-c",
 ]
