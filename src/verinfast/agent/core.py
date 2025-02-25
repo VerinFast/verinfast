@@ -173,10 +173,10 @@ class Agent:
                 else:
                     self.log(msg="Scan ID only fetched when uploading enabled",
                              tag="Scan ID", display=True)
-                self.scanner.scanRepos()
+                self.scanner.scanRepos(self.config)
 
             if self.config.modules and self.config.modules.cloud and len(self.config.modules.cloud):
-                self.cloud_scanner.scanCloud()
+                self.cloud_scanner.scanCloud(self.config)
 
             try:
                 self.create_template()

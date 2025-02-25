@@ -19,8 +19,11 @@ class CloudScanner:
         self.config = agent.config
         self.log = agent.log
 
-    def scanCloud(self):
+    def scanCloud(self, config=None):
         """Main cloud scanning method"""
+        # Need to reset config if it has changed
+        if config:
+            self.config = config
         self.log(msg='', tag="Doing cloud scan", display=True)
         cloud_config = self.config.modules.cloud
         self.log(msg=cloud_config, tag='Cloud Config')

@@ -31,9 +31,13 @@ class RepositoryScanner(GitUtils, RepoHandlers, ScannerTools, FileUtils):
         """Helper method to update template definition"""
         self.template_definition[key] = value
 
-    def scanRepos(self):
+    def scanRepos(self, config=None):
         """Scan all configured repositories"""
+        # Need to reset config if it has changed
+        if config:
+            self.config = config
         self._scan_remote_repos()
+        # sys.exit(1)
         self._scan_local_repos()
         self.log(msg='', tag="Finished repo scans")
 
