@@ -162,7 +162,7 @@ class Agent:
                     if match:
                         repo_name = match.group(1)
                     else:
-                        repo_name = repo_url.rsplit('/', 1)[-1]
+                        repo_name = repo_url.rsplit("/", 1)[-1]
                     if "@" in repo_name and re.search(r"^.*@.*\..*:", repo_url):
                         repo_url = "@".join(repo_url.split("@")[0:2])
                     elif "@" in repo_name:
