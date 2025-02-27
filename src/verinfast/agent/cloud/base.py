@@ -52,7 +52,7 @@ class CloudScanner:
 
     def _scan_aws(self, provider):
         """Handle AWS scanning"""
-        if not checkDependency("aws", "AWS Command-line tool"):
+        if not checkDependency(self.log, "aws", "AWS Command-line tool"):
             return
 
         account_id = str(provider.account).replace("-", "")
@@ -115,7 +115,7 @@ class CloudScanner:
 
     def _scan_azure(self, provider):
         """Handle Azure scanning"""
-        if not checkDependency("az", "Azure Command-line tool"):
+        if not checkDependency(self.log, "az", "Azure Command-line tool"):
             return
         # Costs
         azure_cost_file = runAzure(
@@ -161,7 +161,7 @@ class CloudScanner:
 
     def _scan_gcp(self, provider):
         """Handle GCP scanning"""
-        if not checkDependency("gcloud", "Google Command-line tool"):
+        if not checkDependency(self.log, "gcloud", "Google Command-line tool"):
             return
         # Instances
         gcp_instance_file = get_gcp_instances(
