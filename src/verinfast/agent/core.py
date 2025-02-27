@@ -8,12 +8,15 @@ import os
 from uuid import uuid4
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 import httpx
+import re
+import subprocess
 
-from verinfast.utils.utils import DebugLog
+from verinfast.utils.utils import DebugLog, checkDependency
 from verinfast.system.sysinfo import get_system_info
 from verinfast.upload import Uploader
 from verinfast.config import Config
-from verinfast.user import initial_prompt, save_path
+from verinfast.user import initial_prompt, save_path, repeat_boolean_prompt
+from verinfast.cloud.aws.get_profile import find_profile
 from cachehash.main import Cache
 from .scanner import RepositoryScanner
 from .cloud import CloudScanner
@@ -141,6 +144,80 @@ class Agent:
             )
             return False
 
+    def preflight(self):
+        # If the 'dry' configuration is set, skip the preflight checks
+        if self.config.dry:
+            return
+        # Loop over all remote repositories from config file
+        print("\n\n\nChecking your system's compatibility with the scan "
+              "configuration:\n")
+        if 'repos' in self.config.config:
+            repos = self.config.config["repos"]
+            if repos:
+                # ignore blank lines from server
+                for repo_url in [r for r in repos if len(r) > 0]:
+                    match = re.search(r"([^/]*\.git.*)", repo_url)
+                    if match:
+                        repo_name = match.group(1)
+                    else:
+                        repo_name = repo_url.rsplit('/', 1)[-1]
+                    if "@" in repo_name and re.search(r"^.*@.*\..*:", repo_url):
+                        repo_url = "@".join(repo_url.split("@")[0:2])
+                    elif "@" in repo_name:
+                        repo_url = repo_url.split("@")[0]
+                    try:
+                        subprocess.check_output(["git", "ls-remote", repo_url])
+                        self.log(tag="Repository access confirmed",
+                                 msg=repo_url,
+                                 display=True,
+                                 timestamp=False)
+                    except subprocess.CalledProcessError:
+                        self.log(msg=repo_url,
+                                 tag="Unable to access",
+                                 display=True,
+                                 timestamp=False)
+                        self.log(msg=repo_url,
+                                 tag="Repository will not be scanned",
+                                 display=True,
+                                 timestamp=False)
+
+        cloud_config = self.config.modules.cloud
+        if cloud_config is not None:
+            for provider in cloud_config:
+                try:
+                    if (provider.provider == "aws" and
+                            checkDependency(self.log, "aws", "AWS Command-line tool")):
+                        account_id = str(provider.account).replace('-', '')
+                        if find_profile(account_id, self.log) is None:
+                            self.log(
+                                tag=f"No matching AWS CLI profiles found for {provider.account}",
+                                msg="Account can't be scanned.",
+                                display=True,
+                                timestamp=False
+                            )
+                        else:
+                            self.log(tag="AWS account access confirmed", msg=account_id, display=True, timestamp=False)
+                    if provider.provider == "azure" and checkDependency(self.log, "az", "Azure Command-line tool"):
+                        pass
+                    if provider.provider == "gcp" and checkDependency(self.log, "gcloud", "Google Command-line tool"):
+                        pass
+                except Exception as e:
+                    print(e)
+                    self.log(msg=f"Unable to access {provider.provider} {provider.account}", tag="Unable to access", display=True, timestamp=False)
+
+        resp = repeat_boolean_prompt(
+            "\nWould you like to proceed with the scan?",
+            logger=print,
+            default_val=True
+        )
+
+        if resp:
+            self.log(msg="Proceeding")
+        else:
+            self.log(tag="Exiting now", msg="", display=True)
+            exit(0)
+
+
     def scan(self):
         """Main scan orchestration method"""
         if self.config.modules is not None:
@@ -215,6 +292,7 @@ def main():
     """Main entry point for verinfast CLI"""
     agent = Agent()
     try:
+        agent.preflight()
         agent.scan()
     except Exception as e:
         agent.log(msg=str(e), tag="Main Scan Error Caught")
