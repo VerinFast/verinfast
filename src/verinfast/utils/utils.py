@@ -33,6 +33,7 @@ TODO - Set to system appropriate newline character.
 This doesn't work with modernmetric
 """
 
+
 def checkDependency(log, command, name, kill=False) -> bool:
     which = shutil.which(command)
     if not which:
