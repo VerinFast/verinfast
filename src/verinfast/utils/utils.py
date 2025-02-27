@@ -37,7 +37,12 @@ This doesn't work with modernmetric
 def checkDependency(log, command, name, kill=False) -> bool:
     which = shutil.which(command)
     if not which:
-        log(msg=f"{name} is required but it's not installed.", tag=f"{name} status", display=False, timestamp=False)
+        log(
+            msg=f"{name} is required but it's not installed.",
+            tag=f"{name} status",
+            display=False,
+            timestamp=False,
+        )
         if kill:
             raise Exception(f"{name} is required but it's not installed.")
         return False
