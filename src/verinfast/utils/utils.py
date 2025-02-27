@@ -6,6 +6,7 @@ from glob import glob
 import subprocess
 import time
 from typing import List, Union
+import shutil
 
 
 STD_EXCLUDE_LIST = [
@@ -31,6 +32,17 @@ newline = "\n" #
 TODO - Set to system appropriate newline character.
 This doesn't work with modernmetric
 """
+
+def checkDependency(log, command, name, kill=False) -> bool:
+    which = shutil.which(command)
+    if not which:
+        log(msg=f"{name} is required but it's not installed.", tag=f"{name} status", display=False, timestamp=False)
+        if kill:
+            raise Exception(f"{name} is required but it's not installed.")
+        return False
+    else:
+        log(msg=f"{name} is installed at {which}.", tag=f"{name} status", display=True, timestamp=False)
+        return True
 
 
 def list_files(

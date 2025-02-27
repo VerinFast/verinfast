@@ -2,6 +2,7 @@ from pathlib import Path
 import os
 import shutil
 
+from verinfast.utils.utils import checkDependency
 from verinfast.cloud.aws.blocks import get_aws_blocks
 from verinfast.cloud.aws.costs import get_aws_costs
 from verinfast.cloud.azure.costs import runAzure
@@ -48,26 +49,10 @@ class CloudScanner:
         elif provider.provider == "gcp":
             self._scan_gcp(provider)
 
-    def _check_dependency(self, command, name, kill=False) -> bool:
-        """Check if required CLI tool is installed"""
-        which = shutil.which(command)
-        if not which:
-            self.log(
-                msg=f"{name} is required but it's not installed.",
-                tag=f"{name} status",
-                display=True,
-            )
-            if kill:
-                raise RuntimeError(f"{name} is required but it's not installed.")
-            return False
-        self.log(
-            msg=f"{name} is installed at {which}.", tag=f"{name} status", display=True
-        )
-        return True
 
     def _scan_aws(self, provider):
         """Handle AWS scanning"""
-        if not self._check_dependency("aws", "AWS Command-line tool"):
+        if not checkDependency(self.log, "aws", "AWS Command-line tool"):
             return
 
         account_id = str(provider.account).replace("-", "")
@@ -130,7 +115,7 @@ class CloudScanner:
 
     def _scan_azure(self, provider):
         """Handle Azure scanning"""
-        if not self._check_dependency("az", "Azure Command-line tool"):
+        if not checkDependency(self.log, "az", "Azure Command-line tool"):
             return
         # Costs
         azure_cost_file = runAzure(
@@ -176,7 +161,7 @@ class CloudScanner:
 
     def _scan_gcp(self, provider):
         """Handle GCP scanning"""
-        if not self._check_dependency("gcloud", "Google Command-line tool"):
+        if not checkDependency(self.log, "gcloud", "Google Command-line tool"):
             return
         # Instances
         gcp_instance_file = get_gcp_instances(
