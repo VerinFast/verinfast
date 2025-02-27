@@ -11,9 +11,6 @@ from .file_utils import FileUtils
 
 uname = platform.uname()
 system = uname.system
-node = uname.node
-release = uname.release
-version = uname.version
 machine = uname.machine
 
 
@@ -119,7 +116,7 @@ class RepositoryScanner(GitUtils, RepoHandlers, ScannerTools, FileUtils):
                     "env": machine,
                     "real_size": real_size,
                     "uname": system,
-                    "branch": locals()["branch"] if "branch" in locals() else None,
+                    "branch": self.branch if self.branch else "",
                 },
             }
 

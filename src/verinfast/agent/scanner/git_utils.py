@@ -38,22 +38,24 @@ class GitUtils:
 
     def _initialize_git(self, path, branch):
         """Initialize and checkout git repository"""
+        self.branch = branch
         if not self.config.dry:
             subprocess.check_call(["git", "init"])
             try:
                 subprocess.check_call(
-                    ["git", f"--work-tree={path}", "checkout", branch]
+                    ["git", f"--work-tree={path}", "checkout", self.branch]
                 )
             except subprocess.CalledProcessError:
                 try:
                     subprocess.check_call(["git", "checkout", "master"])
+                    self.branch = "master"
                 except subprocess.CalledProcessError:
                     try:
                         cmd = "git for-each-ref --count=1 --sort=-committerdate refs/heads/ --format='%(refname:short)'"
-                        branch = (
+                        self.branch = (
                             std_exec(cmd.split(" ")).replace("'", "").replace("\n", "")
                         )
-                        subprocess.check_call(["git", "checkout", branch])
+                        subprocess.check_call(["git", "checkout", self.branch])
                     except subprocess.CalledProcessError:
                         if self.config.runGit:
                             raise Exception("Error checking out branch from git.")
