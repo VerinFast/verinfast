@@ -49,7 +49,6 @@ class CloudScanner:
         elif provider.provider == "gcp":
             self._scan_gcp(provider)
 
-
     def _scan_aws(self, provider):
         """Handle AWS scanning"""
         if not checkDependency(self.log, "aws", "AWS Command-line tool"):
