@@ -24,7 +24,7 @@ def test_preflight_cli():
     # We do NOT call agent.scan() directly; we just run the CLI
     result = subprocess.run(
         cmd,
-        input="n\n",          # Don't do the scan
+        input="n\n",  # Don't do the scan
         text=True,
         capture_output=True,
     )
