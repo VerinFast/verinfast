@@ -164,7 +164,7 @@ class Agent:
                         f"Failed to write system information: {str(e)}"
                     ) from e
 
-            if self.config.modules.code is not None:
+            if self.config.modules.code is not None or self.config.modules.cloud is not None:
                 if self.config.shouldUpload:
                     headers = {
                         "content-type": "application/json",
