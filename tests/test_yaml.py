@@ -3,11 +3,34 @@ from unittest.mock import patch
 import os
 from pathlib import Path
 import shutil
+import subprocess
 
 from verinfast.agent import Agent
 from verinfast.config import Config
 from verinfast.upload import Uploader
 from verinfast.utils.utils import DebugLog
+
+
+def test_preflight_cli():
+    # Assume you have already built or installed `verinfast`
+
+    file_path = Path(__file__)
+    test_folder = file_path.parent.absolute()
+    config_path = test_folder / "str_conf.yaml"
+
+    # Run the CLI command.
+    cmd = ["verinfast", "-c", str(config_path)]
+    
+    # We do NOT call agent.scan() directly; we just run the CLI
+    result = subprocess.run(
+        cmd,
+        input="n\n",          # Don't do the scan
+        text=True,
+        capture_output=True,
+    )
+
+    assert result.returncode == 0, f"Non-zero exit code: {result.returncode}"
+    assert "Would you like to proceed with the scan?" in result.stdout
 
 
 @patch("verinfast.user.__get_input__", return_value="y")
