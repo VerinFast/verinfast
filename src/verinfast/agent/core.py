@@ -21,8 +21,6 @@ from cachehash.main import Cache
 from .scanner import RepositoryScanner
 from .cloud import CloudScanner
 
-today = date.today()
-
 
 requestx = httpx.Client(http2=True, timeout=None)
 
