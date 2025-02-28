@@ -206,9 +206,7 @@ class Agent:
                     self.log(msg=f"Unable to access {provider.provider} {provider.account}", tag="Unable to access", display=True, timestamp=False)
 
         resp = repeat_boolean_prompt(
-            "\nWould you like to proceed with the scan?",
-            logger=print,
-            default_val=True
+            "\nWould you like to proceed with the scan?", logger=print, default_val=True
         )
 
         if resp:
