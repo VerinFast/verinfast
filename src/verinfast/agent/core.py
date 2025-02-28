@@ -217,7 +217,6 @@ class Agent:
             self.log(tag="Exiting now", msg="", display=True)
             exit(0)
 
-
     def scan(self):
         """Main scan orchestration method"""
         if self.config.modules is not None:
