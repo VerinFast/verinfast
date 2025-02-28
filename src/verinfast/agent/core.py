@@ -196,8 +196,15 @@ class Agent:
                                 timestamp=False
                             )
                         else:
-                            self.log(tag="AWS account access confirmed", msg=account_id, display=True, timestamp=False)
-                    if provider.provider == "azure" and checkDependency(self.log, "az", "Azure Command-line tool"):
+                            self.log(
+                                tag="AWS account access confirmed",
+                                msg=account_id,
+                                display=True,
+                                timestamp=False,
+                            )
+                    if provider.provider == "azure" and checkDependency(
+                        self.log, "az", "Azure Command-line tool"
+                    ):
                         pass
                     if provider.provider == "gcp" and checkDependency(
                         self.log, "gcloud", "Google Command-line tool"
