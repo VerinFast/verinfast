@@ -47,7 +47,12 @@ def checkDependency(log, command, name, kill=False) -> bool:
             raise Exception(f"{name} is required but it's not installed.")
         return False
     else:
-        log(msg=f"{name} is installed at {which}.", tag=f"{name} status", display=True, timestamp=False)
+        log(
+            msg=f"{name} is installed at {which}.",
+            tag=f"{name} status",
+            display=True,
+            timestamp=False,
+        )
         return True
 
 
