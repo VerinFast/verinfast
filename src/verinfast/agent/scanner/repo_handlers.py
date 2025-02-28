@@ -68,7 +68,6 @@ class RepoHandlers:
 
     def _get_repo_name(self, repo_path):
         a = Path(repo_path).absolute()
-        match = re.search(r"([^/]*\.git.*)", str(a))
-        if match:
-            return match.group(1)
+        if match := re.search(r"([^/]*\.git.*)", str(a)):
+            return match[1]
         return os.path.basename(os.path.normpath(repo_path))
