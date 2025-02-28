@@ -167,19 +167,25 @@ class Agent:
                         repo_url = repo_url.split("@")[0]
                     try:
                         subprocess.check_output(["git", "ls-remote", repo_url])
-                        self.log(tag="Repository access confirmed",
-                                 msg=repo_url,
-                                 display=True,
-                                 timestamp=False)
+                        self.log(
+                            tag="Repository access confirmed",
+                            msg=repo_url,
+                            display=True,
+                            timestamp=False,
+                        )
                     except subprocess.CalledProcessError:
-                        self.log(msg=repo_url,
-                                 tag="Unable to access",
-                                 display=True,
-                                 timestamp=False)
-                        self.log(msg=repo_url,
-                                 tag="Repository will not be scanned",
-                                 display=True,
-                                 timestamp=False)
+                        self.log(
+                            msg=repo_url,
+                            tag="Unable to access",
+                            display=True,
+                            timestamp=False,
+                        )
+                        self.log(
+                            msg=repo_url,
+                            tag="Repository will not be scanned",
+                            display=True,
+                            timestamp=False,
+                        )
 
         cloud_config = self.config.modules.cloud
         if cloud_config is not None:
