@@ -23,6 +23,7 @@ class RepositoryScanner(GitUtils, RepoHandlers, ScannerTools, FileUtils):
         self.curr_dir = os.getcwd()
         self.temp_dir = Path(os.path.expanduser("~/.verinfast/")).joinpath("temp_repo")
         self.template_definition = agent.template_definition
+        self.branch = None
 
     def _update_template_definition(self, key, value):
         """Helper method to update template definition"""
