@@ -185,9 +185,10 @@ class Agent:
         if cloud_config is not None:
             for provider in cloud_config:
                 try:
-                    if (provider.provider == "aws" and
-                            checkDependency(self.log, "aws", "AWS Command-line tool")):
-                        account_id = str(provider.account).replace('-', '')
+                    if provider.provider == "aws" and checkDependency(
+                        self.log, "aws", "AWS Command-line tool"
+                    ):
+                        account_id = str(provider.account).replace("-", "")
                         if find_profile(account_id, self.log) is None:
                             self.log(
                                 tag=f"No matching AWS CLI profiles found for {provider.account}",
