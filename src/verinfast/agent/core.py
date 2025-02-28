@@ -193,7 +193,7 @@ class Agent:
                                 tag=f"No matching AWS CLI profiles found for {provider.account}",
                                 msg="Account can't be scanned.",
                                 display=True,
-                                timestamp=False
+                                timestamp=False,
                             )
                         else:
                             self.log(
