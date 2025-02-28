@@ -6,19 +6,25 @@ from typing import List
 
 from google.api_core.exceptions import NotFound
 from google.cloud import compute_v1
-from google.cloud.monitoring_v3 import Aggregation, MetricServiceClient, TimeInterval, ListTimeSeriesRequest  # noqa: E501
+from google.cloud.monitoring_v3 import (
+    Aggregation,
+    MetricServiceClient,
+    TimeInterval,
+    ListTimeSeriesRequest,
+)  # noqa: E501
 
 from verinfast.cloud.gcp.zones import zones
-from verinfast.cloud.cloud_dataclass import \
-    Utilization_Datapoint as Datapoint,  \
-    Utilization_Datum as Datum
+from verinfast.cloud.cloud_dataclass import (
+    Utilization_Datapoint as Datapoint,
+    Utilization_Datum as Datum,
+)
 
 # os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/Users/jason/.config/gcloud/application_default_credentials.json"  # noqa: E501
 
 metric_identifiers = {
-    "cpu": 'compute.googleapis.com/instance/cpu/utilization',
-    "hdd": 'agent.googleapis.com/disk/percent_used',  # multiple
-    "mem": 'agent.googleapis.com/memory/percent_used'
+    "cpu": "compute.googleapis.com/instance/cpu/utilization",
+    "hdd": "agent.googleapis.com/disk/percent_used",  # multiple
+    "mem": "agent.googleapis.com/memory/percent_used",
 }
 
 metrics = []
@@ -38,7 +44,7 @@ mean_aggregation = Aggregation(
     {
         "alignment_period": {"seconds": 3600},  # 60 minutes
         "per_series_aligner": Aggregation.Aligner.ALIGN_MEAN,
-        "cross_series_reducer": Aggregation.Reducer.REDUCE_MEAN
+        "cross_series_reducer": Aggregation.Reducer.REDUCE_MEAN,
     }
 )
 
@@ -46,7 +52,7 @@ min_aggregation = Aggregation(
     {
         "alignment_period": {"seconds": 3600},  # 60 minutes
         "per_series_aligner": Aggregation.Aligner.ALIGN_MIN,
-        "cross_series_reducer": Aggregation.Reducer.REDUCE_MIN
+        "cross_series_reducer": Aggregation.Reducer.REDUCE_MIN,
     }
 )
 
@@ -54,14 +60,14 @@ max_aggregation = Aggregation(
     {
         "alignment_period": {"seconds": 3600},  # 60 minutes
         "per_series_aligner": Aggregation.Aligner.ALIGN_MAX,
-        "cross_series_reducer": Aggregation.Reducer.REDUCE_MAX
+        "cross_series_reducer": Aggregation.Reducer.REDUCE_MAX,
     }
 )
 
 aggregations = {
     "min": min_aggregation,
     "mean": mean_aggregation,
-    "max": max_aggregation
+    "max": max_aggregation,
 }
 
 
@@ -77,24 +83,23 @@ def get_metrics_for_instance(sub_id: str, instance_name: str) -> List[Datum]:
                 view=ListTimeSeriesRequest.TimeSeriesView.FULL,
                 aggregation=aggregation,
                 name=f"projects/{sub_id}",
-                interval=interval
+                interval=interval,
             )
             try:
-                results = metrics_client.list_time_series(
-                    request=request
-                )
+                results = metrics_client.list_time_series(request=request)
                 for result in results:
                     for point in result.points:
-                        d = str(datetime.fromtimestamp(
-                            point.interval.start_time.timestamp()
-                        ))
+                        d = str(
+                            datetime.fromtimestamp(
+                                point.interval.start_time.timestamp()
+                            )
+                        )
                         if d not in results_dict:
                             results_dict[d] = {}
                         if m not in results_dict[d]:
                             results_dict[d][m] = {}
                         results_dict[d][m][a] = point.value.double_value * 100
-                        results_dict[d]["t"] = \
-                            point.interval.start_time.timestamp()
+                        results_dict[d]["t"] = point.interval.start_time.timestamp()
             except NotFound:
                 pass
     data = []
@@ -145,14 +150,11 @@ def get_instances(sub_id: str, path_to_output: str = "./", dry=False):
                         public_ip = nic.access_configs[0].nat_i_p
                     vnet_name = nic.network
 
-                    m = get_metrics_for_instance(
-                        sub_id=sub_id,
-                        instance_name=name
-                    )
+                    m = get_metrics_for_instance(sub_id=sub_id, instance_name=name)
                     d = {
-                            "id": str(instance.id),
-                            "metrics": [metric.dict for metric in m]
-                        }
+                        "id": str(instance.id),
+                        "metrics": [metric.dict for metric in m],
+                    }
                     metrics.append(d)
 
                     my_instance = {
@@ -165,7 +167,7 @@ def get_instances(sub_id: str, path_to_output: str = "./", dry=False):
                         "subnet": subnet.split("/")[-1],
                         "architecture": architecture,
                         "publicIp": public_ip,
-                        "vpc": vnet_name.split("/")[-1]
+                        "vpc": vnet_name.split("/")[-1],
                     }
                 except KeyError:
                     continue
@@ -173,26 +175,21 @@ def get_instances(sub_id: str, path_to_output: str = "./", dry=False):
         # for network in networks_client.list(project=sub_id):
         #     print(network)
         upload = {
-                    "metadata": {
-                        "provider": "gcp",
-                        "account": str(sub_id)
-                    },
-                    "data": my_instances
-                }
+            "metadata": {"provider": "gcp", "account": str(sub_id)},
+            "data": my_instances,
+        }
     # End dry check
-    gcp_output_file = os.path.join(
-        path_to_output,
-        f'gcp-instances-{sub_id}.json'
-    )
+    gcp_output_file = os.path.join(path_to_output, f"gcp-instances-{sub_id}.json")
     if not dry:
-        with open(gcp_output_file, 'w') as outfile:
+        with open(gcp_output_file, "w") as outfile:
             outfile.write(json.dumps(upload, indent=4))
 
-        upload['data'] = metrics
-        with open(gcp_output_file[:-5]+"-utilization.json", "w") as outfile2:
+        upload["data"] = metrics
+        with open(gcp_output_file[:-5] + "-utilization.json", "w") as outfile2:
             outfile2.write(json.dumps(upload, indent=4))
 
     return gcp_output_file
+
 
 # Test code
 # get_instances(sub_id="startupos-328814")

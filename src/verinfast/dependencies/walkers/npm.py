@@ -13,7 +13,7 @@ class NodeWalker(Walker):
     def initialize(self, root_path: str = "./"):
         root_path = str(Path(root_path).absolute())
         self.install_points: List[Path] = []
-        for p in Path(root_path).rglob('**/*.*'):
+        for p in Path(root_path).rglob("**/*.*"):
             if p.name in self.manifest_files:
                 self.install_points.append(p)
         for p in self.install_points:
@@ -23,12 +23,12 @@ class NodeWalker(Walker):
                 subprocess.run(
                     "npm install --production --silent --yes",
                     capture_output=True,
-                    shell=True
+                    shell=True,
                 )
             except Exception as error:
-                self.log(f'Error with npm install: {error}')
+                self.log(f"Error with npm install: {error}")
             else:
-                self.walk('node_modules')
+                self.walk("node_modules")
             os.chdir(root_path)
 
     def parse(self, file: str, expand=False):
@@ -45,7 +45,7 @@ class NodeWalker(Walker):
                     if "license" in d and isinstance(d["license"], dict):
                         license[key] = d["license"]["type"]
                     elif "license" in d and isinstance(d["license"], list):
-                        license[key] = ' '.join(d["license"])
+                        license[key] = " ".join(d["license"])
                     elif "license" in d:
                         license[key] = d["license"]
                     else:
@@ -58,7 +58,7 @@ class NodeWalker(Walker):
                             value = d["dependencies"][k]
                             if isdigit(value[0]):
                                 value = "==" + value
-                            entry["requires"].append(k+value)
+                            entry["requires"].append(k + value)
 
                     entry["required_by"] = []
                     if "description" in d:
@@ -71,7 +71,7 @@ class NodeWalker(Walker):
                         specifier=entry["specifier"],
                         source=entry["source"],
                         license=entry["license"],
-                        summary=entry["summary"]
+                        summary=entry["summary"],
                     )
                     self.entries.append(e)
         except Exception as error:

@@ -17,4 +17,4 @@ repos:
   - https://github.com/laravel/laravel.git
   # - git@github.com:ramsey/uuid.git
   # - git@github.com:thephpleague/flysystem.git
-  - git@github.com:tijsverkoyen/CssToInlineStyles.git
+  - https://github.com/tijsverkoyen/CssToInlineStyles.git
