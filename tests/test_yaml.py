@@ -20,7 +20,6 @@ def test_preflight_cli():
 
     # Run the CLI command.
     cmd = ["verinfast", "-c", str(config_path)]
-    
     # We do NOT call agent.scan() directly; we just run the CLI
     result = subprocess.run(
         cmd,
