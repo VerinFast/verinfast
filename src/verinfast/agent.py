@@ -94,6 +94,7 @@ class Agent:
                 f.write(output)
 
     def scan(self):
+        report_license(self.config.reportId, self.config, "verinfast")
         if self.config.modules is not None:
             if self.config.modules.code is not None:
 
@@ -426,7 +427,6 @@ class Agent:
                 template_definition["filelist"] = filelist
                 custom_args = [f"--file={stats_input_file}", f"--output={stats_output_file}"]
                 modernmetric(custom_args=custom_args, license_identifier=self.config.reportId)
-                report_license(self.config.reportId, self.config, "modernmetric")
 
                 with open(stats_output_file, 'r') as f:
                     template_definition["stats"] = json.load(f)
