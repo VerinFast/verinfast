@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from cachehash.main import Cache
 from datetime import date
 import json
 import os
@@ -9,18 +8,16 @@ import re
 import shutil
 import subprocess
 import traceback
-import contextlib
-import io
 from uuid import uuid4
 
+from cachehash.main import Cache
 from modernmetric.__main__ import main as modernmetric
-import semgrep.commands.scan as semgrep_scan
 
 import httpx
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from pygments_tsx.tsx import patch_pygments
 
-from verinfast.utils.utils import DebugLog, std_exec, trimLineBreaks, escapeChars, truncate, truncate_children, get_repo_name_url_and_branch
+from verinfast.utils.utils import DebugLog, std_exec, trimLineBreaks, escapeChars, truncate, get_repo_name_url_and_branch
 from verinfast.upload import Uploader
 from verinfast.cloud.aws.costs import get_aws_costs
 from verinfast.cloud.aws.get_profile import find_profile
@@ -34,6 +31,7 @@ from verinfast.cloud.gcp.blocks import getBlocks as get_gcp_blocks
 from verinfast.config import Config
 from verinfast.user import initial_prompt, save_path, repeat_boolean_prompt
 from verinfast.utils.license import report as report_license
+from verinfast.code_scan import run_scan
 
 from verinfast.dependencies.walk import walk as dependency_walk
 
@@ -437,135 +435,7 @@ class Agent:
             )
 
         # Run SEMGrep
-        if self.config.runScan:
-            if system.lower() == 'windows':
-                self.log("""
-                Windows does not support Semgrep.
-                Please see the open issues here:
-                https://github.com/returntocorp/semgrep/issues/1330
-                         """)
-
-            findings_file = os.path.join(
-                self.config.output_dir,
-                f"{repo_name}.findings.json"
-            )
-
-            custom_args = [
-                "--config", "auto",
-                "--json",
-                f"--output={findings_file}",
-                "-q"
-            ]
-
-            findings_success = False
-            if not self.config.dry:
-                self.log(msg=repo_name, tag="Scanning repository", display=True)
-            try:
-                with contextlib.redirect_stdout(io.StringIO()):
-                    if not self.config.dry:
-                        semgrep_scan.scan(custom_args)
-                    if os.path.exists(findings_file):
-                        with open(findings_file) as f:
-                            results = json.load(f)
-                            self.cache.set(findings_file, results)
-                findings_success = True
-            except SystemExit as e:
-                if e.code == 0:
-                    findings_success = True
-                else:
-                    self.log(tag="ERROR", msg="SystemExit in Semgrep")
-                    self.log(e)
-            except Exception as e:
-                self.log(tag="ERROR", msg="Error in Semgrep")
-                self.log(e)
-
-            # Only try to cache if scan was successful and file exists
-            if findings_success and os.path.exists(findings_file):
-                try:
-                    # Try to cache the results
-                    with open(findings_file) as f:
-                        results = json.load(f)
-                        self.cache.set(findings_file, results)
-                except Exception as e:
-                    self.log(
-                        tag="Cache Error",
-                        msg=f"Failed to cache results: {str(e)}"
-                    )
-
-            if findings_success:
-                try:
-                    with open(findings_file) as f:
-                        findings = json.load(f)
-
-                    # This is on purpose. If you try to read same pointer
-                    # twice, it dies.
-                    with open(findings_file) as f:
-                        original_findings = json.load(f)
-
-                    if self.config.truncate_findings:
-                        # Exclusions are set to exclude fields that are not code
-                        truncation_exclusion = [
-                            "cwe",
-                            "owasp",
-                            "path",
-                            "check_id",
-                            "license",
-                            "fingerprint",
-                            "message",
-                            "references",
-                            "url",
-                            "source",
-                            "severity"
-                        ]
-                        self.log(
-                            tag="TRUNCATING",
-                            msg=f"excluding: {truncation_exclusion}"
-                        )
-                        try:
-                            findings = truncate_children(
-                                findings,
-                                self.log,
-                                excludes=truncation_exclusion,
-                                max_length=self.config.truncate_findings_length
-                            )
-                        except Exception as e:
-                            self.log(tag="ERROR", msg="Error in Truncation")
-                            self.log(e)
-                            self.log(
-                                json.dumps(
-                                    original_findings,
-                                    indent=4,
-                                    sort_keys=True
-                                )
-                            )
-                    with open(findings_file, "w") as f2:
-                        f2.write(json.dumps(
-                            findings, indent=4, sort_keys=True
-                        ))
-                    template_definition["gitfindings"] = findings
-                except Exception as e:
-                    if not self.config.dry:
-                        self.log(tag="ERROR",
-                                 msg="Error in findings post-processing")
-                        self.log(e)
-                    else:
-                        self.log(
-                            msg=f'''
-                                Attempted to format/truncate non existent file
-                                {findings_file}
-                            '''
-                        )
-
-            # End if findings_success is True
-
-            # Upload findings always, in case of dry run
-            # .upload checks should_upload
-            self.upload(
-                file=findings_file,
-                route="findings",
-                source=repo_name
-            )
-
+        run_scan(repo_name, self.config, self.cache, self.upload, template_definition, self.log)
         # ##### Scan Dependencies ######
         if self.config.runDependencies:
             dependencies_output_file = os.path.join(

@@ -48,7 +48,7 @@ def test_semgrep_cache():
         second_duration = time.time() - start_time
         print(f"Second scan took: {second_duration:.2f} seconds")
 
-        assert second_duration < first_duration  # Second run should be faster
+        assert second_duration < first_duration - 0.5  # Second run should be faster
         assert Path(Path.home(), '.verinfast_cache/semgrep.db').exists()
 
     finally:
