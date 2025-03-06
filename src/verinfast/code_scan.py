@@ -4,16 +4,20 @@ import json
 import os
 import platform
 
-from typing import Union
-
 import semgrep.commands.scan as semgrep_scan
 from cachehash.main import Cache
-
 
 from verinfast.config import Config
 from verinfast.utils.utils import truncate_children
 
-def run_scan(repo_name:str, config:Config, cache:Cache, upload, template_definition:dict, log=print) -> None:
+
+def run_scan(
+        repo_name: str,
+        config: Config,
+        cache: Cache,
+        upload,
+        template_definition: dict,
+        log=print) -> None:
     uname = platform.uname()
     system = uname.system
 
@@ -26,7 +30,7 @@ def run_scan(repo_name:str, config:Config, cache:Cache, upload, template_definit
         Please see the open issues here:
         https://github.com/returntocorp/semgrep/issues/1330
                     """)
-        
+
         return
 
     findings_file = os.path.join(
@@ -45,7 +49,7 @@ def run_scan(repo_name:str, config:Config, cache:Cache, upload, template_definit
     if not config.dry:
         # if cache exists write cache to findings file
         cache_results = cache.get("./")
-        if(cache_results):
+        if cache_results:
             with open(findings_file) as f:
                 f.write(json.dumps(f))
                 findings_success = True
@@ -134,8 +138,10 @@ def run_scan(repo_name:str, config:Config, cache:Cache, upload, template_definit
                 template_definition["gitfindings"] = findings
             except Exception as e:
                 if not config.dry:
-                    log(tag="ERROR",
-                                msg="Error in findings post-processing")
+                    log(
+                        tag="ERROR",
+                        msg="Error in findings post-processing"
+                    )
                     log(e)
                 else:
                     log(
@@ -145,12 +151,7 @@ def run_scan(repo_name:str, config:Config, cache:Cache, upload, template_definit
                         '''
                     )
         else:
-            log(
-                        msg=f'''
-                            Scan Findings failed
-                            
-                        '''
-                    )
+            log(msg="Scan Findings failed")
 
     # End if findings_success is True
 
