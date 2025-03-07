@@ -5,6 +5,23 @@ import time
 from google.cloud.monitoring_v3 import MetricServiceClient, TimeInterval, ListTimeSeriesRequest  # noqa: E501
 from google.cloud import storage
 
+from verinfast.utils.utils import std_exec
+
+
+def get_bucket_size(bucket_name):
+    try:
+        cmd = ["gcloud", "storage", "du", f"gs://{bucket_name}", "--summarize"]
+        output = std_exec(cmd)
+        # Extracting size from the output
+        for line in output.splitlines():
+            if line.startswith("Total Size:"):
+                size_str = line.split(":")[1].strip()
+                size_bytes = int(size_str.split()[0])
+                return size_bytes
+    except Exception as e:
+        print(f"Error getting size for bucket {bucket_name}: {e}")
+    return 0
+
 
 def getBlocks(sub_id: str, path_to_output: str = "./", dry=False):
     if not dry:
@@ -40,9 +57,10 @@ def getBlocks(sub_id: str, path_to_output: str = "./", dry=False):
         all_buckets = storage_client.list_buckets()
         for bucket in all_buckets:
             rp = bucket.retention_period
+            size = get_bucket_size(bucket.name)
             known_buckets[bucket.name] = {
                 "name": bucket.name,
-                "size": 0,
+                "size": size,
                 "retention": str(rp),
                 "public": False
             }

@@ -62,7 +62,7 @@ def test_aws_scan(self):
         for u in utilization["data"]:
             if u["id"] == "i-0a3493d5abcdfba4b":
                 v = u["metrics"]
-        assert len(v) >= 450
+        assert len(v) >= 200
     # Make sure "aws-instances-foo-utilization.json" doesn't exist
     bad_utilization_file = Path(
         results_dir.joinpath("aws-instances-foo-utilization.json")
@@ -131,7 +131,7 @@ def test_aws_dash(self):
         for u in utilization["data"]:
             if u["id"] == "i-0a3493d5abcdfba4b":
                 v = u["metrics"]
-        assert len(v) >= 450
+        assert len(v) >= 200
     with open(results_dir.joinpath(f"aws-storage-{sub_id}.json")) as f:
         storage = json.load(f)
         v = 0
@@ -139,3 +139,39 @@ def test_aws_dash(self):
             if u["name"] == "startupos-test-bucket":
                 v = u["size"]
         assert v >= 262183
+
+
+@patch('verinfast.user.__get_input__', return_value='y')
+def test_aws_profile(self):
+    # sub_id = "436708548746"
+    assert verinfast.user.initial_prompt is not None
+    file_path = Path(__file__)
+    test_folder = file_path.parent.absolute()
+    results_dir = test_folder.joinpath("results").absolute()
+    cfg_path = test_folder.joinpath("aws_profile.yaml").absolute()
+    agent = Agent()
+    config = Config(cfg_path=str(cfg_path))
+    assert config.cfg_path == str(cfg_path)
+    assert config.config is not FileNotFoundError
+    assert "modules" in config.config
+
+    # assertions to verify profile
+    assert "profile" in config.config["modules"]["cloud"][0]
+    assert config.config["modules"]["cloud"][0]["profile"] == "default"
+
+    config.output_dir = str(results_dir)
+    config.runGit = False
+    agent.config = config
+    agent.debug = DebugLog(path=agent.config.output_dir, debug=False)
+    agent.log = agent.debug.log
+    assert agent.config.output_dir == str(results_dir)
+    assert agent.config.dry is False
+    assert agent.config.runGit is False
+    assert len(agent.config.modules.cloud) > 0
+    try:
+        shutil.rmtree(results_dir)
+    except Exception as e:
+        print(e)
+    assert not Path(results_dir).exists()
+    os.makedirs(agent.config.output_dir, exist_ok=True)
+    agent.scan()

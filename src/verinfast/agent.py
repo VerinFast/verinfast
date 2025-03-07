@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from cachehash.main import Cache
 from datetime import date
 import json
 import os
@@ -16,12 +17,13 @@ from modernmetric.__main__ import main as modernmetric
 import semgrep.commands.scan as semgrep_scan
 
 import httpx
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 from pygments_tsx.tsx import patch_pygments
 
 from verinfast.utils.utils import DebugLog, std_exec, trimLineBreaks, escapeChars, truncate, truncate_children, get_repo_name_url_and_branch
+from verinfast.system.sysinfo import get_system_info
 from verinfast.upload import Uploader
-from verinfast.cloud.aws.costs import runAws
+from verinfast.cloud.aws.costs import get_aws_costs
 from verinfast.cloud.aws.get_profile import find_profile
 from verinfast.cloud.azure.costs import runAzure
 from verinfast.cloud.aws.instances import get_instances as get_aws_instances
@@ -32,6 +34,8 @@ from verinfast.cloud.azure.blocks import getBlocks as get_az_blocks
 from verinfast.cloud.gcp.blocks import getBlocks as get_gcp_blocks
 from verinfast.config import Config
 from verinfast.user import initial_prompt, save_path, repeat_boolean_prompt
+from verinfast.utils.license import report as report_license
+
 from verinfast.dependencies.walk import walk as dependency_walk
 
 
@@ -63,7 +67,7 @@ class Agent:
     def __init__(self):
         self.config = Config()
         os.makedirs(self.config.output_dir, exist_ok=True)
-        self.debug = DebugLog(path=self.config.output_dir, debug=False)
+        self.debug = DebugLog(file=self.config.log_file, debug=False)
         self.log = self.debug.log
         self.log(msg='', tag="Started")
         self.uploader = Uploader(self.config.upload_conf)
@@ -71,22 +75,39 @@ class Agent:
         self.config.upload_logs = initial_prompt()
         self.directory = save_path()
 
-    # Takes a string and shows it to the user.
-    # Also ensures that string is written to the logs.
-    # No other decoration is allowed.
-    def print_and_log(self, msg: str):
-        self.log(msg=msg, tag="", display=True, timestamp=False)
+        # Initialize cache
+        cache_dir = Path(Path.home(), '.verinfast_cache')
+        db_path = Path(cache_dir, 'semgrep.db')
+        if not db_path.parent.exists():
+            db_path.parent.mkdir(parents=True, exist_ok=True)
+
+        self.cache = Cache(db_path, "semgrep_cache")
 
     def create_template(self):
         if not self.config.dry:
             with open(f"{self.config.output_dir}/results.html", "w") as f:
-                jinja_env = Environment(loader=FileSystemLoader(templates_folder))
+                jinja_env = Environment(
+                    loader=FileSystemLoader(templates_folder),
+                    autoescape=select_autoescape(['html', 'xml'])
+                )
                 jinja_env.globals.update(zip=zip, sorted=sorted)
                 output = jinja_env.get_template("results.j2").render(template_definition)
                 f.write(output)
 
     def scan(self):
         if self.config.modules is not None:
+            self.system_info = get_system_info()
+
+            self.log(msg=json.dumps(self.system_info, indent=4), tag="System Information")
+            if not self.config.dry:
+                system_info_file = os.path.join(self.config.output_dir, "system_info.json")
+                try:
+                    with open(system_info_file, 'w') as f:
+                        json.dump(self.system_info, f, indent=4)
+                except IOError as e:
+                    self.log(f"Failed to write system info to {system_info_file}: {str(e)}")
+                    raise RuntimeError(f"Failed to write system information: {str(e)}") from e
+
             if self.config.modules.code is not None:
 
                 if self.config.shouldUpload:
@@ -103,7 +124,7 @@ class Agent:
                     else:
                         raise Exception(f"{self.scanId} returned for failed report Id fetch.")
                 else:
-                    print("ID only fetched for upload")
+                    self.log(msg="Scan ID only fetched when uploading enabled", tag="Scan ID", display=True)
                 self.scanRepos()
             if self.config.modules and self.config.modules.cloud and len(self.config.modules.cloud):
                 self.scanCloud()
@@ -336,12 +357,12 @@ class Agent:
                 template_definition["gitlog"] = finalArr
                 # End if not self.config.dry:
 
-        if Path(git_output_file).exists():
-            self.upload(
-                file=git_output_file,
-                route="git",
-                source=repo_name
-            )
+        # if Path(git_output_file).exists():
+        self.upload(
+            file=git_output_file,
+            route="git",
+            source=repo_name
+        )
 
         # Manual File Sizes and Info
         sizes_output_file = os.path.join(self.config.output_dir, repo_name + ".sizes.json")
@@ -417,7 +438,9 @@ class Agent:
 
                 template_definition["filelist"] = filelist
                 custom_args = [f"--file={stats_input_file}", f"--output={stats_output_file}"]
-                modernmetric(custom_args)
+                modernmetric(custom_args=custom_args, license_identifier=self.config.reportId)
+                report_license(self.config.reportId, self.config, "modernmetric")
+
                 with open(stats_output_file, 'r') as f:
                     template_definition["stats"] = json.load(f)
             self.upload(
@@ -435,102 +458,146 @@ class Agent:
                 https://github.com/returntocorp/semgrep/issues/1330
                          """)
 
-            findings_output_file = os.path.join(self.config.output_dir, repo_name + ".findings.json")
-            findings_error_file = os.path.join(self.config.output_dir, repo_name + ".findings.err")
+            findings_file = os.path.join(
+                self.config.output_dir,
+                f"{repo_name}.findings.json"
+            )
+
+            custom_args = [
+                "--config", "auto",
+                "--json",
+                f"--output={findings_file}",
+                "-q"
+            ]
+
+            findings_success = False
             if not self.config.dry:
                 self.log(msg=repo_name, tag="Scanning repository", display=True)
-                try:
-                    with open(findings_output_file, 'a') as o:
-                        custom_args = [
-                            "--config",
-                            "auto",
-                            "--json",
-                            f"--json-output={findings_output_file}",
-                            "-q"
-                        ]
-                        try:
-                            with contextlib.redirect_stdout(io.StringIO()):
-                                semgrep_scan.scan(custom_args)
-                        except SystemExit:
-                            pass
-                except Exception as e:
-                    self.log(tag="ERROR", msg="Error in Semgrep")
-                    self.log(e)
             try:
-                with open(findings_output_file) as f:
-                    findings = json.load(f)
-
-                # This is on purpose. If you try to read same pointer
-                # twice, it dies.
-                with open(findings_output_file) as f:
-                    original_findings = json.load(f)
-
-                if self.config.truncate_findings:
-                    # Exclusions are set to exclude fields that are not code
-                    truncation_exclusion = [
-                        "cwe",
-                        "owasp",
-                        "path",
-                        "check_id",
-                        "license",
-                        "fingerprint",
-                        "message",
-                        "references",
-                        "url",
-                        "source",
-                        "severity"
-                    ]
-                    self.log(
-                        tag="TRUNCATING",
-                        msg=f"excluding: {truncation_exclusion}"
-                    )
-                    try:
-                        findings = truncate_children(
-                            findings,
-                            self.log,
-                            excludes=truncation_exclusion,
-                            max_length=self.config.truncate_findings_length
-                        )
-                    except Exception as e:
-                        self.log(tag="ERROR", msg="Error in Truncation")
-                        self.log(e)
-                        self.log(
-                            json.dumps(
-                                original_findings,
-                                indent=4,
-                                sort_keys=True
-                            )
-                        )
-                with open(findings_output_file, "w") as f2:
-                    f2.write(json.dumps(
-                        findings, indent=4, sort_keys=True
-                    ))
-                template_definition["gitfindings"] = findings
-            except Exception as e:
-                if not self.config.dry:
-                    raise e
+                with contextlib.redirect_stdout(io.StringIO()):
+                    if not self.config.dry:
+                        semgrep_scan.scan(custom_args)
+                    if os.path.exists(findings_file):
+                        with open(findings_file) as f:
+                            results = json.load(f)
+                            self.cache.set(findings_file, results)
+                findings_success = True
+            except SystemExit as e:
+                if e.code == 0:
+                    findings_success = True
                 else:
+                    self.log(tag="ERROR", msg="SystemExit in Semgrep")
+                    self.log(e)
+            except Exception as e:
+                self.log(tag="ERROR", msg="Error in Semgrep")
+                self.log(e)
+
+            # Only try to cache if scan was successful and file exists
+            if findings_success and os.path.exists(findings_file):
+                try:
+                    # Try to cache the results
+                    with open(findings_file) as f:
+                        results = json.load(f)
+                        self.cache.set(findings_file, results)
+                except Exception as e:
                     self.log(
-                        msg=f'''
-                            Attempted to format/truncate non existent file
-                            {findings_output_file}
-                        '''
+                        tag="Cache Error",
+                        msg=f"Failed to cache results: {str(e)}"
                     )
+
+            if findings_success:
+                try:
+                    with open(findings_file) as f:
+                        findings = json.load(f)
+
+                    # This is on purpose. If you try to read same pointer
+                    # twice, it dies.
+                    with open(findings_file) as f:
+                        original_findings = json.load(f)
+
+                    if self.config.truncate_findings:
+                        # Exclusions are set to exclude fields that are not code
+                        truncation_exclusion = [
+                            "cwe",
+                            "owasp",
+                            "path",
+                            "check_id",
+                            "license",
+                            "fingerprint",
+                            "message",
+                            "references",
+                            "url",
+                            "source",
+                            "severity"
+                        ]
+                        self.log(
+                            tag="TRUNCATING",
+                            msg=f"excluding: {truncation_exclusion}"
+                        )
+                        try:
+                            findings = truncate_children(
+                                findings,
+                                self.log,
+                                excludes=truncation_exclusion,
+                                max_length=self.config.truncate_findings_length
+                            )
+                        except Exception as e:
+                            self.log(tag="ERROR", msg="Error in Truncation")
+                            self.log(e)
+                            self.log(
+                                json.dumps(
+                                    original_findings,
+                                    indent=4,
+                                    sort_keys=True
+                                )
+                            )
+                    with open(findings_file, "w") as f2:
+                        f2.write(json.dumps(
+                            findings, indent=4, sort_keys=True
+                        ))
+                    template_definition["gitfindings"] = findings
+                except Exception as e:
+                    if not self.config.dry:
+                        self.log(tag="ERROR",
+                                 msg="Error in findings post-processing")
+                        self.log(e)
+                    else:
+                        self.log(
+                            msg=f'''
+                                Attempted to format/truncate non existent file
+                                {findings_file}
+                            '''
+                        )
+
+            # End if findings_success is True
+
+            # Upload findings always, in case of dry run
+            # .upload checks should_upload
             self.upload(
-                file=findings_output_file,
+                file=findings_file,
                 route="findings",
                 source=repo_name
             )
 
         # ##### Scan Dependencies ######
         if self.config.runDependencies:
-            dependencies_output_file = os.path.join(self.config.output_dir, repo_name + ".dependencies.json")
+            dependencies_output_file = os.path.join(
+                self.config.output_dir,
+                f"{repo_name}.dependencies.json"
+            )
             self.log(msg=repo_name, tag="Scanning dependencies", display=True)
             if not self.config.dry:
-                dependencies_output_file = dependency_walk(output_file=dependencies_output_file, logger=self.log)
+                dependencies_output_file = dependency_walk(
+                    output_file=dependencies_output_file,
+                    logger=self.log
+                )
                 with open(dependencies_output_file, "r") as f:
                     template_definition["dependencies"] = json.load(f)
-            self.log(msg=dependencies_output_file, tag="Dependency File", display=False)
+            self.log(
+                msg=dependencies_output_file,
+                tag="Dependency File",
+                display=False
+            )
             self.upload(
                 file=dependencies_output_file,
                 route="dependencies",
@@ -541,13 +608,14 @@ class Agent:
         # If the 'dry' configuration is set, skip the preflight checks
         if self.config.dry:
             return
-
         # Loop over all remote repositories from config file
-        print("\n\n\nChecking your system's compatibility with the scan configuration:\n")
+        print("\n\n\nChecking your system's compatibility with the scan "
+              "configuration:\n")
         if 'repos' in self.config.config:
             repos = self.config.config["repos"]
             if repos:
-                for repo_url in [r for r in repos if len(r) > 0]:       # ignore blank lines from server
+                # ignore blank lines from server
+                for repo_url in [r for r in repos if len(r) > 0]:
                     match = re.search(r"([^/]*\.git.*)", repo_url)
                     if match:
                         repo_name = match.group(1)
@@ -559,19 +627,34 @@ class Agent:
                         repo_url = repo_url.split("@")[0]
                     try:
                         subprocess.check_output(["git", "ls-remote", repo_url])
-                        self.log(tag="Repository access confirmed", msg=repo_url, display=True, timestamp=False)
+                        self.log(tag="Repository access confirmed",
+                                 msg=repo_url,
+                                 display=True,
+                                 timestamp=False)
                     except subprocess.CalledProcessError:
-                        self.log(msg=repo_url, tag="Unable to access", display=True, timestamp=False)
-                        self.log(msg=repo_url, tag="Repository will not be scanned", display=True, timestamp=False)
+                        self.log(msg=repo_url,
+                                 tag="Unable to access",
+                                 display=True,
+                                 timestamp=False)
+                        self.log(msg=repo_url,
+                                 tag="Repository will not be scanned",
+                                 display=True,
+                                 timestamp=False)
 
         cloud_config = self.config.modules.cloud
         if cloud_config is not None:
             for provider in cloud_config:
                 try:
-                    if provider.provider == "aws" and self.checkDependency("aws", "AWS Command-line tool"):
+                    if (provider.provider == "aws" and
+                            self.checkDependency("aws", "AWS Command-line tool")):
                         account_id = str(provider.account).replace('-', '')
                         if find_profile(account_id, self.log) is None:
-                            self.log(tag=f"No matching AWS CLI profiles found for {provider.account}", msg="Account can't be scanned.", display=True, timestamp=False)
+                            self.log(
+                                tag=f"No matching AWS CLI profiles found for {provider.account}",
+                                msg="Account can't be scanned.",
+                                display=True,
+                                timestamp=False
+                            )
                         else:
                             self.log(tag="AWS account access confirmed", msg=account_id, display=True, timestamp=False)
                     if provider.provider == "azure" and self.checkDependency("az", "Azure Command-line tool"):
@@ -626,7 +709,6 @@ class Agent:
                             subprocess.check_output(["git", "clone", repo_url, temp_dir])
                         except subprocess.CalledProcessError:
                             self.log(msg=repo_url, tag="Failed to clone", display=True)
-                            exit(1)
                             continue
 
                         self.log(msg=repo_url, tag="Successfully cloned", display=True)
@@ -650,13 +732,21 @@ class Agent:
             localrepos = self.config.config['local_repos']
             if localrepos:
                 for repo_path in localrepos:
+
+                    # Check for a branch
+                    split_url = repo_path.split("@")
+                    branch = None
+                    if len(split_url) == 2:
+                        branch = split_url[1]
+                        repo_path = split_url[0]
+
                     a = Path(repo_path).absolute()
                     match = re.search(r"([^/]*\.git.*)", str(a))
                     if match:
                         repo_name = match.group(1)
                     else:
                         repo_name = os.path.basename(os.path.normpath(repo_path))
-                    self.parseRepo(repo_path, repo_name)
+                    self.parseRepo(repo_path, repo_name, branch)
             else:
                 self.log(msg='', tag="No local repos", display=True)
         else:
@@ -677,7 +767,7 @@ class Agent:
                 # Check if AWS-CLI is installed
                 if provider.provider == "aws" and self.checkDependency("aws", "AWS Command-line tool"):
                     account_id = str(provider.account).replace('-', '')
-                    aws_cost_file = runAws(
+                    aws_cost_file = get_aws_costs(
                         targeted_account=account_id,
                         start=provider.start,
                         end=provider.end,
@@ -742,6 +832,7 @@ class Agent:
                         start=provider.start,
                         end=provider.end,
                         path_to_output=self.config.output_dir,
+                        log=self.log,
                         dry=self.config.dry
                     )
                     if azure_cost_file is None:
@@ -856,8 +947,8 @@ def main():
         if agent.config.upload_logs:
             agent.upload(route="logs", file=agent.config.output_dir+"/log.txt")
         raise e
-    if agent.config.shouldUpload or agent.config.upload_logs:
-        agent.upload(route="logs", file=agent.config.output_dir+"/log.txt", source='logs', isJSON=False)
+
+    # If user opts to upload logs, copy the log to the verinfast directory for future upload
     if agent.config.upload_logs:
         new_folder_name = (
             str(today.year) + str(today.month) + str(today.day)
@@ -866,10 +957,25 @@ def main():
         os.makedirs(f'{d}/{new_folder_name}/', exist_ok=True)
         new_file_name = str(uuid4())+".txt"
         fp = f'{d}/{new_folder_name}/{new_file_name}'
-        shutil.copy2(agent.config.output_dir+"/log.txt", fp)
-        os.unlink(agent.config.output_dir+"/log.txt")
-        print(f"""The log for this run has moved to:
-              {d}/{new_folder_name}/{new_file_name}""")
+        shutil.copy2(agent.config.log_file, fp)
+        print(f"""The log for this run was copied to:
+            {d}/{new_folder_name}/{new_file_name}""")
+
+    # If user opts to upload results, upload and non-uploaded logs
+    if agent.config.shouldUpload:
+        log_list = os.listdir(agent.config.output_dir)
+        log_list.sort()  # Upload current log last
+        for file in log_list:
+            if file.endswith("log.txt") and not file.startswith("u_"):
+                file_path = os.path.join(agent.config.output_dir, file)
+                agent.upload(
+                    route="logs",
+                    file=file_path,
+                    source=file,
+                    isJSON=False
+                )
+                new_path = os.path.join(agent.config.output_dir, "u_"+file)
+                os.rename(file_path, new_path)
 
     # We only do this if you have a remote config but didn't upload
     if not agent.config.shouldUpload and agent.config.is_original_path_remote():

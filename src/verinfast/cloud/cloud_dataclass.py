@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Union
 
 
 @dataclass
@@ -41,7 +41,7 @@ class Utilization_Datapoint():
 
 @dataclass
 class Utilization_Datum():
-    Timestamp: datetime | float
+    Timestamp: Union[datetime, float]
     cpu: Optional[Utilization_Datapoint] = None
     mem: Optional[Utilization_Datapoint] = None
     hdd: Optional[Utilization_Datapoint] = None

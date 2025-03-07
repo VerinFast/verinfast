@@ -3,8 +3,8 @@ import json
 import subprocess
 from pathlib import Path
 from typing import List
-
 import httpx
+import os
 
 
 class Entry(dict):
@@ -65,12 +65,15 @@ class Walker():
         if print_name:
             logger(print_name)
         self.files = []
-        self.manifest_files = manifest_files.copy()
-        for f in self.manifest_files:
+        new_files = []
+        for f in manifest_files:
             if "*" in f:
-                expanded = glob.glob(f, root_dir=root_dir)
-                self.manifest_files.remove(f)
-                self.manifest_files += expanded
+                full_paths = glob.glob(os.path.join(root_dir, f))
+                expanded = [os.path.basename(p) for p in full_paths]
+                new_files.extend(expanded)
+            else:
+                new_files.append(f)
+        self.manifest_files = new_files.copy()
         self.manifest_type = manifest_type
         self.entries = []
         self.requestx = httpx.Client(http2=True, timeout=None)
@@ -89,13 +92,20 @@ class Walker():
         )
 
     def getUrl(self, url: str, headers: dict = {}):
-        return  (  # noqa: E271
-                    self
-                        .requestx  # NOQA: E131
-                        .get(url=url, headers=headers)
-                        .content
-                        .decode('utf-8-sig')
-                )
+        try:
+            return  (  # noqa: E271
+                        self
+                            .requestx  # NOQA: E131
+                            .get(url=url, headers=headers)
+                            .content
+                            .decode('utf-8-sig')
+                    )
+        except Exception as e:
+            self.loggerFunc(
+                f"Failed to get URL: {url}, {e}",
+                display=False
+            )
+            return None
 
     def walk(self,
              path: str = "./",
