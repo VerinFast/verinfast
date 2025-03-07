@@ -2,10 +2,10 @@ azure-identity~=1.20.0
 azure-mgmt-compute~=34.0.0
 azure-mgmt-monitor~=6.0.2
 azure-mgmt-network~=28.1.0
-azure-mgmt-resource~=23.2.0
-azure-mgmt-storage~=22.0.0
+azure-mgmt-resource~=23.3.0
+azure-mgmt-storage~=22.1.1
 azure-monitor-query~=1.4.0
-boto3~=1.36.18
+boto3~=1.37.8
 coverage~=7.6.9
 defusedxml~=0.7.1
 flake8~=7.1.1
@@ -15,16 +15,17 @@ google-cloud-compute>=1.14.0
 google-cloud-storage>=2.10.0
 google-cloud-monitoring>=2.15.0
 httpx[http2]~=0.28.1
-Jinja2==3.1.5
+Jinja2==3.1.6
 johnnydep~=1.20.6
 modernmetric>=1.5.2
 pygments-tsx>=1.0.1
 pytest~=8.3.4
 pytest-cov~=6.0.0
 pytest-xdist~=3.6.1
+psutil~=5.9.8
 pyyaml~=6.0.2
 # If Python == 3.9, install Semgrep 1.52.0
 semgrep==1.52.0; python_version == "3.9"
-# For all other Python versions, install Semgrep 1.104.0
+# For all other Python versions, install Semgrep 1.107.0
 semgrep==1.107.0; python_version != "3.9"
 windows-curses~=2.4.0; sys.platform == 'win32'
