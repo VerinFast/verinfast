@@ -9,21 +9,21 @@ from typing import List, Union
 
 
 STD_EXCLUDE_LIST = [
-                "**/.git/**",
-                "**/node_modules/**",
-                "build/**",
-                "dist/**",
-                "env/**",
-                "venv/**",
-                "**/__pycache__/**",
-                "**/*.pyc",
-                "**/*.pyo",
-                "**/*.log",
-                "**/*.swp",
-                "**/*.swo",
-                "**/*.DS_Store",
-                "**/.idea/**"
-            ]
+    "**/.git/**",
+    "**/node_modules/**",
+    "build/**",
+    "dist/**",
+    "env/**",
+    "venv/**",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "**/*.pyo",
+    "**/*.log",
+    "**/*.swp",
+    "**/*.swo",
+    "**/*.DS_Store",
+    "**/.idea/**",
+]
 
 
 """
@@ -34,10 +34,8 @@ This doesn't work with modernmetric
 
 
 def list_files(
-        path: str,
-        incl: List[glob] = ["*.*"],
-        excl: List[glob] = STD_EXCLUDE_LIST
-        ):
+    path: str, incl: List[glob] = ["*.*"], excl: List[glob] = STD_EXCLUDE_LIST
+):
     files = []
     excluded = []
     for i in incl:
@@ -50,11 +48,10 @@ def list_files(
 
 def std_exec(cmd: List[str], log=None):
     try:
-        return subprocess.check_output(cmd).decode('utf-8')
+        return subprocess.check_output(cmd).decode("utf-8")
     except (subprocess.CalledProcessError, UnicodeDecodeError) as e:
         try:
-            return subprocess.check_output(
-                cmd, shell=True).decode(encoding='latin-1')
+            return subprocess.check_output(cmd, shell=True).decode(encoding="latin-1")
         except Exception as e2:
             if log is not None:
                 log(tag="std_exec replace Error", msg=f"{e2}, {cmd}")
@@ -64,11 +61,11 @@ def std_exec(cmd: List[str], log=None):
                 log(tag="std_exec Error", msg=f"{e}, {cmd}")
             else:
                 print(f"std_exec Error: {e}, {cmd}")
-            return ''
+            return ""
 
 
 def escapeChars(text: str):
-    fixedText = re.sub(r'([\"\{\}])', r'\\\1', text)
+    fixedText = re.sub(r"([\"\{\}])", r"\\\1", text)
     return fixedText
 
 
@@ -79,16 +76,12 @@ def trimLineBreaks(text: str):
 # Truncate large strings for display
 def truncate(text, length=100):
     testStr = str(text)  # Supports passing in Lists and other types
-    return ((testStr[:length] + '..') if len(testStr) > length else testStr)
+    return (testStr[:length] + "..") if len(testStr) > length else testStr
 
 
 def truncate_children(
-            obj: Union[dict, list],
-            log,
-            excludes=[],
-            max_length=30,
-            recursion_depth=0
-        ):
+    obj: Union[dict, list], log, excludes=[], max_length=30, recursion_depth=0
+):
     if isinstance(obj, dict):
         for k in obj:
             v = obj[k]
@@ -96,11 +89,7 @@ def truncate_children(
                 pass
             elif isinstance(v, str):
                 obj[k] = v[0:max_length]
-            elif (
-                isinstance(v, int) or
-                isinstance(v, float) or
-                isinstance(v, bool)
-            ):
+            elif isinstance(v, int) or isinstance(v, float) or isinstance(v, bool):
                 pass
             else:
                 obj[k] = truncate_children(
@@ -108,17 +97,13 @@ def truncate_children(
                     log,
                     excludes=excludes,
                     max_length=max_length,
-                    recursion_depth=recursion_depth + 1
+                    recursion_depth=recursion_depth + 1,
                 )
     elif isinstance(obj, list):
         for i, v in enumerate(obj):
             if isinstance(v, str):
                 obj[i] = v[0:max_length]
-            elif (
-                isinstance(v, int) or
-                isinstance(v, float) or
-                isinstance(v, bool)
-            ):
+            elif isinstance(v, int) or isinstance(v, float) or isinstance(v, bool):
                 pass
             else:
                 obj[i] = truncate_children(
@@ -126,7 +111,7 @@ def truncate_children(
                     log,
                     excludes=excludes,
                     max_length=max_length,
-                    recursion_depth=recursion_depth + 1
+                    recursion_depth=recursion_depth + 1,
                 )
 
     return obj
@@ -136,7 +121,7 @@ def truncate_children(
 def chunks(lst, n):
     """Yield successive n-sized chunks from lst."""
     for i in range(0, len(lst), n):
-        yield lst[i:i + n]
+        yield lst[i : i + n]
 
 
 # DebugLog
@@ -145,11 +130,7 @@ def chunks(lst, n):
 # class will create a default log file called
 # "log.txt" in the specified path
 class DebugLog:
-    def __init__(
-            self,
-            path: str = None,
-            file: str = None,
-            debug: bool = False):
+    def __init__(self, path: str = None, file: str = None, debug: bool = False):
         if path is None and file is None:
             raise ValueError("No log file or path specified")
             return
@@ -176,8 +157,8 @@ class DebugLog:
         else:
             output = f"{msg}"
 
-        with open(self.file, 'a') as f:
-            f.write(output+"\n")
+        with open(self.file, "a") as f:
+            f.write(output + "\n")
 
         if display or self.debug:
             print(output)
@@ -218,10 +199,6 @@ def get_repo_name_url_and_branch(repo_url: str):
             print(f"@{branch}")
 
     # Match repo_name to after the last '/' in the cleaned URL
-    repo_name = repo_url.rsplit('/', 1)[-1]
+    repo_name = repo_url.rsplit("/", 1)[-1]
 
-    return {
-        "repo_name": repo_name,
-        "repo_url": repo_url,
-        "branch": branch
-    }
+    return {"repo_name": repo_name, "repo_url": repo_url, "branch": branch}

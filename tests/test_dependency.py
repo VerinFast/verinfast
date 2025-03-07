@@ -13,9 +13,9 @@ from verinfast.dependencies.walkers.classes import Entry
 
 file_path = Path(__file__)
 test_folder = file_path.parent
-docker_folder = test_folder.joinpath('fixtures/docker')
+docker_folder = test_folder.joinpath("fixtures/docker")
 results_dir = test_folder.joinpath("results").absolute()
-composer_config_path = str(test_folder.joinpath('composer.yaml').absolute())
+composer_config_path = str(test_folder.joinpath("composer.yaml").absolute())
 
 
 def enabled_logger(flag=True):
@@ -33,33 +33,31 @@ def enabled_logger(flag=True):
 
 
 def test_dockerfile_exists():
-    docker_file_path = docker_folder.joinpath('Dockerfile')
+    docker_file_path = docker_folder.joinpath("Dockerfile")
     assert Path.exists(docker_file_path)
 
 
 def test_walk():
     folder_path = test_folder.joinpath("fixtures/npm_walker").absolute()
-    file_path = folder_path.joinpath('package.json')
+    file_path = folder_path.joinpath("package.json")
 
     output_file = test_folder.joinpath("dependencies1.json")
     assert file_path.exists(), "Manifest doesn't exist"
     assert not output_file.exists(), "Results file exists"
 
     output_path = walk(
-        path=folder_path,
-        output_file=output_file,
-        logger=enabled_logger(False)
-        )
+        path=folder_path, output_file=output_file, logger=enabled_logger(False)
+    )
 
     with open(output_path) as output_file:
         output = json.load(output_file)
         assert len(output) >= 1
         first_dep = output[0]
-        assert first_dep['name'] == 'simple-test-package'
+        assert first_dep["name"] == "simple-test-package"
 
     os.remove(output_path)
     assert not Path(output_path).exists()
-    node_modules = folder_path.joinpath('node_modules')
+    node_modules = folder_path.joinpath("node_modules")
     shutil.rmtree(node_modules)
     os.remove(folder_path.joinpath("package-lock.json"))
     return None
@@ -67,7 +65,7 @@ def test_walk():
 
 def test_entity():
     folder_path = test_folder.joinpath("fixtures/nuget_walker").absolute()
-    file_path = folder_path.joinpath('test.csproj')
+    file_path = folder_path.joinpath("test.csproj")
     output_file = test_folder.joinpath("dependencies2.json")
     assert file_path.exists(), "Manifest doesn't exist"
     shutil.rmtree(output_file, ignore_errors=True)
@@ -78,9 +76,7 @@ def test_entity():
     assert not output_file.exists(), "Results file exists"
 
     output_path = walk(
-        path=str(folder_path),
-        output_file=output_file,
-        logger=enabled_logger(False)
+        path=str(folder_path), output_file=output_file, logger=enabled_logger(False)
     )
     with open(output_path) as output_file:
         output = json.load(output_file)
@@ -169,7 +165,7 @@ def test_docker():
     output_path = walk(
         path=docker_folder,
         output_file="./dependencies.json",
-        logger=enabled_logger(False)
+        logger=enabled_logger(False),
     )
     with open(output_path) as output_file:
         output = json.load(output_file)
@@ -188,7 +184,7 @@ def test_docker():
 
 def test_composer():
     folder_path = test_folder.joinpath("fixtures/composer_walker").absolute()
-    file_path = folder_path.joinpath('composer.json')
+    file_path = folder_path.joinpath("composer.json")
     assert file_path.exists(), "Manifest doesn't exist"
 
     output_file_path = test_folder.joinpath("dependencies3.json")
@@ -198,9 +194,7 @@ def test_composer():
         pass
 
     output_path = walk(
-        path=folder_path,
-        output_file=output_file_path,
-        logger=enabled_logger(False)
+        path=folder_path, output_file=output_file_path, logger=enabled_logger(False)
     )
     with open(output_path) as output_file:
         output = json.load(output_file)
@@ -213,7 +207,7 @@ def test_composer():
 
 def test_go():
     folder_path = test_folder.joinpath("fixtures/go_walker").absolute()
-    file_path = folder_path.joinpath('go.sum')
+    file_path = folder_path.joinpath("go.sum")
     assert file_path.exists(), "Manifest doesn't exist"
 
     output_file_path = test_folder.joinpath("dependencies4.json")
@@ -223,23 +217,21 @@ def test_go():
         pass
 
     output_path = walk(
-        path=folder_path,
-        output_file=output_file_path,
-        logger=enabled_logger(False)
+        path=folder_path, output_file=output_file_path, logger=enabled_logger(False)
     )
     with open(output_path) as output_file:
         output = json.load(output_file)
         assert len(output) >= 1
-        assert output[0]['name'] == "cloud.google.com/go"
-        assert output[0]['source'] == "Go"
-        assert output[0]['specifier'] == "v0.26.0"
+        assert output[0]["name"] == "cloud.google.com/go"
+        assert output[0]["source"] == "Go"
+        assert output[0]["specifier"] == "v0.26.0"
 
     os.remove(output_path)
 
     return None
 
 
-@patch('verinfast.user.__get_input__', return_value='y')
+@patch("verinfast.user.__get_input__", return_value="y")
 def test_composer_config(self):
     try:
         shutil.rmtree(results_dir)
@@ -259,7 +251,7 @@ def test_composer_config(self):
     assert Path(results_dir).exists() is True
     expected_files = [
         "CssToInlineStyles.git.dependencies.json",
-        "laravel.git.dependencies.json"
+        "laravel.git.dependencies.json",
     ]
     for f in expected_files:
         expected_file = results_dir.joinpath(f)

@@ -53,14 +53,14 @@ class Entry(dict):
         return d
 
 
-class Walker():
+class Walker:
     def __init__(
         self,
         manifest_type: str,  # "json",
         manifest_files: List[str],  # ["package.json"]
         logger,
         root_dir: str = "./",
-        print_name: str = None
+        print_name: str = None,
     ) -> None:
         if print_name:
             logger(print_name)
@@ -84,37 +84,23 @@ class Walker():
             subprocess.call(args=command)
 
     def log(self, msg, tag=None, display=False, timestamp=True):
-        self.loggerFunc(
-            msg,
-            tag=tag,
-            display=display,
-            timestamp=timestamp
-        )
+        self.loggerFunc(msg, tag=tag, display=display, timestamp=timestamp)
 
     def getUrl(self, url: str, headers: dict = {}):
         try:
-            return  (  # noqa: E271
-                        self
-                            .requestx  # NOQA: E131
-                            .get(url=url, headers=headers)
-                            .content
-                            .decode('utf-8-sig')
-                    )
+            return self.requestx.get(  # noqa: E271  # NOQA: E131
+                url=url, headers=headers
+            ).content.decode("utf-8-sig")
         except Exception as e:
-            self.loggerFunc(
-                f"Failed to get URL: {url}, {e}",
-                display=False
-            )
+            self.loggerFunc(f"Failed to get URL: {url}, {e}", display=False)
             return None
 
-    def walk(self,
-             path: str = "./",
-             parse: bool = True,
-             expand: bool = False,
-             debug: int = 0):
-        for p in Path(path).rglob('**/*'):
+    def walk(
+        self, path: str = "./", parse: bool = True, expand: bool = False, debug: int = 0
+    ):
+        for p in Path(path).rglob("**/*"):
             if debug > 1:
-                self.log(F"EVALUATING: {p}", display=(debug > 2))
+                self.log(f"EVALUATING: {p}", display=(debug > 2))
             if p.name in self.manifest_files:
                 if debug > 0:
                     self.log(f"FOUND: {p.name}", display=True)

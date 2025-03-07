@@ -30,7 +30,7 @@ rust_matches = ["Cargo.toml"]
 
 
 def write_file(output_file: str, entries):
-    with open(output_file, 'w') as outfile:
+    with open(output_file, "w") as outfile:
         dicts = [entry.to_json() for entry in entries]
         outfile.write(json.dumps(dicts, indent=4))
 
@@ -39,24 +39,21 @@ def write_file(output_file: str, entries):
 # and stores their path in memory
 def walk(logger, path: str = "./", output_file="./dependencies.json"):
     mavenWalker = MavenWalker(
-        manifest_type="xml",
-        manifest_files=["pom.xml"],
-        logger=logger,
-        root_dir=path
+        manifest_type="xml", manifest_files=["pom.xml"], logger=logger, root_dir=path
     )
 
     nodeWalker = NodeWalker(
-        manifest_type='json',
+        manifest_type="json",
         manifest_files=["package.json"],
         logger=logger,
-        root_dir=path
+        root_dir=path,
     )
 
     nugetWalker = NuGetWalker(
-        manifest_type='xml',
+        manifest_type="xml",
         manifest_files=c_sharp_matches,
         logger=logger,
-        root_dir=path
+        root_dir=path,
     )
 
     py_walker = PyWalker(
@@ -64,35 +61,32 @@ def walk(logger, path: str = "./", output_file="./dependencies.json"):
             "requirements.txt",
             "requirements-dev.txt",
             "pyproject.toml",
-            "poetry.lock"
+            "poetry.lock",
         ],
         manifest_type="txt",
         logger=logger,
-        root_dir=path
+        root_dir=path,
     )
     gem_walker = GemWalker(
         manifest_files=["gemfile", "Gemfile"],
         manifest_type="ruby",
         logger=logger,
-        root_dir=path
+        root_dir=path,
     )
     docker_walker = DockerWalker(
         manifest_files=["Dockerfile", "dockerfile", "docker-compose.yml"],
         manifest_type="Dockerfile",
         logger=logger,
-        root_dir=path
+        root_dir=path,
     )
     composer_walker = ComposerWalker(
-        manifest_files=['composer.json'],
-        manifest_type='json',
+        manifest_files=["composer.json"],
+        manifest_type="json",
         logger=logger,
-        root_dir=path
+        root_dir=path,
     )
     go_walker = GoWalker(
-        manifest_type="sum",
-        manifest_files=["go.sum"],
-        logger=logger,
-        root_dir=path
+        manifest_type="sum", manifest_files=["go.sum"], logger=logger, root_dir=path
     )
     path = str(Path(path).absolute())
     entries: List[Entry] = []
@@ -108,10 +102,10 @@ def walk(logger, path: str = "./", output_file="./dependencies.json"):
         entries += nodeWalker.entries
     else:
         packageWalker = PackageWalker(
-            manifest_type='json',
+            manifest_type="json",
             logger=logger,
             root_dir=path,
-            manifest_files=["package-lock.json"]
+            manifest_files=["package-lock.json"],
         )
         packageWalker.walk(path=path)
         entries += packageWalker.entries
