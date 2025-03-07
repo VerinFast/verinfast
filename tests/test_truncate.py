@@ -14,31 +14,31 @@ from typing import Union
 
 file_path = Path(__file__)
 test_folder = file_path.parent.absolute()
-str_path = str(test_folder.joinpath('str_conf.yaml').absolute())
+str_path = str(test_folder.joinpath("str_conf.yaml").absolute())
 results_dir = test_folder.joinpath("results").absolute()
 saw_message = False
 MAX_RECURSION_DEPTH = 10
 
 
 def check_children(
-            i: Union[str, dict, list],
-            max_length=30,
-            recursion_depth=0,
-            # This list must match agent.py
-            excludes=[
-                "cwe",
-                "owasp",
-                "path",
-                "check_id",
-                "license",
-                "fingerprint",
-                "message",
-                "references",
-                "url",
-                "source",
-                "severity"
-            ]
-        ):
+    i: Union[str, dict, list],
+    max_length=30,
+    recursion_depth=0,
+    # This list must match agent.py
+    excludes=[
+        "cwe",
+        "owasp",
+        "path",
+        "check_id",
+        "license",
+        "fingerprint",
+        "message",
+        "references",
+        "url",
+        "source",
+        "severity",
+    ],
+):
     if recursion_depth > MAX_RECURSION_DEPTH:
         raise Exception("In TOO DEEP!")
     global saw_message
@@ -56,9 +56,7 @@ def check_children(
             else:
                 try:
                     check_children(
-                        i[k],
-                        recursion_depth=recursion_depth+1,
-                        excludes=excludes
+                        i[k], recursion_depth=recursion_depth + 1, excludes=excludes
                     )
                 except Exception as e:
                     print(k)
@@ -67,24 +65,18 @@ def check_children(
         for k in i:
             try:
                 check_children(
-                    k,
-                    recursion_depth=recursion_depth+1,
-                    excludes=excludes
+                    k, recursion_depth=recursion_depth + 1, excludes=excludes
                 )
             except Exception as e:
                 print(k)
                 raise e
-    elif (
-        isinstance(i, float) or
-        isinstance(i, int) or
-        isinstance(i, bool)
-    ):
+    elif isinstance(i, float) or isinstance(i, int) or isinstance(i, bool):
         pass
     else:
         raise Exception("Non-serializable Object")
 
 
-@patch('verinfast.user.__get_input__', return_value='y')
+@patch("verinfast.user.__get_input__", return_value="y")
 def test_no_truncate(self):
     global saw_message
     saw_message = False
@@ -103,14 +95,19 @@ def test_no_truncate(self):
     agent.debug = DebugLog(path=agent.config.output_dir, debug=False)
     agent.log = agent.debug.log
     agent.scan()
-    findings_file_path = results_dir.joinpath('small-test-repo.git.findings.json')  # NOQA: E501
+    findings_file_path = results_dir.joinpath(
+        "small-test-repo.git.findings.json"
+    )  # NOQA: E501
 
     with open(findings_file_path) as f:
         d = json.load(f)
         r = d["results"]
         assert r[0]["check_id"] == "bash.curl.security.curl-eval.curl-eval"
         m = r[0]["extra"]["message"]
-        assert m == "Data is being eval'd from a `curl` command. An attacker with control of the server in the `curl` command could inject malicious code into the `eval`, resulting in a system comrpomise. Avoid eval'ing untrusted data if you can. If you must do this, consider checking the SHA sum of the content returned by the server to verify its integrity."  # noqa: E501
+        assert (
+            m
+            == "Data is being eval'd from a `curl` command. An attacker with control of the server in the `curl` command could inject malicious code into the `eval`, resulting in a system comrpomise. Avoid eval'ing untrusted data if you can. If you must do this, consider checking the SHA sum of the content returned by the server to verify its integrity."
+        )  # noqa: E501
         print("CHECK CHILDREN")
         for k in r:
             with pytest.raises(AssertionError):
@@ -123,13 +120,13 @@ def test_no_truncate(self):
                         "license",
                         "taint_sink",
                         "taint_source",
-                        "fingerprint"
-                    ]
+                        "fingerprint",
+                    ],
                 )
     assert saw_message is True
 
 
-@patch('verinfast.user.__get_input__', return_value='y')
+@patch("verinfast.user.__get_input__", return_value="y")
 def test_truncate(self):
     global saw_message
     saw_message = False
@@ -154,7 +151,9 @@ def test_truncate(self):
     agent.debug = DebugLog(path=agent.config.output_dir, debug=False)
     agent.log = agent.debug.log
     agent.scan()
-    findings_file_path = results_dir.joinpath('small-test-repo.git.findings.json')  # NOQA: E501
+    findings_file_path = results_dir.joinpath(
+        "small-test-repo.git.findings.json"
+    )  # NOQA: E501
 
     with open(findings_file_path) as f:
         d = json.load(f)
@@ -166,7 +165,7 @@ def test_truncate(self):
     assert saw_message is True
 
 
-@patch('verinfast.user.__get_input__', return_value='y')
+@patch("verinfast.user.__get_input__", return_value="y")
 def test_truncate_from_args(self):
     global saw_message
     saw_message = False
@@ -179,7 +178,7 @@ def test_truncate_from_args(self):
     agent = Agent()
     config = Config(str_path)
     parser = config.init_argparse()
-    args = parser.parse_args(['--truncate_findings=30'])
+    args = parser.parse_args(["--truncate_findings=30"])
     assert args.truncate_findings == 30
     config.handle_args(args)
     assert config.runGit is True
@@ -195,7 +194,9 @@ def test_truncate_from_args(self):
     agent.debug = DebugLog(path=agent.config.output_dir, debug=False)
     agent.log = agent.debug.log
     agent.scan()
-    findings_file_path = results_dir.joinpath('small-test-repo.git.findings.json')  # NOQA: E501
+    findings_file_path = results_dir.joinpath(
+        "small-test-repo.git.findings.json"
+    )  # NOQA: E501
 
     with open(findings_file_path) as f:
         d = json.load(f)

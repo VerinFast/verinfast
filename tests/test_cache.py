@@ -49,7 +49,7 @@ def test_semgrep_cache():
         print(f"Second scan took: {second_duration:.2f} seconds")
 
         assert second_duration < first_duration  # Second run should be faster
-        assert Path(Path.home(), '.verinfast_cache/semgrep.db').exists()
+        assert Path(Path.home(), ".verinfast_cache/semgrep.db").exists()
 
     finally:
         # Cleanup
@@ -58,7 +58,7 @@ def test_semgrep_cache():
 
 
 def test_cache_persistence():
-    cache_path = Path(Path.home(), '.verinfast_cache/semgrep.db')
+    cache_path = Path(Path.home(), ".verinfast_cache/semgrep.db")
 
     # First run creates cache
     agent = Agent()

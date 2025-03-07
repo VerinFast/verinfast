@@ -7,12 +7,13 @@ class PackageWalker(Walker):
     def remote_decorate(self, entry: Entry) -> str:
         resp = None
         try:
-            license_resp = self.getUrl(f"https://registry.npmjs.org/{entry.name}/{entry.specifier}/")  # NOQA:E501
+            license_resp = self.getUrl(
+                f"https://registry.npmjs.org/{entry.name}/{entry.specifier}/"
+            )  # NOQA:E501
             resp = json.loads(license_resp)
         except Exception as e:
             self.log(
-                f"License not found for: {entry.name}@{entry.specifier}",
-                display=False
+                f"License not found for: {entry.name}@{entry.specifier}", display=False
             )
             self.log(e, display=False)
         if isinstance(resp, dict):
@@ -37,7 +38,7 @@ class PackageWalker(Walker):
                                 specifier=dependencies[dependency].get(
                                     "version", "Version not found"
                                 ),
-                                source="package-lock.json"
+                                source="package-lock.json",
                             )
                             self.remote_decorate(entry=e)
                             self.entries.append(e)

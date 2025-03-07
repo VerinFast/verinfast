@@ -18,16 +18,12 @@ def get_system_info() -> Dict[str, Any]:
         "Hostname": platform.node(),
         "CPU Cores": psutil.cpu_count(logical=False),
         "Logical CPUs": psutil.cpu_count(logical=True),
-        "Total RAM": (
-            f"{round(psutil.virtual_memory().total / (1024**3), 2)} GB"
-        ),
+        "Total RAM": (f"{round(psutil.virtual_memory().total / (1024**3), 2)} GB"),
         "Available RAM": (
             f"{round(psutil.virtual_memory().available / (1024**3), 2)} GB"
         ),
         "Used RAM": f"{round(psutil.virtual_memory().used / (1024**3), 2)} GB",
-        "Disk Size": (
-            f"{round(shutil.disk_usage('/').total / (1024**3), 2)} GB"
-        ),
+        "Disk Size": (f"{round(shutil.disk_usage('/').total / (1024**3), 2)} GB"),
         "Disk Used": f"{round(shutil.disk_usage('/').used / (1024**3), 2)} GB",
         "Disk Free": f"{round(shutil.disk_usage('/').free / (1024**3), 2)} GB",
         "Python Version": platform.python_version(),

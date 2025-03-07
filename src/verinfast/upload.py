@@ -7,11 +7,11 @@ class Uploader:
         self.config = config
 
     def make_upload_path(
-            self,
-            path_type: str,
-            report: Union[str, int],
-            code: Union[str, int] = None,
-            repo_name: str = None,
+        self,
+        path_type: str,
+        report: Union[str, int],
+        code: Union[str, int] = None,
+        repo_name: str = None,
     ) -> str:
         """make_upload_path
         make_upload_path is a convenience function for abstracting
@@ -23,8 +23,12 @@ class Uploader:
             code (Union[str, int]) :
         """
 
-        code_sep = self.config.code_separator if self.config.code_separator else ''  # noqa: E501
-        cost_sep = self.config.cost_separator if self.config.cost_separator else ''  # noqa: E501
+        code_sep = (
+            self.config.code_separator if self.config.code_separator else ""
+        )  # noqa: E501
+        cost_sep = (
+            self.config.cost_separator if self.config.cost_separator else ""
+        )  # noqa: E501
 
         paths = {
             "git": f"{report}{code_sep}/{code}/{repo_name}/git",
@@ -44,22 +48,21 @@ class Uploader:
         }
 
         if report is None:
-            raise Exception("Invocation Error: must supply either a report ID or UUID")  # noqa: E501
+            raise Exception(
+                "Invocation Error: must supply either a report ID or UUID"
+            )  # noqa: E501
 
-        requires_code = [
-            "git",
-            "sizes",
-            "pygount",
-            "stats",
-            "findings",
-            "dependencies"
-        ]
+        requires_code = ["git", "sizes", "pygount", "stats", "findings", "dependencies"]
 
         if path_type in requires_code and code is None:
-            raise Exception(f"Invocation Error: type {path_type} requires code")  # noqa: E501
+            raise Exception(
+                f"Invocation Error: type {path_type} requires code"
+            )  # noqa: E501
 
         if path_type in requires_code and repo_name is None:
-            raise Exception(f"Invocation Error: type {path_type} requires repo_name")  # noqa: E501
+            raise Exception(
+                f"Invocation Error: type {path_type} requires repo_name"
+            )  # noqa: E501
 
         return_path = paths[path_type]
 

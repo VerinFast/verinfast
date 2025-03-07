@@ -4,7 +4,7 @@ import yaml
 from typing import List, Callable, Union
 
 
-user_home = os.path.expanduser('~')
+user_home = os.path.expanduser("~")
 
 
 def __get_input__(t: str):
@@ -12,9 +12,7 @@ def __get_input__(t: str):
 
 
 def repeat_boolean_prompt(
-        prompt: str,
-        logger: Union[Callable, None] = None,
-        default_val: bool = False
+    prompt: str, logger: Union[Callable, None] = None, default_val: bool = False
 ):
     valid_strs = ["y", "n"]
     print_opts = "(y/N)"
@@ -30,11 +28,7 @@ def repeat_boolean_prompt(
     return resp.lower() == "y"
 
 
-def repeat_prompt(
-        prompt: str,
-        valid: List[str],
-        default_val: Union[str, None] = None
-):
+def repeat_prompt(prompt: str, valid: List[str], default_val: Union[str, None] = None):
     prompt += "\n"
     resp = __get_input__(prompt).lower()
     while resp not in valid:
@@ -47,14 +41,14 @@ def repeat_prompt(
 def initial_prompt():
     should_upload_log = False
 
-    warning = '''
+    warning = """
         VerinFast™ would like to collect information about
         this scan. Do you give consent to upload diagnostic
         information to our sponsor, StartupOS at:
         https://beta.startupos.dev/
-    '''
+    """
 
-    storage = f'''
+    storage = f"""
         VerinFast™ stores user preferences and configurations
         in your home directory. To do that we create a hidden
         folder (.verinfast) inside the directory {user_home}.
@@ -63,12 +57,9 @@ def initial_prompt():
         there. We do store consents so we don't prompt on every
         run, hashes for more efficient scanning, and other
         preferences.
-    '''
+    """
 
-    f_path = (
-        Path(os.path.expanduser('~/.verinfast/'))
-        .joinpath('preferences.yaml')
-    )
+    f_path = Path(os.path.expanduser("~/.verinfast/")).joinpath("preferences.yaml")
     conf = {}
     if f_path.exists():
         with open(f_path, "r") as f:
@@ -88,7 +79,7 @@ def initial_prompt():
         print(storage)
         conf["show_warning"] = False
 
-    os.makedirs(os.path.expanduser('~/.verinfast'), exist_ok=True)
+    os.makedirs(os.path.expanduser("~/.verinfast"), exist_ok=True)
 
     with open(f_path, "w") as f:
         f.write(yaml.dump(conf))
@@ -97,7 +88,7 @@ def initial_prompt():
 
 
 def save_path():
-    return os.path.expanduser('~/.verinfast/')
+    return os.path.expanduser("~/.verinfast/")
 
 
 if __name__ == "__main__":

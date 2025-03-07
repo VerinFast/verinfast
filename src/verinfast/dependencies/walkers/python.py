@@ -14,18 +14,19 @@ def parseFile(filename="requirements.txt", ret=False):
         "specifier",
         "requires",
         "required_by",
-        "license"
+        "license",
     ]
     with open(filename) as file:
         for line in file:
             if line.find("#") >= 0:
-                line = line[0:line.find("#")]
+                line = line[0 : line.find("#")]
             stripped_line = line.rstrip()
-            if stripped_line[0:2] == '--' or not stripped_line:
+            if stripped_line[0:2] == "--" or not stripped_line:
                 pass
             else:
                 try:
-                    dists.append(JohnnyDist(
+                    dists.append(
+                        JohnnyDist(
                             stripped_line,
                             ignore_errors=True,
                         )
@@ -45,13 +46,12 @@ def parseFile(filename="requirements.txt", ret=False):
 
     # This is the worst line of code I've ever written.
     output = [
-        d for dep in data
-        for d in dep.serialise(fields=default_fields, recurse=False)
+        d for dep in data for d in dep.serialise(fields=default_fields, recurse=False)
     ]
 
     dup_check = {}
     for idx, o in enumerate(output):
-        k = o["name"]+o["specifier"]
+        k = o["name"] + o["specifier"]
         if k in dup_check:
             output[dup_check[k]]["required_by"].append(k)
             output.remove(o)
