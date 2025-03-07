@@ -21,6 +21,7 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from pygments_tsx.tsx import patch_pygments
 
 from verinfast.utils.utils import DebugLog, std_exec, trimLineBreaks, escapeChars, truncate, truncate_children, get_repo_name_url_and_branch
+from verinfast.system.sysinfo import get_system_info
 from verinfast.upload import Uploader
 from verinfast.cloud.aws.costs import get_aws_costs
 from verinfast.cloud.aws.get_profile import find_profile
@@ -95,6 +96,18 @@ class Agent:
 
     def scan(self):
         if self.config.modules is not None:
+            self.system_info = get_system_info()
+
+            self.log(msg=json.dumps(self.system_info, indent=4), tag="System Information")
+            if not self.config.dry:
+                system_info_file = os.path.join(self.config.output_dir, "system_info.json")
+                try:
+                    with open(system_info_file, 'w') as f:
+                        json.dump(self.system_info, f, indent=4)
+                except IOError as e:
+                    self.log(f"Failed to write system info to {system_info_file}: {str(e)}")
+                    raise RuntimeError(f"Failed to write system information: {str(e)}") from e
+
             if self.config.modules.code is not None:
 
                 if self.config.shouldUpload:
