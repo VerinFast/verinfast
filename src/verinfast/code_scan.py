@@ -12,13 +12,14 @@ from cachehash.main import Cache
 from verinfast.config import Config
 from verinfast.utils.utils import truncate_children
 
+
 def run_scan(
-        path:str,
-        repo_name:str, 
-        config:Config, 
-        cache:Cache, 
-        upload, 
-        template_definition:dict, 
+        path: str,
+        repo_name: str,
+        config: Config,
+        cache: Cache,
+        upload,
+        template_definition: dict,
         log=print
         ) -> None:
     path = str(Path(path).absolute())
@@ -58,7 +59,7 @@ def run_scan(
         first_duration = time.time() - start_time
         log(f"cache get took: {first_duration:.2f} seconds")
 
-        if(cache_results):
+        if cache_results:
             log("CACHE HIT")
             with open(findings_file, "w") as f:
                 f.write(json.dumps(cache_results))

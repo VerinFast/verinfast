@@ -13,7 +13,7 @@ from unittest.mock import patch
 
 # Create test file
 pwd = os.path.dirname(__file__)
-test_file = Path(pwd,"fixtures","bad_password.py")
+test_file = Path(pwd, "fixtures", "bad_password.py")
 test_folder = Path(pwd, "fixtures").absolute()
 
 
@@ -40,7 +40,7 @@ def setup_database():
 
     if test_log_path.exists():
         os.remove(str(test_log_path))
-    
+
     assert not test_log_path.exists()
 
 
@@ -64,20 +64,21 @@ def test_cache_persistence():
 def test_semgrep_cache(self):
     setup_database()
     cache = Cache(path=db_path, table="test_cache")
-    def mock_upload(*args, **kwargs ):
+
+    def mock_upload(*args, **kwargs):
         for k in kwargs:
-            if k is not "file":
+            if k != "file":
                 assert expected_upload[k] == kwargs[k]
             else:
                 with open(kwargs[k]) as f:
                     res = json.load(f)
                     r = res["results"]
                     result = r[0]
-                    assert result["extra"]["metadata"]["cwe"] is not None;
+                    assert result["extra"]["metadata"]["cwe"] is not None
 
     expected_upload = {
-        "route" : "findings",
-        "source" : "test"
+        "route": "findings",
+        "source": "test"
     }
 
     # First run
@@ -85,10 +86,10 @@ def test_semgrep_cache(self):
     test_args = {
         "repo_name": "test",
         "path": test_folder,
-        "config" : config,
-        "cache" : cache,
+        "config": config,
+        "cache": cache,
         "upload": mock_upload,
-        "template_definition" : {},
+        "template_definition": {},
         "log": mock_log
     }
     start_time = time.time()
@@ -104,8 +105,6 @@ def test_semgrep_cache(self):
     second_duration = time.time() - second_start_time
     print(f"Second scan took: {second_duration:.2f} seconds")
 
-    assert second_duration < (first_duration - 0.5)  # Second run should be faster
+    # Second run should be faster
+    assert second_duration < (first_duration - 5)  
     assert db_path.exists()
-
-
-

@@ -450,11 +450,11 @@ class Agent:
         # Run SEMGrep
         run_scan(
             path,
-            repo_name, 
-            self.config, 
-            self.cache, 
-            self.upload, 
-            template_definition, 
+            repo_name,
+            self.config,
+            self.cache,
+            self.upload,
+            template_definition,
             self.log)
         # ##### Scan Dependencies ######
         if self.config.runDependencies:
