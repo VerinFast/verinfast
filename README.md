@@ -1,9 +1,9 @@
 [![Python Release](https://github.com/StartupOS/verinfast/actions/workflows/release.yml/badge.svg?event=release)](https://github.com/StartupOS/verinfast/actions/workflows/release.yml)
 [![codecov](https://codecov.io/gh/StartupOS/verinfast/graph/badge.svg?token=IECR8RD60P)](https://codecov.io/gh/StartupOS/verinfast)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](code_of_conduct.md)
-# VerinFast™
+# VerinFast®
 
- Welcome to the Scanning Agent.
+ Welcome to the scanning agent.
 
  This tool safely and securely analyzes applications for benchmarking.
 
@@ -12,9 +12,9 @@
  - pip - Test with `pip -V`
  - SSH access to code repositories - Test with `git status`
  - Command line tool access to cloud hosting providers
- - Admin privileges on the computer used to run the agent
+ - Admin privileges on the computer used to run the agent (not required but recommended)
  - Outbound internet access (for posting results and fetching dependency metadata)
- - Your dependency mangement tools (e.g. `npm` or `yarn` or `maven`)
+ - Your dependency management tools (e.g. `npm` or `yarn` or `maven`)
 
 ## To run the Agent:
  - Install this package with `pip install verinfast`
@@ -45,4 +45,4 @@
     `python get-pip.py`  OR `python3 get-pip.py`
  Run `sudo apt update`
 
- Copyright 2023 Startos Inc.
+ Copyright ©2023-2025 Startos Inc.
