@@ -7,7 +7,7 @@ report:
 modules:
   code:
     git:
-      start: 2024-02-09
+      start: 2025-02-09
     dry: false
     dependencies: true
     run_scan: false
