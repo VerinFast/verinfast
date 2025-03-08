@@ -2,7 +2,9 @@ import contextlib
 import io
 import json
 import os
+from pathlib import Path
 import platform
+import time
 
 import semgrep.commands.scan as semgrep_scan
 from cachehash.main import Cache
@@ -10,14 +12,17 @@ from cachehash.main import Cache
 from verinfast.config import Config
 from verinfast.utils.utils import truncate_children
 
-
 def run_scan(
-        repo_name: str,
-        config: Config,
-        cache: Cache,
-        upload,
-        template_definition: dict,
-        log=print) -> None:
+        path:str,
+        repo_name:str, 
+        config:Config, 
+        cache:Cache, 
+        upload, 
+        template_definition:dict, 
+        log=print
+        ) -> None:
+    path = str(Path(path).absolute())
+    log(f"path: {path}")
     uname = platform.uname()
     system = uname.system
 
@@ -48,14 +53,20 @@ def run_scan(
     findings_success = False
     if not config.dry:
         # if cache exists write cache to findings file
-        cache_results = cache.get("./")
-        if cache_results:
-            with open(findings_file) as f:
-                f.write(json.dumps(f))
+        start_time = time.time()
+        cache_results = cache.get(path)
+        first_duration = time.time() - start_time
+        log(f"cache get took: {first_duration:.2f} seconds")
+
+        if(cache_results):
+            log("CACHE HIT")
+            with open(findings_file, "w") as f:
+                f.write(json.dumps(cache_results))
                 findings_success = True
 
         # else run scan
         else:
+            log("cache miss")
             log(msg=repo_name, tag="Scanning repository", display=True)
             try:
                 with contextlib.redirect_stdout(io.StringIO()):
@@ -78,7 +89,7 @@ def run_scan(
                     # Try to cache the results
                     with open(findings_file) as f:
                         results = json.load(f)
-                        cache.set(findings_file, results)
+                        cache.set(path, results)
                 except Exception as e:
                     log(
                         tag="Cache Error",

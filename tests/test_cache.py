@@ -1,61 +1,47 @@
+import json
+import os
 from pathlib import Path
 import time
+
 from verinfast.agent import Agent
+from verinfast.code_scan import run_scan
 from verinfast.config import Config
+from verinfast.utils.utils import DebugLog
+
+from cachehash.main import Cache
+from unittest.mock import patch
+
+# Create test file
+pwd = os.path.dirname(__file__)
+test_file = Path(pwd,"fixtures","bad_password.py")
+test_folder = Path(pwd, "fixtures").absolute()
 
 
-def setup_test_file():
-    # Create a simple test file
-    test_content = """
-def test_function():
-    password = "hardcoded_password"  # This should trigger a semgrep finding
-    return password
-"""
-    test_file = Path("test_sample.py")
-    with open(test_file, "w") as f:
-        f.write(test_content)
-    return test_file
+# Minimal configuration
+config = Config()
+config.runGit = False
+config.runSizes = False
+config.runStats = False
+config.runDependencies = False
+config.config["local_repos"] = [str(test_file.parent.absolute())]
+
+# Create Cache
+db_path = "semgrep.db"
+db_path = Path(pwd, db_path)
+
+test_log_path = Path(pwd, "test_log.txt")
+mock_log = DebugLog(file=str(test_log_path), debug=True).log
 
 
-def test_semgrep_cache():
-    # Create test file
-    test_file = setup_test_file()
+def setup_database():
+    if db_path.exists():
+        os.remove(str(db_path))
+    assert not db_path.exists()
 
-    # Minimal configuration
-    config = Config()
-    config.runGit = False
-    config.runSizes = False
-    config.runStats = False
-    config.runDependencies = False
-    config.config["local_repos"] = [str(test_file.parent.absolute())]
-
-    try:
-        # First run
-        print("\nRunning first scan...")
-        start_time = time.time()
-        agent = Agent()
-        agent.config = config
-        agent.scan()
-        first_duration = time.time() - start_time
-        print(f"First scan took: {first_duration:.2f} seconds")
-
-        # Second run should use cache
-        print("\nRunning second scan...")
-        start_time = time.time()
-        agent2 = Agent()
-        agent2.config = config
-        agent2.scan()
-        second_duration = time.time() - start_time
-        print(f"Second scan took: {second_duration:.2f} seconds")
-
-        # Second run should be faster
-        assert second_duration < first_duration - 0.5
-        assert Path(Path.home(), '.verinfast_cache/semgrep.db').exists()
-
-    finally:
-        # Cleanup
-        if test_file.exists():
-            test_file.unlink()
+    if test_log_path.exists():
+        os.remove(str(test_log_path))
+    
+    assert not test_log_path.exists()
 
 
 def test_cache_persistence():
@@ -72,3 +58,54 @@ def test_cache_persistence():
     # Verify cache exists and has content
     assert cache_path.exists()
     assert cache_path.stat().st_size > 0
+
+
+@patch('verinfast.user.__get_input__', return_value='y')
+def test_semgrep_cache(self):
+    setup_database()
+    cache = Cache(path=db_path, table="test_cache")
+    def mock_upload(*args, **kwargs ):
+        for k in kwargs:
+            if k is not "file":
+                assert expected_upload[k] == kwargs[k]
+            else:
+                with open(kwargs[k]) as f:
+                    res = json.load(f)
+                    r = res["results"]
+                    result = r[0]
+                    assert result["extra"]["metadata"]["cwe"] is not None;
+
+    expected_upload = {
+        "route" : "findings",
+        "source" : "test"
+    }
+
+    # First run
+    print("\nRunning first scan...")
+    test_args = {
+        "repo_name": "test",
+        "path": test_folder,
+        "config" : config,
+        "cache" : cache,
+        "upload": mock_upload,
+        "template_definition" : {},
+        "log": mock_log
+    }
+    start_time = time.time()
+    run_scan(**test_args)
+
+    first_duration = time.time() - start_time
+    print(f"First scan took: {first_duration:.2f} seconds")
+
+    # Second run should use cache
+    print("\nRunning second scan...")
+    second_start_time = time.time()
+    run_scan(**test_args)
+    second_duration = time.time() - second_start_time
+    print(f"Second scan took: {second_duration:.2f} seconds")
+
+    assert second_duration < (first_duration - 0.5)  # Second run should be faster
+    assert db_path.exists()
+
+
+

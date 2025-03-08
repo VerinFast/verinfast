@@ -448,7 +448,14 @@ class Agent:
             )
 
         # Run SEMGrep
-        run_scan(repo_name, self.config, self.cache, self.upload, template_definition, self.log)
+        run_scan(
+            path,
+            repo_name, 
+            self.config, 
+            self.cache, 
+            self.upload, 
+            template_definition, 
+            self.log)
         # ##### Scan Dependencies ######
         if self.config.runDependencies:
             dependencies_output_file = os.path.join(
