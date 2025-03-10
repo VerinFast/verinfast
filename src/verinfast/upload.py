@@ -23,6 +23,10 @@ class Uploader:
             code (Union[str, int]) :
         """
 
+        code_sep = (
+            self.config.code_separator or ""
+        )
+
         cost_sep = (
             self.config.code_separator or ""
         )
