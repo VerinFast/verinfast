@@ -190,7 +190,7 @@ def get_instances(
                             try:
                                 result = {
                                     "id": instance["InstanceId"],
-                                    "name": name if name else "n/a",
+                                    "name": name or "n/a",
                                     "state": instance["State"]["Name"],
                                     "type": instance["InstanceType"],
                                     "zone": zone if zone else "n/a",
