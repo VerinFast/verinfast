@@ -2,7 +2,11 @@ import json
 import os
 import time
 
-from google.cloud.monitoring_v3 import MetricServiceClient, TimeInterval, ListTimeSeriesRequest  # noqa: E501
+from google.cloud.monitoring_v3 import (
+    MetricServiceClient,
+    TimeInterval,
+    ListTimeSeriesRequest,
+)
 from google.cloud import storage
 
 from verinfast.utils.utils import std_exec
@@ -47,7 +51,7 @@ def getBlocks(sub_id: str, path_to_output: str = "./", dry=False):
         results = client.list_time_series(
             request={
                 "name": f"projects/{sub_id}",
-                "filter": 'metric.type = "storage.googleapis.com/storage/total_bytes"',  # noqa: E501
+                "filter": 'metric.type = "storage.googleapis.com/storage/total_bytes"',
                 "interval": interval,
                 "view": ListTimeSeriesRequest.TimeSeriesView.FULL,
             }
@@ -62,7 +66,7 @@ def getBlocks(sub_id: str, path_to_output: str = "./", dry=False):
                 "name": bucket.name,
                 "size": size,
                 "retention": str(rp),
-                "public": False
+                "public": False,
             }
             iam = bucket.get_iam_policy()
             permissions = []
@@ -81,21 +85,16 @@ def getBlocks(sub_id: str, path_to_output: str = "./", dry=False):
                     known_buckets[bn]["size"] = size
         my_buckets = list(known_buckets.values())
         upload = {
-                    "metadata": {
-                        "provider": "gcp",
-                        "account": str(sub_id)
-                    },
-                    "data": my_buckets
-                }
+            "metadata": {"provider": "gcp", "account": str(sub_id)},
+            "data": my_buckets,
+        }
     # End dry block
-    gcp_output_file = os.path.join(
-        path_to_output,
-        f'gcp-storage-{sub_id}.json'
-    )
+    gcp_output_file = os.path.join(path_to_output, f"gcp-storage-{sub_id}.json")
     if not dry:
-        with open(gcp_output_file, 'w') as outfile:
+        with open(gcp_output_file, "w") as outfile:
             outfile.write(json.dumps(upload, indent=4))
     return gcp_output_file
+
 
 # Test Code
 # getBlocks(sub_id="startupos-328814")

@@ -40,12 +40,11 @@ def setup_database():
 
     if test_log_path.exists():
         os.remove(str(test_log_path))
-
     assert not test_log_path.exists()
 
 
 def test_cache_persistence():
-    cache_path = Path(Path.home(), '.verinfast_cache/semgrep.db')
+    cache_path = Path(Path.home(), ".verinfast_cache/semgrep.db")
 
     # First run creates cache
     agent = Agent()

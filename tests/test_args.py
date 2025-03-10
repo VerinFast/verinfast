@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 from verinfast.config import Config
+
 """
     dry
     should_upload
@@ -18,7 +19,7 @@ test_folder = file_path.parent.absolute()
 def test_arg_dry():
     c = Config()
     parser = c.init_argparse()
-    args = parser.parse_args(['--dry'])
+    args = parser.parse_args(["--dry"])
     assert args.dry is True
     c.handle_args(args)
     assert c.dry is True
@@ -27,7 +28,7 @@ def test_arg_dry():
 def test_arg_should_upload():
     c = Config()
     parser = c.init_argparse()
-    args = parser.parse_args(['--should_upload'])
+    args = parser.parse_args(["--should_upload"])
     assert args.should_upload is True
     c.handle_args(args)
     assert c.shouldUpload is True
@@ -35,17 +36,17 @@ def test_arg_should_upload():
 
 def test_is_remote():
     c = Config()
-    c.original_cfg_path = 'http://www.google.com'
+    c.original_cfg_path = "http://www.google.com"
     assert c.is_original_path_remote() is True
-    c.original_cfg_path = 'https://www.google.com'
+    c.original_cfg_path = "https://www.google.com"
     assert c.is_original_path_remote() is True
-    c.original_cfg_path = 'config.yaml'
+    c.original_cfg_path = "config.yaml"
     assert c.is_original_path_remote() is False
-    c.original_cfg_path = './config.yaml'
+    c.original_cfg_path = "./config.yaml"
     assert c.is_original_path_remote() is False
-    c.original_cfg_path = '//config.yaml'
+    c.original_cfg_path = "//config.yaml"
     assert c.is_original_path_remote() is False
-    c.original_cfg_path = '/C://config.yaml'
+    c.original_cfg_path = "/C://config.yaml"
     assert c.is_original_path_remote() is False
 
 
@@ -57,10 +58,10 @@ def test_config_to_json():
 
 
 def test_should_git_with_args():
-    conf_path = test_folder.joinpath('str_conf.yaml').absolute()
+    conf_path = test_folder.joinpath("str_conf.yaml").absolute()
     config = Config(str(conf_path))
     parser = config.init_argparse()
-    args = parser.parse_args(['--truncate_findings=30'])
+    args = parser.parse_args(["--truncate_findings=30"])
     assert args.truncate_findings == 30
     config.handle_args(args)
     assert config.runGit is True
@@ -69,7 +70,7 @@ def test_should_git_with_args():
 def test_should_git_with_args_set():
     config = Config()
     parser = config.init_argparse()
-    args = parser.parse_args(['-g'])
+    args = parser.parse_args(["-g"])
     assert args.should_git is True
     config.handle_args(args)
     assert config.runGit is True

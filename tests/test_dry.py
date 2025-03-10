@@ -10,10 +10,10 @@ from verinfast.utils.utils import DebugLog
 file_path = Path(__file__)
 test_folder = file_path.parent.absolute()
 results_dir = test_folder.joinpath("results").absolute()
-str_path = str(test_folder.joinpath('str_conf.yaml').absolute())
+str_path = str(test_folder.joinpath("str_conf.yaml").absolute())
 
 
-@patch('verinfast.user.__get_input__', return_value='y')
+@patch("verinfast.user.__get_input__", return_value="y")
 def test_no_config(self):
     try:
         shutil.rmtree(results_dir)
@@ -32,9 +32,15 @@ def test_no_config(self):
     agent.debug = DebugLog(path=agent.config.output_dir, debug=False)
     agent.log = agent.debug.log
     agent.uploader.config = config.upload_conf
-    assert agent.config.use_uuid is True, f"Expected True, config {agent.config}"  # noqa: E501
-    get_url = agent.uploader.make_upload_path("scan_id", report=agent.config.reportId)  # noqa: E501
-    assert get_url == "/report/uuid/9a6e8696-f93a-4402-a64e-342ccb37592b/CorsisCode", get_url  # noqa: E501
+    assert (
+        agent.config.use_uuid is True
+    ), f"Expected True, config {agent.config}"
+    get_url = agent.uploader.make_upload_path(
+        "scan_id", report=agent.config.reportId
+    )
+    assert (
+        get_url == "/report/uuid/9a6e8696-f93a-4402-a64e-342ccb37592b/CorsisCode"
+    ), get_url
     agent.scan()
     assert Path(results_dir).exists()
     # Make sure there are no .json results files
@@ -63,5 +69,4 @@ def test_no_config(self):
     assert upload_fail_prefix + "small-test-repo.git.sizes.json" in logText
     assert upload_fail_prefix + "small-test-repo.git.stats.json" in logText
     assert upload_fail_prefix + "small-test-repo.git.findings.json" in logText
-    assert (upload_fail_prefix + "small-test-repo.git.dependencies.json"
-            in logText)
+    assert upload_fail_prefix + "small-test-repo.git.dependencies.json" in logText
