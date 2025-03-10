@@ -27,7 +27,7 @@ class Uploader:
             self.config.code_separator or ""
         )  # noqa: E501
         cost_sep = (
-            self.config.cost_separator if self.config.cost_separator else ""
+            self.config.cost_separator or ""
         )  # noqa: E501
 
         paths = {
