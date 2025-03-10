@@ -34,13 +34,13 @@ def test_no_config(self):
     agent.uploader.config = config.upload_conf
     assert (
         agent.config.use_uuid is True
-    ), f"Expected True, config {agent.config}"  # noqa: E501
+    ), f"Expected True, config {agent.config}"
     get_url = agent.uploader.make_upload_path(
         "scan_id", report=agent.config.reportId
-    )  # noqa: E501
+    )
     assert (
         get_url == "/report/uuid/9a6e8696-f93a-4402-a64e-342ccb37592b/CorsisCode"
-    ), get_url  # noqa: E501
+    ), get_url
     agent.scan()
     assert Path(results_dir).exists()
     # Make sure there are no .json results files

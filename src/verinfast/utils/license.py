@@ -40,11 +40,11 @@ def report(identifier: Union[str, int], config: Config, product: str):
                 "product": product,
             }
             response = requestx.post(
-                f"https://logger.verinfast.com/logger?license=true&product={str(product)}",  # noqa: E501
+                f"https://logger.verinfast.com/logger?license=true&product={str(product)}",
                 json=data,
                 headers=headers,
             )
             return response
         return False
-    except:  # noqa:E722
+    except:
         return False

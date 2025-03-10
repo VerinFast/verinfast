@@ -162,7 +162,7 @@ def get_instances(
                             else:
                                 tags_with_name = [
                                     t["Value"] for t in tags if t["Key"] == "Name"
-                                ]  # noqa: E501
+                                ]
                                 if not tags_with_name:
                                     name = instance["InstanceId"]
                                 else:
@@ -209,7 +209,7 @@ def get_instances(
                             if "PublicIpAddress" in instance:
                                 result["publicIp"] = instance[
                                     "PublicIpAddress"
-                                ]  # noqa: E501
+                                ]
                             else:
                                 result["publicIp"] = "n/a"
                             if "NetworkInterfaces" in instance:

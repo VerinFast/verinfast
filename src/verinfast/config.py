@@ -32,20 +32,8 @@ default_start_date = date(
     day=1,  # TODO: Support arbitrary start days
 )
 
-default_start: str = (
-    str(default_start_date.year)
-    + "-"
-    + str(default_start_date.month)
-    + "-"
-    + str(default_start_date.day)
-)
-default_end: str = (
-    str(default_end_date.year)
-    + "-"
-    + str(default_end_date.month)
-    + "-"
-    + str(default_end_date.day)
-)
+default_start: str = f"{default_start_date.year}-{default_start_date.month}-{default_start_date.day}"
+default_end: str = f"{default_end_date.year}-{default_end_date.month}-{default_end_date.day}"
 
 
 class printable:
@@ -53,7 +41,7 @@ class printable:
         d = {}
         for key in dir(self):
             x = self.__getattribute__(key)
-            if not key.startswith("_") and not callable(x):  # noqa: E501
+            if not key.startswith("_") and not callable(x):
                 if is_dataclass(x):
                     d[key] = asdict(x)
                 elif isinstance(x, date):

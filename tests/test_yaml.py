@@ -28,7 +28,7 @@ def test_file(self):
     # Test not overwritten
     assert config.cfg_path == str(
         test_folder.joinpath("config.yaml").absolute()
-    )  # noqa: E501
+    )
     assert config.modules.cloud == []
     agent.config = config
     assert agent.config.dry is True

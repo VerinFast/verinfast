@@ -11,7 +11,7 @@ def test_local_scan(self):
     test_folder = file_path.parent
     output_path = test_folder.joinpath("results").joinpath(
         "tsx_test.stats.json"
-    )  # noqa: E501
+    )
     tsx_path = test_folder.joinpath("tsx_test")
 
     agent = Agent()
@@ -40,7 +40,7 @@ def test_local_scan_branch(self):
     test_folder = file_path.parent
     output_path = test_folder.joinpath("results").joinpath(
         "tsx_test.stats.json"
-    )  # noqa: E501
+    )
     tsx_path = test_folder.joinpath("tsx_test")
 
     agent = Agent()

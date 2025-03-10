@@ -15,7 +15,7 @@ def print_cloud(config_file: str):
     # Test not overwritten
     assert config.cfg_path == str(
         test_folder.joinpath(config_file).absolute()
-    )  # noqa: E501
+    )
     assert config.modules.cloud
     agent.config = config
     for provider in agent.config.modules.cloud:

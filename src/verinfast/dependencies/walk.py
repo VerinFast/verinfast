@@ -25,7 +25,7 @@ defusedxml.defuse_stdlib()
 ruby_matches = ["Gemfile"]
 
 # TODO: Parse Cargo.toml
-# Example: https://github.com/servo/servo/blob/master/components/style/Cargo.toml # noqa: E501
+# Example: https://github.com/servo/servo/blob/master/components/style/Cargo.toml
 rust_matches = ["Cargo.toml"]
 
 

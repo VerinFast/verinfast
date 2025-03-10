@@ -11,7 +11,7 @@ from google.cloud.monitoring_v3 import (
     MetricServiceClient,
     TimeInterval,
     ListTimeSeriesRequest,
-)  # noqa: E501
+)
 
 from verinfast.cloud.gcp.zones import zones
 from verinfast.cloud.cloud_dataclass import (
@@ -19,7 +19,7 @@ from verinfast.cloud.cloud_dataclass import (
     Utilization_Datum as Datum,
 )
 
-# os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/Users/jason/.config/gcloud/application_default_credentials.json"  # noqa: E501
+# os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/Users/jason/.config/gcloud/application_default_credentials.json"
 
 metric_identifiers = {
     "cpu": "compute.googleapis.com/instance/cpu/utilization",
@@ -79,7 +79,7 @@ def get_metrics_for_instance(sub_id: str, instance_name: str) -> List[Datum]:
         for a in aggregations:
             aggregation = aggregations[a]
             request = ListTimeSeriesRequest(
-                filter=f'metric.type = "{metric}" AND metric.labels.instance_name = "{instance_name}"',  # noqa: E501
+                filter=f'metric.type = "{metric}" AND metric.labels.instance_name = "{instance_name}"',
                 view=ListTimeSeriesRequest.TimeSeriesView.FULL,
                 aggregation=aggregation,
                 name=f"projects/{sub_id}",

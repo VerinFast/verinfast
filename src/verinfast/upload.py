@@ -19,16 +19,13 @@ class Uploader:
 
         Args:
             path_type (str) : specifies the scan action triggering the upload
-            report (Union[str, int]): specifies the identifier the server uses for this scan  # noqa: E501
+            report (Union[str, int]): specifies the identifier the server uses for this scan
             code (Union[str, int]) :
         """
 
-        code_sep = (
-            self.config.code_separator or ""
-        )  # noqa: E501
         cost_sep = (
-            self.config.cost_separator or ""
-        )  # noqa: E501
+            self.config.code_separator or ""
+        )
 
         paths = {
             "git": f"{report}{code_sep}/{code}/{repo_name}/git",
@@ -36,7 +33,7 @@ class Uploader:
             "pygount": f"{report}{code_sep}/{code}/{repo_name}/pygount",
             "stats": f"{report}{code_sep}/{code}/{repo_name}/stats",
             "findings": f"{report}{code_sep}/{code}/{repo_name}/findings",
-            "dependencies": f"{report}{code_sep}/{code}/{repo_name}/dependencies",  # noqa: E501
+            "dependencies": f"{report}{code_sep}/{code}/{repo_name}/dependencies",
             "costs": f"{report}{cost_sep}/costs",
             "instances": f"{report}{cost_sep}/instances",
             "utilization": f"{report}{cost_sep}/instance_utilization",
@@ -50,19 +47,19 @@ class Uploader:
         if report is None:
             raise Exception(
                 "Invocation Error: must supply either a report ID or UUID"
-            )  # noqa: E501
+            )
 
         requires_code = ["git", "sizes", "pygount", "stats", "findings", "dependencies"]
 
         if path_type in requires_code and code is None:
             raise Exception(
                 f"Invocation Error: type {path_type} requires code"
-            )  # noqa: E501
+            )
 
         if path_type in requires_code and repo_name is None:
             raise Exception(
                 f"Invocation Error: type {path_type} requires repo_name"
-            )  # noqa: E501
+            )
 
         return_path = paths[path_type]
 

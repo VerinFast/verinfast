@@ -71,7 +71,7 @@ def test_entity():
     shutil.rmtree(output_file, ignore_errors=True)
     try:
         os.remove(output_file)
-    except:  # noqa
+    except:
         pass
     assert not output_file.exists(), "Results file exists"
 
@@ -190,7 +190,7 @@ def test_composer():
     output_file_path = test_folder.joinpath("dependencies3.json")
     try:
         os.remove(output_file_path)
-    except:  # noqa
+    except:
         pass
 
     output_path = walk(
@@ -213,7 +213,7 @@ def test_go():
     output_file_path = test_folder.joinpath("dependencies4.json")
     try:
         os.remove(output_file_path)
-    except FileNotFoundError:  # noqa
+    except FileNotFoundError:
         pass
 
     output_path = walk(

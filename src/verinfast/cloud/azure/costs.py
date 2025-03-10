@@ -14,10 +14,10 @@ def runAzure(subscription_id, start, end, path_to_output, log, dry=False):
 
         conn = http.client.HTTPSConnection("management.azure.com")
         subprocess.run(f"az account set --subscription {subscription_id}", shell=True)
-        # results = subprocess.run(f'az account show --query id" -o tsv', shell=True, stdout=subprocess.PIPE)  # noqa: E501
+        # results = subprocess.run(f'az account show --query id" -o tsv', shell=True, stdout=subprocess.PIPE)
         # subscription_id = results.stdout.decode()[:-1]
         # 80dc7a6b-df94-44be-a235-7e7ade335a3c
-        req_path = f"/subscriptions/{subscription_id}/providers/Microsoft.CostManagement/query"  # noqa: E501
+        req_path = f"/subscriptions/{subscription_id}/providers/Microsoft.CostManagement/query"
         req_params = "api-version=2023-03-01"
         body = {
             "dataset": {
@@ -30,7 +30,7 @@ def runAzure(subscription_id, start, end, path_to_output, log, dry=False):
             "type": "ActualCost",
         }
         results = subprocess.run(
-            "az account get-access-token --resource=https://management.azure.com/ --query accessToken -o tsv",  # noqa: E501
+            "az account get-access-token --resource=https://management.azure.com/ --query accessToken -o tsv",
             shell=True,
             stdout=subprocess.PIPE,
         )

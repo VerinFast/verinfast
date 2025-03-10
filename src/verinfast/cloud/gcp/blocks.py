@@ -6,7 +6,7 @@ from google.cloud.monitoring_v3 import (
     MetricServiceClient,
     TimeInterval,
     ListTimeSeriesRequest,
-)  # noqa: E501
+)
 from google.cloud import storage
 
 from verinfast.utils.utils import std_exec
@@ -51,7 +51,7 @@ def getBlocks(sub_id: str, path_to_output: str = "./", dry=False):
         results = client.list_time_series(
             request={
                 "name": f"projects/{sub_id}",
-                "filter": 'metric.type = "storage.googleapis.com/storage/total_bytes"',  # noqa: E501
+                "filter": 'metric.type = "storage.googleapis.com/storage/total_bytes"',
                 "interval": interval,
                 "view": ListTimeSeriesRequest.TimeSeriesView.FULL,
             }

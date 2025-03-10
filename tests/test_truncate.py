@@ -107,7 +107,7 @@ def test_no_truncate(self):
         assert (
             m
             == "Data is being eval'd from a `curl` command. An attacker with control of the server in the `curl` command could inject malicious code into the `eval`, resulting in a system comrpomise. Avoid eval'ing untrusted data if you can. If you must do this, consider checking the SHA sum of the content returned by the server to verify its integrity."
-        )  # noqa: E501
+        )
         print("CHECK CHILDREN")
         for k in r:
             with pytest.raises(AssertionError):

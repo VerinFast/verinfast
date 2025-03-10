@@ -13,7 +13,7 @@ def test_scan(self):
     repo_name = "test_tsx"
     output_path = test_folder.joinpath("results").joinpath(
         repo_name + ".stats.json"
-    )  # noqa: E501
+    )
     tsx_path = test_folder.joinpath("tsx_test")
 
     agent = Agent()

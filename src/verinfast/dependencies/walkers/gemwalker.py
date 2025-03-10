@@ -36,7 +36,7 @@ class GemWalker(Walker):
                     gem_name = line[0:split_position]
                     gem_version = line[split_position + 1 :]
                     self.real_dependencies[gem_name] = gem_version
-        except:  # noqa:E722
+        except:
             self.loggerFunc(msg=f"Failed to parse Gemfile {file}", display=True)
             with open(file, "r") as manifest:
                 self.loggerFunc(msg=file)
