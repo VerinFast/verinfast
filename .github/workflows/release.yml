@@ -20,6 +20,26 @@ on:
         - warning
         - debug
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - id: black
+      uses: psf/black@stable
+      continue-on-error: true
+    - id: black2
+      if: steps.black.outcome == 'failure'
+      uses: psf/black@stable
+      with:
+        options: ''
+    - name: Annotate diff changes using reviewdog
+      if: steps.black.outcome == 'failure'
+      uses: reviewdog/action-suggester@v1
+      with:
+        tool_name: blackfmt
+    - name: Fail on Linting Issue
+      if: steps.black.outcome == 'failure'
+      run: exit 1
   unit-tests:
     permissions:
       contents: 'read'
