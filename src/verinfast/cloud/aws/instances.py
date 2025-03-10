@@ -193,7 +193,7 @@ def get_instances(
                                     "name": name or "n/a",
                                     "state": instance["State"]["Name"],
                                     "type": instance["InstanceType"],
-                                    "zone": zone if zone else "n/a",
+                                    "zone": zone or "n/a",
                                     "region": region if region else "n/a",
                                     "subnet": (subnet_id if subnet_id else "n/a"),
                                     "architecture": instance["Architecture"],
