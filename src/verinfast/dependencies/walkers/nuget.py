@@ -28,7 +28,7 @@ class NuGetWalker(Walker):
         try:
             license_resp = self.getUrl(
                 f"{self.registrationUrl}{name}/{version}.json"
-            )  # NOQA:E501
+            )
             resp = json.loads(license_resp)
         except Exception as e:
             self.log(e, display=False)

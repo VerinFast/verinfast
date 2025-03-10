@@ -97,7 +97,7 @@ def test_no_truncate(self):
     agent.scan()
     findings_file_path = results_dir.joinpath(
         "small-test-repo.git.findings.json"
-    )  # NOQA: E501
+    )
 
     with open(findings_file_path) as f:
         d = json.load(f)
@@ -153,7 +153,7 @@ def test_truncate(self):
     agent.scan()
     findings_file_path = results_dir.joinpath(
         "small-test-repo.git.findings.json"
-    )  # NOQA: E501
+    )
 
     with open(findings_file_path) as f:
         d = json.load(f)
@@ -196,7 +196,7 @@ def test_truncate_from_args(self):
     agent.scan()
     findings_file_path = results_dir.joinpath(
         "small-test-repo.git.findings.json"
-    )  # NOQA: E501
+    )
 
     with open(findings_file_path) as f:
         d = json.load(f)

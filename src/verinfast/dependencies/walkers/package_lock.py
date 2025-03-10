@@ -9,7 +9,7 @@ class PackageWalker(Walker):
         try:
             license_resp = self.getUrl(
                 f"https://registry.npmjs.org/{entry.name}/{entry.specifier}/"
-            )  # NOQA:E501
+            )
             resp = json.loads(license_resp)
         except Exception as e:
             self.log(
