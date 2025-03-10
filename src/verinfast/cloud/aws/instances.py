@@ -195,7 +195,7 @@ def get_instances(
                                     "type": instance["InstanceType"],
                                     "zone": zone or "n/a",
                                     "region": region or "n/a",
-                                    "subnet": (subnet_id if subnet_id else "n/a"),
+                                    "subnet": (subnet_id or "n/a"),
                                     "architecture": instance["Architecture"],
                                 }
                             except Exception as e:
