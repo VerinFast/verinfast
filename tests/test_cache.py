@@ -106,5 +106,5 @@ def test_semgrep_cache(self):
     print(f"Second scan took: {second_duration:.2f} seconds")
 
     # Second run should be faster
-    assert second_duration < (first_duration - 5)  
+    assert second_duration < (first_duration - 5)
     assert db_path.exists()
