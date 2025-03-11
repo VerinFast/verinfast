@@ -30,29 +30,23 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Black (diff mode)
-        id: black_diff
-        uses: psf/black@stable
-        with:
-          options: --check --diff
-        continue-on-error: true
-
-      - name: Reviewdog suggestions
-        if: steps.black_diff.outcome == 'failure'
-        uses: reviewdog/action-suggester@v1
-        with:
-          tool_name: blackfmt
-          filter_mode: diff_context
-          level: warning
-
-      - name: Fail if linting issues
-        if: steps.black_diff.outcome == 'failure'
-        run: exit 1
+    - uses: actions/checkout@v4
+    - id: black
+      uses: psf/black@stable
+      continue-on-error: true
+    - id: black2
+      if: steps.black.outcome == 'failure'
+      uses: psf/black@stable
+      with:
+        options: ''
+    - name: Annotate diff changes using reviewdog
+      if: steps.black.outcome == 'failure'
+      uses: reviewdog/action-suggester@v1
+      with:
+        tool_name: blackfmt
+    - name: Fail on Linting Issue
+      if: steps.black.outcome == 'failure'
+      run: exit 1
 
   unit-tests:
     permissions:
