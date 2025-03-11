@@ -24,6 +24,15 @@ classifiers = [
 ]
 dynamic = ["dependencies", "version"]
 
+[project.optional-dependencies]
+dev = [
+    "black>=24.1.1",
+    "pytest",
+    "pytest-cov",
+    "pytest-xdist",
+    "coverage",
+]
+
 [project.urls]
 "Homepage" = "https://github.com/VerinFast/verinfast"
 "Bug Tracker" = "https://github.com/VerinFast/verinfast/issues"
