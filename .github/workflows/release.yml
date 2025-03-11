@@ -47,6 +47,7 @@ jobs:
     - name: Fail on Linting Issue
       if: steps.black.outcome == 'failure'
       run: exit 1
+
   unit-tests:
     permissions:
       contents: 'read'
