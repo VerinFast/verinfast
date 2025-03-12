@@ -14,14 +14,14 @@ from verinfast.utils.utils import truncate_children
 
 
 def run_scan(
-        path: str,
-        repo_name: str,
-        config: Config,
-        cache: Cache,
-        upload,
-        template_definition: dict,
-        log=print
-        ) -> None:
+    path: str,
+    repo_name: str,
+    config: Config,
+    cache: Cache,
+    upload,
+    template_definition: dict,
+    log=print,
+) -> None:
     path = str(Path(path).absolute())
     log(f"path: {path}")
     uname = platform.uname()
@@ -30,26 +30,20 @@ def run_scan(
     if not config.runScan:
         return
 
-    if system.lower() == 'windows':
-        log("""
+    if system.lower() == "windows":
+        log(
+            """
         Windows does not support Semgrep.
         Please see the open issues here:
         https://github.com/returntocorp/semgrep/issues/1330
-                    """)
+                    """
+        )
 
         return
 
-    findings_file = os.path.join(
-        config.output_dir,
-        f"{repo_name}.findings.json"
-    )
+    findings_file = os.path.join(config.output_dir, f"{repo_name}.findings.json")
 
-    custom_args = [
-        "--config", "auto",
-        "--json",
-        f"--output={findings_file}",
-        "-q"
-    ]
+    custom_args = ["--config", "auto", "--json", f"--output={findings_file}", "-q"]
 
     findings_success = False
     if not config.dry:
@@ -92,10 +86,7 @@ def run_scan(
                         results = json.load(f)
                         cache.set(path, results)
                 except Exception as e:
-                    log(
-                        tag="Cache Error",
-                        msg=f"Failed to cache results: {str(e)}"
-                    )
+                    log(tag="Cache Error", msg=f"Failed to cache results: {str(e)}")
 
         if findings_success:
             try:
@@ -120,47 +111,33 @@ def run_scan(
                         "references",
                         "url",
                         "source",
-                        "severity"
+                        "severity",
                     ]
-                    log(
-                        tag="TRUNCATING",
-                        msg=f"excluding: {truncation_exclusion}"
-                    )
+                    log(tag="TRUNCATING", msg=f"excluding: {truncation_exclusion}")
                     try:
                         findings = truncate_children(
                             findings,
                             log,
                             excludes=truncation_exclusion,
-                            max_length=config.truncate_findings_length
+                            max_length=config.truncate_findings_length,
                         )
                     except Exception as e:
                         log(tag="ERROR", msg="Error in Truncation")
                         log(e)
-                        log(
-                            json.dumps(
-                                original_findings,
-                                indent=4,
-                                sort_keys=True
-                            )
-                        )
+                        log(json.dumps(original_findings, indent=4, sort_keys=True))
                 with open(findings_file, "w") as f2:
-                    f2.write(json.dumps(
-                        findings, indent=4, sort_keys=True
-                    ))
+                    f2.write(json.dumps(findings, indent=4, sort_keys=True))
                 template_definition["gitfindings"] = findings
             except Exception as e:
                 if not config.dry:
-                    log(
-                        tag="ERROR",
-                        msg="Error in findings post-processing"
-                    )
+                    log(tag="ERROR", msg="Error in findings post-processing")
                     log(e)
                 else:
                     log(
-                        msg=f'''
+                        msg=f"""
                             Attempted to format/truncate non existent file
                             {findings_file}
-                        '''
+                        """
                     )
         else:
             log(msg="Scan Findings failed")
@@ -169,8 +146,4 @@ def run_scan(
 
     # Upload findings always, in case of dry run
     # .upload checks should_upload
-    upload(
-        file=findings_file,
-        route="findings",
-        source=repo_name
-    )
+    upload(file=findings_file, route="findings", source=repo_name)

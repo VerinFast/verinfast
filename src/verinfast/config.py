@@ -32,8 +32,12 @@ default_start_date = date(
     day=1,  # TODO: Support arbitrary start days
 )
 
-default_start: str = f"{default_start_date.year}-{default_start_date.month}-{default_start_date.day}"
-default_end: str = f"{default_end_date.year}-{default_end_date.month}-{default_end_date.day}"
+default_start: str = (
+    f"{default_start_date.year}-{default_start_date.month}-{default_start_date.day}"
+)
+default_end: str = (
+    f"{default_end_date.year}-{default_end_date.month}-{default_end_date.day}"
+)
 
 
 class printable:

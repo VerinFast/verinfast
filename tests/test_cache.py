@@ -59,7 +59,7 @@ def test_cache_persistence():
     assert cache_path.stat().st_size > 0
 
 
-@patch('verinfast.user.__get_input__', return_value='y')
+@patch("verinfast.user.__get_input__", return_value="y")
 def test_semgrep_cache(self):
     setup_database()
     cache = Cache(path=db_path, table="test_cache")
@@ -75,10 +75,7 @@ def test_semgrep_cache(self):
                     result = r[0]
                     assert result["extra"]["metadata"]["cwe"] is not None
 
-    expected_upload = {
-        "route": "findings",
-        "source": "test"
-    }
+    expected_upload = {"route": "findings", "source": "test"}
 
     # First run
     print("\nRunning first scan...")
@@ -89,7 +86,7 @@ def test_semgrep_cache(self):
         "cache": cache,
         "upload": mock_upload,
         "template_definition": {},
-        "log": mock_log
+        "log": mock_log,
     }
     start_time = time.time()
     run_scan(**test_args)

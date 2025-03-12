@@ -9,9 +9,7 @@ from verinfast.agent import Agent
 def test_local_scan(self):
     file_path = Path(__file__)
     test_folder = file_path.parent
-    output_path = test_folder.joinpath("results").joinpath(
-        "tsx_test.stats.json"
-    )
+    output_path = test_folder.joinpath("results").joinpath("tsx_test.stats.json")
     tsx_path = test_folder.joinpath("tsx_test")
 
     agent = Agent()
@@ -38,9 +36,7 @@ def test_local_scan(self):
 def test_local_scan_branch(self):
     file_path = Path(__file__)
     test_folder = file_path.parent
-    output_path = test_folder.joinpath("results").joinpath(
-        "tsx_test.stats.json"
-    )
+    output_path = test_folder.joinpath("results").joinpath("tsx_test.stats.json")
     tsx_path = test_folder.joinpath("tsx_test")
 
     agent = Agent()

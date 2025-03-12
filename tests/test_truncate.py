@@ -95,9 +95,7 @@ def test_no_truncate(self):
     agent.debug = DebugLog(path=agent.config.output_dir, debug=False)
     agent.log = agent.debug.log
     agent.scan()
-    findings_file_path = results_dir.joinpath(
-        "small-test-repo.git.findings.json"
-    )
+    findings_file_path = results_dir.joinpath("small-test-repo.git.findings.json")
 
     with open(findings_file_path) as f:
         d = json.load(f)
@@ -151,9 +149,7 @@ def test_truncate(self):
     agent.debug = DebugLog(path=agent.config.output_dir, debug=False)
     agent.log = agent.debug.log
     agent.scan()
-    findings_file_path = results_dir.joinpath(
-        "small-test-repo.git.findings.json"
-    )
+    findings_file_path = results_dir.joinpath("small-test-repo.git.findings.json")
 
     with open(findings_file_path) as f:
         d = json.load(f)
@@ -194,9 +190,7 @@ def test_truncate_from_args(self):
     agent.debug = DebugLog(path=agent.config.output_dir, debug=False)
     agent.log = agent.debug.log
     agent.scan()
-    findings_file_path = results_dir.joinpath(
-        "small-test-repo.git.findings.json"
-    )
+    findings_file_path = results_dir.joinpath("small-test-repo.git.findings.json")
 
     with open(findings_file_path) as f:
         d = json.load(f)

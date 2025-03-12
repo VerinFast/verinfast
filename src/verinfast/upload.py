@@ -23,13 +23,9 @@ class Uploader:
             code (Union[str, int]) :
         """
 
-        code_sep = (
-            self.config.code_separator or ""
-        )
+        code_sep = self.config.code_separator or ""
 
-        cost_sep = (
-            self.config.code_separator or ""
-        )
+        cost_sep = self.config.code_separator or ""
 
         paths = {
             "git": f"{report}{code_sep}/{code}/{repo_name}/git",
@@ -49,21 +45,15 @@ class Uploader:
         }
 
         if report is None:
-            raise Exception(
-                "Invocation Error: must supply either a report ID or UUID"
-            )
+            raise Exception("Invocation Error: must supply either a report ID or UUID")
 
         requires_code = ["git", "sizes", "pygount", "stats", "findings", "dependencies"]
 
         if path_type in requires_code and code is None:
-            raise Exception(
-                f"Invocation Error: type {path_type} requires code"
-            )
+            raise Exception(f"Invocation Error: type {path_type} requires code")
 
         if path_type in requires_code and repo_name is None:
-            raise Exception(
-                f"Invocation Error: type {path_type} requires repo_name"
-            )
+            raise Exception(f"Invocation Error: type {path_type} requires repo_name")
 
         return_path = paths[path_type]
 

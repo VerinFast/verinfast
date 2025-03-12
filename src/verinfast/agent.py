@@ -69,34 +69,6 @@ curr_dir = os.getcwd()
 temp_dir = Path(os.path.expanduser("~/.verinfast/")).joinpath("temp_repo")
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Agent:
     def __init__(self):
         self.config = Config()
@@ -543,7 +515,8 @@ class Agent:
             self.cache,
             self.upload,
             template_definition,
-            self.log)
+            self.log,
+        )
 
         # ##### Scan Dependencies ######
         if self.config.runDependencies:
