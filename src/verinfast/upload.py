@@ -25,7 +25,7 @@ class Uploader:
 
         code_sep = self.config.code_separator or ""
 
-        cost_sep = self.config.code_separator or ""
+        cost_sep = self.config.cost_separator or ""
 
         paths = {
             "git": f"{report}{code_sep}/{code}/{repo_name}/git",
