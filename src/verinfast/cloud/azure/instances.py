@@ -95,12 +95,8 @@ def get_instances(sub_id: str, path_to_output: str = "./", dry=False, log=None):
                     if hasattr(nic, "public_ip_address") and hasattr(
                         nic.public_ip_address, "ip_address"
                     ):
-                        public_ip_name = nic.public_ip_address.id.split("/")[
-                            -1
-                        ]
-                        pi = networkClient.public_ip_addresses.get(
-                            tgt, public_ip_name
-                        )
+                        public_ip_name = nic.public_ip_address.id.split("/")[-1]
+                        pi = networkClient.public_ip_addresses.get(tgt, public_ip_name)
                         public_ip = pi.ip_address
                 architecture = "x86_64"
 

@@ -26,9 +26,7 @@ def test_file(self):
     config.cfg_path = str(test_folder.joinpath("config.yaml").absolute())
     config.__init__()
     # Test not overwritten
-    assert config.cfg_path == str(
-        test_folder.joinpath("config.yaml").absolute()
-    )
+    assert config.cfg_path == str(test_folder.joinpath("config.yaml").absolute())
     assert config.modules.cloud == []
     agent.config = config
     assert agent.config.dry is True

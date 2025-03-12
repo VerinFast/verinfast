@@ -26,9 +26,7 @@ class NuGetWalker(Walker):
         resp = None
         name2 = name.lower()
         try:
-            license_resp = self.getUrl(
-                f"{self.registrationUrl}{name}/{version}.json"
-            )
+            license_resp = self.getUrl(f"{self.registrationUrl}{name}/{version}.json")
             resp = json.loads(license_resp)
         except Exception as e:
             self.log(e, display=False)

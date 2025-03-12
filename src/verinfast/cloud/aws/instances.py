@@ -207,9 +207,7 @@ def get_instances(
                             else:
                                 result["vpc"] = "n/a"
                             if "PublicIpAddress" in instance:
-                                result["publicIp"] = instance[
-                                    "PublicIpAddress"
-                                ]
+                                result["publicIp"] = instance["PublicIpAddress"]
                             else:
                                 result["publicIp"] = "n/a"
                             if "NetworkInterfaces" in instance:

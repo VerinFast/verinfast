@@ -24,6 +24,15 @@ classifiers = [
 ]
 dynamic = ["dependencies", "version"]
 
+[project.optional-dependencies]
+dev = [
+    "black>=24.1.1",
+    "pytest",
+    "pytest-cov",
+    "pytest-xdist",
+    "coverage",
+]
+
 [project.urls]
 "Homepage" = "https://github.com/VerinFast/verinfast"
 "Bug Tracker" = "https://github.com/VerinFast/verinfast/issues"
@@ -45,3 +54,11 @@ path = "VERSION.py"
 
 [tool.hatch.metadata.hooks.requirements_txt]
 files = ["requirements.txt"]
+
+[tool.black]
+line-length = 88
+target-version = ['py39', 'py310', 'py311']
+include = '\.pyi?$'
+extend-exclude = '''
+^/VERSION\.py$
+'''

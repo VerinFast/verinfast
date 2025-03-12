@@ -88,9 +88,9 @@ class Walker:
 
     def getUrl(self, url: str, headers: dict = {}):
         try:
-            return self.requestx.get(
-                url=url, headers=headers
-            ).content.decode("utf-8-sig")
+            return self.requestx.get(url=url, headers=headers).content.decode(
+                "utf-8-sig"
+            )
         except Exception as e:
             self.loggerFunc(f"Failed to get URL: {url}, {e}", display=False)
             return None

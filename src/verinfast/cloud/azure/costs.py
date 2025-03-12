@@ -17,7 +17,9 @@ def runAzure(subscription_id, start, end, path_to_output, log, dry=False):
         # results = subprocess.run(f'az account show --query id" -o tsv', shell=True, stdout=subprocess.PIPE)
         # subscription_id = results.stdout.decode()[:-1]
         # 80dc7a6b-df94-44be-a235-7e7ade335a3c
-        req_path = f"/subscriptions/{subscription_id}/providers/Microsoft.CostManagement/query"
+        req_path = (
+            f"/subscriptions/{subscription_id}/providers/Microsoft.CostManagement/query"
+        )
         req_params = "api-version=2023-03-01"
         body = {
             "dataset": {

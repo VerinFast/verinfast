@@ -13,9 +13,7 @@ def print_cloud(config_file: str):
     config.cfg_path = str(test_folder.joinpath(config_file).absolute())
     config.__init__()
     # Test not overwritten
-    assert config.cfg_path == str(
-        test_folder.joinpath(config_file).absolute()
-    )
+    assert config.cfg_path == str(test_folder.joinpath(config_file).absolute())
     assert config.modules.cloud
     agent.config = config
     for provider in agent.config.modules.cloud:

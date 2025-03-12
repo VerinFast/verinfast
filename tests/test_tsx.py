@@ -11,9 +11,7 @@ def test_scan(self):
     file_path = Path(__file__)
     test_folder = file_path.parent
     repo_name = "test_tsx"
-    output_path = test_folder.joinpath("results").joinpath(
-        repo_name + ".stats.json"
-    )
+    output_path = test_folder.joinpath("results").joinpath(repo_name + ".stats.json")
     tsx_path = test_folder.joinpath("tsx_test")
 
     agent = Agent()

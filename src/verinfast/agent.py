@@ -515,7 +515,8 @@ class Agent:
             self.cache,
             self.upload,
             template_definition,
-            self.log)
+            self.log,
+        )
 
         # ##### Scan Dependencies ######
         if self.config.runDependencies:
