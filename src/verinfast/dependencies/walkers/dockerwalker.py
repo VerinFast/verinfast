@@ -36,9 +36,6 @@ class DockerWalker(Walker):
 
     def parse(self, file: str, expand=False):
         with open(file, "r") as f:
-            string = f"\nDockerfile found {file}:\n\n\n {str(f.read())} \n\n\n"
-            self.log(timestamp=False, tag=None, msg=string)
-        with open(file, "r") as f:
             lines = f.readlines()
             for line in lines:
                 line = self.clean_str(line)
