@@ -31,7 +31,12 @@ class DockerWalker(Walker):
         elif ":" in name:
             [name, specifier] = name.split(":")
 
-        e = Entry(name=name, specifier=specifier, source=source, required_by=file)
+        e = Entry(
+            name=name or address + "-",
+            specifier=specifier,
+            source=source,
+            required_by=file,
+        )
         return e
 
     def parse(self, file: str, expand=False):
