@@ -26,7 +26,7 @@ def test_system_info_comprehensive():
         "Processor",
         "CPU Cores",
         "Total RAM",
-        "Python Version"
+        "Python Version",
     ]
 
     print("\nValidating essential system information:")

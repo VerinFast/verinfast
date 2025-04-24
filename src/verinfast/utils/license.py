@@ -24,13 +24,10 @@ def report(identifier: Union[str, int], config: Config, product: str):
 
     """
     try:
-        if (
-                config.reportId != 0 or
-                config.shouldUpload
-        ):
+        if config.reportId != 0 or config.shouldUpload:
             headers = {
-                'content-type': 'application/json',
-                'Accept-Charset': 'UTF-8',
+                "content-type": "application/json",
+                "Accept-Charset": "UTF-8",
             }
             data = {
                 "baseurl": config.baseUrl,
@@ -40,14 +37,14 @@ def report(identifier: Union[str, int], config: Config, product: str):
                 "ran_sizes": config.runSizes,
                 "ran_stats": config.runStats,
                 "uuid": identifier,
-                "product": product
+                "product": product,
             }
             response = requestx.post(
-                f"https://logger.verinfast.com/logger?license=true&product={str(product)}",  # noqa: E501
+                f"https://logger.verinfast.com/logger?license=true&product={str(product)}",
                 json=data,
-                headers=headers
+                headers=headers,
             )
             return response
         return False
-    except:  # noqa:E722
+    except:
         return False

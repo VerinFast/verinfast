@@ -21,7 +21,7 @@ default_month_delta = 6
 
 default_end_date = date.today()
 default_start_year = default_end_date.year
-default_start_month = default_end_date.month-default_month_delta
+default_start_month = default_end_date.month - default_month_delta
 while default_start_month <= 0:
     default_start_year -= 1
     default_start_month += 12
@@ -29,18 +29,14 @@ while default_start_month <= 0:
 default_start_date = date(
     year=default_start_year,
     month=default_start_month,
-    day=1  # TODO: Support arbitrary start days
+    day=1,  # TODO: Support arbitrary start days
 )
 
 default_start: str = (
-    str(default_start_date.year) + "-" +
-    str(default_start_date.month) + "-" +
-    str(default_start_date.day)
+    f"{default_start_date.year}-{default_start_date.month}-{default_start_date.day}"
 )
 default_end: str = (
-    str(default_end_date.year) + "-" +
-    str(default_end_date.month) + "-" +
-    str(default_end_date.day)
+    f"{default_end_date.year}-{default_end_date.month}-{default_end_date.day}"
 )
 
 
@@ -49,11 +45,11 @@ class printable:
         d = {}
         for key in dir(self):
             x = self.__getattribute__(key)
-            if not key.startswith("_") and not callable(x):  # noqa: E501
+            if not key.startswith("_") and not callable(x):
                 if is_dataclass(x):
                     d[key] = asdict(x)
                 elif isinstance(x, date):
-                    d[key] = x.strftime('%Y-%mm-%dd')
+                    d[key] = x.strftime("%Y-%mm-%dd")
                 elif x is None:
                     d[key] = None
                 else:
@@ -88,10 +84,11 @@ class printable:
 @dataclass
 class UploadConfig(printable):
     """
-        Args:
-            uuid (bool) : specifies whether to use the uuid path prefix
-            prefix (str) : defaults to "/report" if not specified
+    Args:
+        uuid (bool) : specifies whether to use the uuid path prefix
+        prefix (str) : defaults to "/report" if not specified
     """
+
     uuid: bool = False
     prefix: Union[str, None] = "/report/"
     code_separator: Union[str, None] = "/CorsisCode"
@@ -127,6 +124,7 @@ class CloudProvider(printable):
         end (str): A date in the format 'YYYY-MM-DD'
 
     """
+
     provider: str
     account: Union[str, int]
     profile: Optional[str] = None
@@ -153,7 +151,8 @@ class Config(printable):
     only. Examples include: "runGit", "runSizes", etc. Modifying these
     could have unanticipated side effects.
     """
-    baseUrl: str = ''
+
+    baseUrl: str = ""
     cfg_path: str = ".verinfast.yaml"
     original_cfg_path: str = ".verinfast.yaml"
     config = FileNotFoundError
@@ -166,8 +165,7 @@ class Config(printable):
     modules: Union[ConfigModules, None] = None
     output_dir = os.path.join(os.getcwd(), "results")
     log_file = os.path.join(
-        output_dir,
-        datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_log.txt"
+        output_dir, datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_log.txt"
     )
     reportId: int = 0
     runDependencies: bool = True
@@ -189,7 +187,7 @@ class Config(printable):
         if cfg_path is not None:
             self.cfg_path = cfg_path
             self.original_cfg_path = cfg_path
-        elif 'pytest' not in sys.argv[0]:
+        elif "pytest" not in sys.argv[0]:
             parser = self.init_argparse()
             args = parser.parse_args()
             if "config" in args and args.config is not None:
@@ -201,8 +199,8 @@ class Config(printable):
             self.delete_config_after = True
             requestx = httpx.Client(http2=True, timeout=None)
             response = requestx.get(self.cfg_path)
-            self.cfg_path = str(uuid4())+".yaml"
-            with open(self.cfg_path, 'wb') as f:
+            self.cfg_path = str(uuid4()) + ".yaml"
+            with open(self.cfg_path, "wb") as f:
                 f.write(response.content)
 
         else:
@@ -211,14 +209,14 @@ class Config(printable):
             if not os.path.isfile(self.cfg_path):
                 curr_path = Path(os.getcwd())
                 parent = curr_path.parent
-                while parent and Path(curr_path) != Path('/'):
+                while parent and Path(curr_path) != Path("/"):
                     if curr_path.joinpath(self.cfg_path).exists():
                         self.cfg_path = curr_path.joinpath(self.cfg_path)
                         break
                     parent = curr_path.parent
                     curr_path = parent
         self.handle_config_file()
-        if 'pytest' not in sys.argv[0]:
+        if "pytest" not in sys.argv[0]:
             self.handle_args(args)
         if self.config is FileNotFoundError:
             self.config = {}
@@ -228,12 +226,9 @@ class Config(printable):
         target to be ["./"]
         """
         if (
-            "repos" not in self.config and
-            "local_repos" not in self.config and
-            (
-                "modules" not in self.config or
-                "cloud" not in self.config["modules"]
-            )
+            "repos" not in self.config
+            and "local_repos" not in self.config
+            and ("modules" not in self.config or "cloud" not in self.config["modules"])
         ):
             self.config["local_repos"] = [self.local_scan_path]
             gm = GitModule()
@@ -244,15 +239,13 @@ class Config(printable):
             self.modules = ConfigModules(code=cm, cloud=[])
             self.runGit = False
         elif (
-            "repos" in self.config and
-            "modules" in self.config and
-            "code" in self.config["modules"] and
-            "git" in self.config["modules"]["code"]
+            "repos" in self.config
+            and "modules" in self.config
+            and "code" in self.config["modules"]
+            and "git" in self.config["modules"]["code"]
         ):
             self.runGit = True
-        self.upload_conf = UploadConfig(
-            uuid=self.use_uuid
-        )
+        self.upload_conf = UploadConfig(uuid=self.use_uuid)
         if self.server_cost_separator is not None:
             self.upload_conf.cost_separator = self.server_cost_separator
         if self.server_prefix is not None:
@@ -262,20 +255,23 @@ class Config(printable):
 
         os.makedirs(self.output_dir, exist_ok=True)
         self.log_file = os.path.join(
-            self.output_dir,
-            datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_log.txt"
+            self.output_dir, datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_log.txt"
         )
         debugLog = DebugLog(file=self.log_file)
         debugLog.log(msg="VerinFast Scan Started", tag="", display=True)
         debugLog.log(msg=self.config, tag="Loaded Configuration", display=True)
-        if 'pytest' not in sys.argv[0]:
+        if "pytest" not in sys.argv[0]:
             debugLog.log(msg=args, tag="Arguments", display=True)
-        debugLog.log(msg={
-            "baseurl": self.baseUrl,
-            "should_upload": self.shouldUpload,
-            "dry": self.dry,
-            "uuid": self.reportId,
-        }, tag="Run Configuration", display=True)
+        debugLog.log(
+            msg={
+                "baseurl": self.baseUrl,
+                "should_upload": self.shouldUpload,
+                "dry": self.dry,
+                "uuid": self.reportId,
+            },
+            tag="Run Configuration",
+            display=True,
+        )
 
     def init_argparse(self) -> argparse.ArgumentParser:
         """config.init_argparse
@@ -294,23 +290,23 @@ class Config(printable):
         )
 
         parser.add_argument(
-            "-c", "--config",
+            "-c",
+            "--config",
             dest="config",
             help="""This argument can be used with either a local or
             remote path. A path of 'http://a.b.c/config.yaml' the
             application will download that file, save it, locally,
             parse it, and then delete it when complete.
             It will be saved with a random file name (uuid4) while
-            it is on the local machine"""
+            it is on the local machine""",
         )
 
-        parser.add_argument(
-            "-o", "--output", "--output_dir",
-            dest="output_dir"
-        )
+        parser.add_argument("-o", "--output", "--output_dir", dest="output_dir")
 
         parser.add_argument(
-            "-t", "--truncate", "--truncate_findings",
+            "-t",
+            "--truncate",
+            "--truncate_findings",
             dest="truncate_findings",
             type=int,
             help="""This flag will further enhance privacy by capping
@@ -319,11 +315,12 @@ class Config(printable):
 
             <0 = unlimited
             We recommend 30 as good balance between privacy and utility
-            """
+            """,
         )
 
         parser.add_argument(
-            "-d", "--dry",
+            "-d",
+            "--dry",
             dest="dry",
             action="store_true",
             help="""This flag is boolean, and when passed will not run
@@ -331,7 +328,7 @@ class Config(printable):
             primarily used for developing servers that accept these results.
 
             If this is passed it will set should_upload to true no matter what.
-            """
+            """,
         )
 
         parser.add_argument(
@@ -341,7 +338,7 @@ class Config(printable):
             help=""" --should_upload tells the application that it should
             send the results to the bsae_url specified either as a command
             line argument or in the config.
-            """
+            """,
         )
 
         parser.add_argument(
@@ -350,7 +347,7 @@ class Config(printable):
             dest="base_url",
             help=""" --base_url=https://a.b.c/ will post the results of the
             scan to that url, provided the server conforms to the expected
-            structure and responses."""
+            structure and responses.""",
         )
 
         parser.add_argument(
@@ -360,7 +357,7 @@ class Config(printable):
             help=""" --uuid specifies the secret key the receiving server
             needs to identify your upload. This can either be read from
             the config file (most common with remote configs), or passed
-            here on the command line."""
+            here on the command line.""",
         )
 
         parser.add_argument(
@@ -369,21 +366,22 @@ class Config(printable):
             dest="local_scan_path",
             help="""This argument will be ignored if a config file specifies
             repositories to scan. This is only used for a single path scan.
-            """
+            """,
         )
 
         parser.add_argument(
-            "--should_git", "-g",
+            "--should_git",
+            "-g",
             action="store_true",
             dest="should_git",
             help="""Used to skip contributions and only run a
-            code quality scan."""
+            code quality scan.""",
         )
 
         return parser
 
     def handle_args(self, args):
-        """ config.handle_args
+        """config.handle_args
 
         config.handle_args overwrites any values stored in the
         current config with the values passed on the command line.
@@ -422,15 +420,12 @@ class Config(printable):
         s = self.original_cfg_path
 
         # TODO: Add ftp
-        supported_protocols = [
-            "http",
-            "https"
-        ]
+        supported_protocols = ["http", "https"]
 
         # protocol_separator
         ps = "://"
         for sp in supported_protocols:
-            if s.lower().startswith(sp+ps):
+            if s.lower().startswith(sp + ps):
                 return True
         return False
 
@@ -453,8 +448,9 @@ class Config(printable):
             if "truncate_findings" in self.config:
                 self.truncate_findings = self.config["truncate_findings"]
                 if "truncate_findings_length" in self.config:
-                    self.truncate_findings_length = \
-                        self.config["truncate_findings_length"]
+                    self.truncate_findings_length = self.config[
+                        "truncate_findings_length"
+                    ]
                 else:
                     self.truncate_findings_length = 30
 
@@ -501,7 +497,4 @@ class Config(printable):
                     for row in c:
                         provider = CloudProvider(**row)
                         cloud_modules.append(provider)
-                self.modules = ConfigModules(
-                    code=code_modules,
-                    cloud=cloud_modules
-                )
+                self.modules = ConfigModules(code=code_modules, cloud=cloud_modules)

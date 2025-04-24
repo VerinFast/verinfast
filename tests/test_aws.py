@@ -10,7 +10,7 @@ from verinfast.utils.utils import DebugLog
 import verinfast.user
 
 
-@patch('verinfast.user.__get_input__', return_value='y')
+@patch("verinfast.user.__get_input__", return_value="y")
 def test_aws_scan(self):
     sub_id = 436708548746
     assert verinfast.user.initial_prompt is not None
@@ -54,9 +54,7 @@ def test_aws_scan(self):
     # Make sure "aws-instances-foo.json" doesn't exist
     bad_instances_file = Path(results_dir.joinpath("aws-instances-foo.json"))
     assert not bad_instances_file.is_file()
-    with open(
-        results_dir.joinpath(f"aws-instances-{sub_id}-utilization.json")
-    ) as f:
+    with open(results_dir.joinpath(f"aws-instances-{sub_id}-utilization.json")) as f:
         utilization = json.load(f)
         v = []
         for u in utilization["data"]:
@@ -87,7 +85,7 @@ def test_aws_scan(self):
     assert not bad_storage_file.is_file()
 
 
-@patch('verinfast.user.__get_input__', return_value='y')
+@patch("verinfast.user.__get_input__", return_value="y")
 def test_aws_dash(self):
     sub_id = "436708548746"
     assert verinfast.user.initial_prompt is not None
@@ -123,9 +121,7 @@ def test_aws_dash(self):
     with open(results_dir.joinpath(f"aws-instances-{sub_id}.json")) as f:
         instances = json.load(f)
         assert len(instances["data"]) >= 5
-    with open(
-        results_dir.joinpath(f"aws-instances-{sub_id}-utilization.json")
-    ) as f:
+    with open(results_dir.joinpath(f"aws-instances-{sub_id}-utilization.json")) as f:
         utilization = json.load(f)
         v = []
         for u in utilization["data"]:
@@ -141,7 +137,7 @@ def test_aws_dash(self):
         assert v >= 262183
 
 
-@patch('verinfast.user.__get_input__', return_value='y')
+@patch("verinfast.user.__get_input__", return_value="y")
 def test_aws_profile(self):
     # sub_id = "436708548746"
     assert verinfast.user.initial_prompt is not None

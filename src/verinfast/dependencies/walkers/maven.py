@@ -32,7 +32,7 @@ class MavenWalker(Walker):
     def parse(self, file: str, expand=False):
         tree = ET.parse(file)
         # root = tree.getroot()
-        dependencies = tree.findall('dependencies/dependency')
+        dependencies = tree.findall("dependencies/dependency")
         for d in dependencies:
             groupId = d.find("groupId")
             artifcact = d.find("artifactId")
@@ -41,11 +41,7 @@ class MavenWalker(Walker):
             a = artifcact.text
             v = version.text
             n = g + "/" + a
-            e = Entry(
-                name=n,
-                source='maven',
-                specifier="=="+v
-            )
+            e = Entry(name=n, source="maven", specifier="==" + v)
             self.entries.append(e)
 
     def expand(self, file):

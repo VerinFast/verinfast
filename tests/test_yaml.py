@@ -10,14 +10,14 @@ from verinfast.upload import Uploader
 from verinfast.utils.utils import DebugLog
 
 
-@patch('verinfast.user.__get_input__', return_value='y')
+@patch("verinfast.user.__get_input__", return_value="y")
 def test_no_config(self):
     agent = Agent()
     assert agent.config.modules.cloud == []
     assert agent.config.config["local_repos"] == ["./"]
 
 
-@patch('verinfast.user.__get_input__', return_value='y')
+@patch("verinfast.user.__get_input__", return_value="y")
 def test_file(self):
     file_path = Path(__file__)
     test_folder = file_path.parent.absolute()
@@ -26,21 +26,21 @@ def test_file(self):
     config.cfg_path = str(test_folder.joinpath("config.yaml").absolute())
     config.__init__()
     # Test not overwritten
-    assert config.cfg_path == str(test_folder.joinpath("config.yaml").absolute())  # noqa: E501
+    assert config.cfg_path == str(test_folder.joinpath("config.yaml").absolute())
     assert config.modules.cloud == []
     agent.config = config
     assert agent.config.dry is True
     assert agent.config.runDependencies is False
     assert agent.config.reportId == 0
-    assert agent.config.baseUrl == ''
-    assert agent.up("logs", report=0) == '/report/0/agent_logs'
+    assert agent.config.baseUrl == ""
+    assert agent.up("logs", report=0) == "/report/0/agent_logs"
     agent.uploader = Uploader(agent.config.upload_conf)
     agent.up = agent.uploader.make_upload_path
-    assert agent.up("logs", report=0) == '/report/0/agent_logs'
+    assert agent.up("logs", report=0) == "/report/0/agent_logs"
     assert agent.getloc(config.cfg_path) >= 9
 
 
-@patch('verinfast.user.__get_input__', return_value='y')
+@patch("verinfast.user.__get_input__", return_value="y")
 def test_str_results_from_file(self):
 
     file_path = Path(__file__)
@@ -64,7 +64,7 @@ def test_str_results_from_file(self):
     os.makedirs(agent.config.output_dir, exist_ok=True)
     agent.scan()
     assert Path(results_dir).exists() is True
-    with open(results_dir.joinpath('small-test-repo.git.filelist.json')) as f:
+    with open(results_dir.joinpath("small-test-repo.git.filelist.json")) as f:
         file_list = json.load(f)
         assert len(file_list) >= 4
         for myfile in file_list:
@@ -72,18 +72,18 @@ def test_str_results_from_file(self):
                 assert str(myfile["path"]).endswith("README.md")
             assert myfile["name"]
             assert myfile["path"]
-    with open(results_dir.joinpath('small-test-repo.git.sizes.json')) as f:
+    with open(results_dir.joinpath("small-test-repo.git.sizes.json")) as f:
         sizes = json.load(f)
         assert sizes["files"]["."]["size"] >= 34100
         assert sizes["files"]["./README.md"]["ext"] == "md"
-    with open(results_dir.joinpath('small-test-repo.git.stats.json')) as f:
+    with open(results_dir.joinpath("small-test-repo.git.stats.json")) as f:
         stats = json.load(f)
         for file_name in stats["files"]:
             file_name = str(file_name)
             if file_name.endswith("/temp_repo/README.md"):
                 my_file = stats["files"][file_name]
                 assert my_file["lang"][0] == "Markdown"
-    with open(results_dir.joinpath('small-test-repo.git.findings.json')) as f:
+    with open(results_dir.joinpath("small-test-repo.git.findings.json")) as f:
         findings = json.load(f)
         for finding in findings["results"]:
             p = str(finding["path"])
