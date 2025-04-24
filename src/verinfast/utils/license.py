@@ -40,7 +40,7 @@ def report(identifier: Union[str, int], config: Config, product: str):
                 "ran_stats": config.runStats,
                 "uuid": identifier,
                 "product": product,
-                "version": v
+                "version": v,
             }
             response = requestx.post(
                 f"https://logger.verinfast.com/logger?license=true&product={str(product)}&version={str(v)}",
