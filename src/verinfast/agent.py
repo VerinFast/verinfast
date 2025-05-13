@@ -330,7 +330,7 @@ class Agent:
         git_output_file = os.path.join(
             self.config.output_dir, repo_name + ".git.log.json"
         )
-    
+
         if self.config.runGit and self.checkDependency("git", "Git") and git_dir_exists:
             # Adding this for Windows support
             # Appears to fail with blank HEAD
