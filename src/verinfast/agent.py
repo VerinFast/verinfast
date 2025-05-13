@@ -415,8 +415,8 @@ class Agent:
                 display=True,
             )
 
-        if Path(git_output_file).exists():
-            self.upload(file=git_output_file, route="git", source=repo_name)
+        # if Path(git_output_file).exists():
+        self.upload(file=git_output_file, route="git", source=repo_name)
 
         # Manual File Sizes and Info
         sizes_output_file = os.path.join(
