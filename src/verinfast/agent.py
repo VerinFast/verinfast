@@ -375,7 +375,7 @@ class Agent:
                 self.log("Error getting log from git", display=True)
 
             if not self.config.dry and gitlog:
-                resultArr = log.split("\n")
+                resultArr = gitlog.split("\n")
                 prevHash = ""
                 filesArr = []
                 finalArr = []
