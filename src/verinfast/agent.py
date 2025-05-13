@@ -364,16 +364,17 @@ class Agent:
                 --format='%H' \
                 {branch} --
             """
+            gitlog = None
             try:
                 if not self.config.dry:
                     results = subprocess.run(
                         command, shell=True, stdout=subprocess.PIPE
                     )
-                    log = results.stdout.decode()
+                    gitlog = results.stdout.decode()
             except subprocess.CalledProcessError:
                 self.log("Error getting log from git", display=True)
 
-            if not self.config.dry and log:
+            if not self.config.dry and gitlog:
                 resultArr = log.split("\n")
                 prevHash = ""
                 filesArr = []
