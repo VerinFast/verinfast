@@ -12,7 +12,9 @@ def test_local_scan(self):
     stats_path = test_folder.joinpath("results").joinpath("tsx_test.stats.json")
     size_path = test_folder.joinpath("results").joinpath("tsx_test.sizes.json")
     findings_path = test_folder.joinpath("results").joinpath("tsx_test.findings.json")
-    dependencies_path = test_folder.joinpath("results").joinpath("tsx_test.dependencies.json")
+    dependencies_path = test_folder.joinpath("results").joinpath(
+        "tsx_test.dependencies.json"
+    )
     tsx_path = test_folder.joinpath("tsx_test")
 
     agent = Agent()
@@ -43,7 +45,9 @@ def test_local_scan_branch(self):
     stats_path = test_folder.joinpath("results").joinpath("tsx_test.stats.json")
     size_path = test_folder.joinpath("results").joinpath("tsx_test.sizes.json")
     findings_path = test_folder.joinpath("results").joinpath("tsx_test.findings.json")
-    dependencies_path = test_folder.joinpath("results").joinpath("tsx_test.dependencies.json")
+    dependencies_path = test_folder.joinpath("results").joinpath(
+        "tsx_test.dependencies.json"
+    )
     tsx_path = test_folder.joinpath("tsx_test")
 
     agent = Agent()
