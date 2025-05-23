@@ -1,5 +1,6 @@
 import httpx
 from verinfast.config import Config
+from importlib.metadata import version
 from typing import Union
 
 
@@ -29,6 +30,7 @@ def report(identifier: Union[str, int], config: Config, product: str):
                 "content-type": "application/json",
                 "Accept-Charset": "UTF-8",
             }
+            v = version("verinfast")
             data = {
                 "baseurl": config.baseUrl,
                 "ran_dependencies": config.runDependencies,
@@ -38,9 +40,10 @@ def report(identifier: Union[str, int], config: Config, product: str):
                 "ran_stats": config.runStats,
                 "uuid": identifier,
                 "product": product,
+                "version": v,
             }
             response = requestx.post(
-                f"https://logger.verinfast.com/logger?license=true&product={str(product)}",
+                f"https://logger.verinfast.com/logger?license=true&product={str(product)}&version={str(v)}",
                 json=data,
                 headers=headers,
             )
