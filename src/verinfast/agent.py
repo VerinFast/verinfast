@@ -326,12 +326,15 @@ class Agent:
         if branch is None:
             branch = "main"
 
-        # Adding this for Windows support
-        # Appears to fail with blank HEAD
-        if self.config.runGit:
-            std_exec(["git", "init"])
+        git_dir_exists = os.path.isdir(os.path.join(path, ".git"))
+        git_output_file = os.path.join(
+            self.config.output_dir, repo_name + ".git.log.json"
+        )
 
-        if self.config.runGit and self.checkDependency("git", "Git"):
+        if self.config.runGit and self.checkDependency("git", "Git") and git_dir_exists:
+            # Adding this for Windows support
+            # Appears to fail with blank HEAD
+            std_exec(["git", "init"])
             try:
                 if not self.config.dry:
                     subprocess.check_call(
@@ -351,16 +354,7 @@ class Agent:
                         )
                         subprocess.check_call(["git", "checkout", branch])
                     except subprocess.CalledProcessError:
-                        if self.config.runGit:
-                            raise Exception("Error checking out branch from git.")
-                        else:
-                            self.log("Error checking out branch from git.")
-
-        # Git Stats
-        git_output_file = os.path.join(
-            self.config.output_dir, repo_name + ".git.log.json"
-        )
-        if self.config.runGit:
+                        self.log("Error checking out branch from git.", display=True)
             self.log(
                 msg=repo_name, tag="Gathering source code statistics for", display=True
             )
@@ -370,18 +364,18 @@ class Agent:
                 --format='%H' \
                 {branch} --
             """
+            gitlog = None
             try:
                 if not self.config.dry:
                     results = subprocess.run(
                         command, shell=True, stdout=subprocess.PIPE
                     )
-                    log = results.stdout.decode()
+                    gitlog = results.stdout.decode()
             except subprocess.CalledProcessError:
-                self.log("Error getting log from git")
-                raise Exception("Error getting log from git.")
+                self.log("Error getting log from git", display=True)
 
-            if not self.config.dry:
-                resultArr = log.split("\n")
+            if not self.config.dry and gitlog:
+                resultArr = gitlog.split("\n")
                 prevHash = ""
                 filesArr = []
                 finalArr = []
@@ -415,6 +409,12 @@ class Agent:
                     f.write(json.dumps(finalArr, indent=4))
                 template_definition["gitlog"] = finalArr
                 # End if not self.config.dry:
+        else:
+            self.log(
+                msg="No git found. Check if the repository is a git repository if not expected.",
+                tag=".git Missing",
+                display=True,
+            )
 
         # if Path(git_output_file).exists():
         self.upload(file=git_output_file, route="git", source=repo_name)
