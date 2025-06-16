@@ -1,6 +1,7 @@
 import json
 import logging
 
+import contextlib
 from johnnydep.lib import JohnnyDist, flatten_deps
 
 from verinfast.dependencies.walkers.classes import Walker, Entry
@@ -25,12 +26,13 @@ def parseFile(filename="requirements.txt", ret=False):
                 pass
             else:
                 try:
-                    dists.append(
-                        JohnnyDist(
-                            stripped_line,
-                            ignore_errors=True,
+                    with contextlib.redirect_stdout(io.StringIO()):
+                        dists.append(
+                            JohnnyDist(
+                                stripped_line,
+                                ignore_errors=True,
+                            )
                         )
-                    )
                 except Exception as error:
                     # handle the exception, hiding for now
                     logger = logging.getLogger()
