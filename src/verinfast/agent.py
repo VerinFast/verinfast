@@ -331,6 +331,13 @@ class Agent:
             self.config.output_dir, repo_name + ".git.log.json"
         )
 
+        if self.config.runGit and self.checkDependency("git", "Git") and not git_dir_exists:
+            # Adding this for Windows support
+            # Appears to fail with blank HEAD
+            print("Git Directory Exists")
+            print("Calling git init")
+            std_exec(["git", "init"])
+
         if self.config.runGit and self.checkDependency("git", "Git") and git_dir_exists:
             # Adding this for Windows support
             # Appears to fail with blank HEAD
