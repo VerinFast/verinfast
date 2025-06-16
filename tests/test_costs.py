@@ -69,7 +69,7 @@ def test_aws_costs_pagination(mock_subprocess_run, tmp_path):
 
     # Verify the second call included the NextPageToken
     second_call_args = mock_subprocess_run.call_args_list[1][0][0]
-    assert '--next-token="mock-token-123"' in second_call_args
+    assert '--next-page-token="mock-token-123"' in second_call_args
 
     # Verify the output file exists and contains combined data
     assert os.path.exists(output_file)
