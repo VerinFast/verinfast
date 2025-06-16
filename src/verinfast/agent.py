@@ -326,22 +326,24 @@ class Agent:
         if branch is None:
             branch = "main"
 
+        # Adding this for Windows support
+        # Appears to fail with blank HEAD
+        try:
+            std_exec(["git", "init"])
+        except subprocess.CalledProcessError:
+            self.log(
+                msg="Error initializing git repository. This may not be a git repository.",
+                tag="Git Init Error",
+                display=True,
+            )
+            return
+
         git_dir_exists = os.path.isdir(os.path.join(path, ".git"))
         git_output_file = os.path.join(
             self.config.output_dir, repo_name + ".git.log.json"
         )
 
-        if self.config.runGit and self.checkDependency("git", "Git") and not git_dir_exists:
-            # Adding this for Windows support
-            # Appears to fail with blank HEAD
-            print("Git Directory Exists")
-            print("Calling git init")
-            std_exec(["git", "init"])
-
         if self.config.runGit and self.checkDependency("git", "Git") and git_dir_exists:
-            # Adding this for Windows support
-            # Appears to fail with blank HEAD
-            std_exec(["git", "init"])
             try:
                 if not self.config.dry:
                     subprocess.check_call(
