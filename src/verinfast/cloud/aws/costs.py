@@ -18,9 +18,8 @@ def get_aws_costs(
             --profile="{profile}" \
             --output=json"""
 
-        cmd = f'{base_cmd} --next-token="{next_token}" | cat'
         if next_token:
-            cmd = f'{base_cmd} --next-token="{next_token}" | cat'
+            cmd = f'{base_cmd} --next-page-token="{next_token}" | cat'
         else:
             cmd = f"{base_cmd} | cat"
 
