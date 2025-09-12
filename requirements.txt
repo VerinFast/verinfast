@@ -1,4 +1,4 @@
-azure-identity~=1.23.0
+azure-identity~=1.25.0
 azure-mgmt-compute~=34.1.0
 azure-mgmt-monitor~=6.0.2
 azure-mgmt-network~=29.0.0
