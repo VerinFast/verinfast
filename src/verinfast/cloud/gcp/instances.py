@@ -138,12 +138,18 @@ def get_instances(sub_id: str, path_to_output: str = "./", dry=False):
             for instance in instances_client.list(project=sub_id, zone=zone):
                 try:
                     name = instance.name
-                    architecture = instance.disks[0].architecture
+                    if len(instance.disks) > 0:
+                        architecture = instance.disks[0].architecture
+                    else:
+                        architecture = "n/a"
                     hw = instance.machine_type
                     state = instance.status
                     region = zone[0:-3]
                     z = zone[-1:]
-                    nic = instance.network_interfaces[0]
+                    if instance.network_interfaces and len(instance.network_interfaces) > 0:
+                        nic = instance.network_interfaces[0]
+                    else:
+                        nic = "n/a"
                     subnet = nic.subnetwork
                     public_ip = "n/a"
                     if nic.access_configs:
