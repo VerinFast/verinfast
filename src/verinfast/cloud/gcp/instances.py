@@ -146,7 +146,10 @@ def get_instances(sub_id: str, path_to_output: str = "./", dry=False):
                     state = instance.status
                     region = zone[0:-3]
                     z = zone[-1:]
-                    if instance.network_interfaces and len(instance.network_interfaces) > 0:
+                    if (
+                        instance.network_interfaces
+                        and len(instance.network_interfaces) > 0
+                    ):
                         nic = instance.network_interfaces[0]
                     else:
                         nic = "n/a"
