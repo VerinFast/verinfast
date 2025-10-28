@@ -1,7 +1,7 @@
 [![Python Release](https://github.com/StartupOS/verinfast/actions/workflows/release.yml/badge.svg?event=release)](https://github.com/StartupOS/verinfast/actions/workflows/release.yml)
 [![codecov](https://codecov.io/gh/StartupOS/verinfast/graph/badge.svg?token=IECR8RD60P)](https://codecov.io/gh/StartupOS/verinfast)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](code_of_conduct.md)
-# VerinFast®
+# VerinFast™
 
  Welcome to the scanning agent.
 

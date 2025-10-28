@@ -14,7 +14,7 @@ google-cloud-monitoring>=2.15.0
 httpx[http2]~=0.28.1
 Jinja2==3.1.6
 johnnydep~=1.20.6
-modernmetric>=1.5.4
+modernmetric>=1.5.9
 pygments-tsx>=1.0.1
 psutil~=7.0.0
 pyyaml~=6.0.2
