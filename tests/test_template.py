@@ -22,7 +22,7 @@ def test_no_config(self):
         pass
     os.makedirs(results_dir, exist_ok=True)
     agent = Agent()
-    config = Config(str_path) 
+    config = Config(str_path)
     config.output_dir = results_dir
     print(agent.config.output_dir)
     agent.config = config
