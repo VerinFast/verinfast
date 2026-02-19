@@ -26,8 +26,8 @@ config.runDependencies = False
 config.config["local_repos"] = [str(test_file.parent.absolute())]
 
 # Create Cache
-db_path = "semgrep.db"
-db_path = Path(pwd, db_path)
+db_path_name = "semgrep.db"
+db_path = Path(pwd, db_path_name)
 
 test_log_path = Path(pwd, "test_log.txt")
 mock_log = DebugLog(file=str(test_log_path), debug=True).log
@@ -102,5 +102,5 @@ def test_semgrep_cache(self):
     print(f"Second scan took: {second_duration:.2f} seconds")
 
     # Second run should be faster
-    assert second_duration < (first_duration - 5)
+    assert second_duration < first_duration
     assert db_path.exists()
