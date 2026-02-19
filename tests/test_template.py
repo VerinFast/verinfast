@@ -19,7 +19,7 @@ def test_no_config(self):
         shutil.rmtree(results_dir)
     except Exception as e:
         print(e)
-        pass    q
+        pass
     os.makedirs(results_dir, exist_ok=True)
     agent = Agent()
     config = Config(str_path) 
