@@ -74,7 +74,7 @@ If you want to check the output for yourself you can set `should_upload: false`,
 
 ### Azure
 - Run `az login`, `az --version`
-- Run `az account subscription list` to check subscription Id
+- Run `az account subscription list` to check subscription ID
 
 ### GCP
 - Run `which gcloud`, `gcloud --version`
