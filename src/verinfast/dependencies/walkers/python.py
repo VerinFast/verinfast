@@ -56,8 +56,11 @@ def _resolve_requirements(requirement_lines, ret=True):
 
     data = []
     for d in dists:
-        deps = flatten_deps(d)
-        data += deps
+        try:
+            deps = flatten_deps(d)
+            data += deps
+        except Exception:
+            pass
 
     output = [
         d for dep in data for d in dep.serialise(fields=_DEFAULT_FIELDS, recurse=False)

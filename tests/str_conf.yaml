@@ -1,5 +1,5 @@
 # This is a sample config for test runs
-baseurl: https://beta.startupos.dev/api/v2
+baseurl: URL_OF_DASHBOARD_SERVER
 report:
   uuid: 9a6e8696-f93a-4402-a64e-342ccb37592b # UUID to match to server records
 modules:

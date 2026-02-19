@@ -1,6 +1,6 @@
 # This is a sample config for test runs
 
-baseurl: https://beta.startupos.dev/api/v2
+baseurl: URL_OF_DASHBOARD_SERVER
 # baseurl: http://localhost:4000
 should_upload: true # Optional parameter to turn upload off or on. Default is true
 dry: true # Flag to just reupload files

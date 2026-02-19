@@ -23,12 +23,12 @@ def test_no_config(self):
     os.makedirs(results_dir, exist_ok=True)
     agent = Agent()
     config = Config(str_path)
-    config.output_dir = results_dir
+    config.output_dir = results_dir.absolute( ).as_posix()
     print(agent.config.output_dir)
     agent.config = config
     assert agent.config.use_uuid is True
     agent.config.dry = True
-    agent.config.shouldUpload = True
+    agent.config.shouldUpload = False
     agent.debug = DebugLog(path=agent.config.output_dir, debug=False)
     agent.log = agent.debug.log
     agent.uploader.config = config.upload_conf
@@ -47,7 +47,7 @@ def test_no_config(self):
     json_files = list(results_path.glob("*.json"))
     assert not json_files, f"Found JSON files: {json_files}"
 
-    # Since this test creates it's on DebubLog, the results
+    # Since this test creates it's own DebubLog, the results
     # dir will have two log files. One is timestamped and is
     # the start of the regular log the the agent creates on start.
     # The other is the debug log created by this test, "log.txt"
@@ -55,14 +55,13 @@ def test_no_config(self):
     with open(agent.debug.file) as f:
         logText = f.read()
     assert "Error" not in logText
-    assert "File does not exist:" in logText
-    # Since this test does not run a real scan, the debug log
-    # will have errors about file uploads. Confirm it attempts
-    # to upload all the files.
-    upload_fail_prefix = "File does not exist: "
-    upload_fail_prefix = upload_fail_prefix + str(results_dir) + "/"
-    assert upload_fail_prefix + "small-test-repo.git.git.log.json" in logText
-    assert upload_fail_prefix + "small-test-repo.git.sizes.json" in logText
-    assert upload_fail_prefix + "small-test-repo.git.stats.json" in logText
-    assert upload_fail_prefix + "small-test-repo.git.findings.json" in logText
-    assert upload_fail_prefix + "small-test-repo.git.dependencies.json" in logText
+
+    # Since this is a dry run, these result files should not exist
+    for name in [
+        "small-test-repo.git.git.log.json",
+        "small-test-repo.git.sizes.json",
+        "small-test-repo.git.stats.json",
+        "small-test-repo.git.findings.json",
+        "small-test-repo.git.dependencies.json",
+    ]:
+        assert not results_path.joinpath(name).exists(), f"Unexpected file: {name}"

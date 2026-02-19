@@ -1,7 +1,0 @@
-2026-02-19 13:18:14 /home/sean/verinfast/src/verinfast/code_scan.py@26 run_scan: path: /home/sean/verinfast/tests/fixtures
-2026-02-19 13:18:14 /home/sean/verinfast/src/verinfast/code_scan.py@52 run_scan: cache get took: 0.00 seconds
-2026-02-19 13:18:14 /home/sean/verinfast/src/verinfast/code_scan.py@62 run_scan: cache miss
-2026-02-19 13:18:14 Scanning repository: test
-2026-02-19 13:18:22 /home/sean/verinfast/src/verinfast/code_scan.py@26 run_scan: path: /home/sean/verinfast/tests/fixtures
-2026-02-19 13:18:22 /home/sean/verinfast/src/verinfast/code_scan.py@52 run_scan: cache get took: 0.00 seconds
-2026-02-19 13:18:22 /home/sean/verinfast/src/verinfast/code_scan.py@55 run_scan: CACHE HIT
