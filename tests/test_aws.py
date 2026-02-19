@@ -116,9 +116,7 @@ def _mock_check_dependency(self, cmd, name):
 @patch("verinfast.agent.get_aws_blocks", side_effect=_mock_get_aws_blocks)
 @patch("verinfast.agent.find_profile", side_effect=_mock_find_profile)
 @patch.object(Agent, "checkDependency", _mock_check_dependency)
-def test_aws_scan(
-    mock_user, mock_costs, mock_instances, mock_blocks, mock_profile
-):
+def test_aws_scan(mock_user, mock_costs, mock_instances, mock_blocks, mock_profile):
     sub_id = 436708548746
     assert verinfast.user.initial_prompt is not None
     cfg_path = test_folder.joinpath("aws_conf.yaml").absolute()
@@ -158,9 +156,7 @@ def test_aws_scan(
         assert len(instances["data"]) >= 5
 
     # Verify utilization output
-    with open(
-        results_dir.joinpath(f"aws-instances-{sub_id}-utilization.json")
-    ) as f:
+    with open(results_dir.joinpath(f"aws-instances-{sub_id}-utilization.json")) as f:
         utilization = json.load(f)
         assert len(utilization["data"]) >= 1
         assert len(utilization["data"][0]["metrics"]) >= 200
@@ -177,9 +173,7 @@ def test_aws_scan(
 @patch("verinfast.agent.get_aws_blocks", side_effect=_mock_get_aws_blocks)
 @patch("verinfast.agent.find_profile", side_effect=_mock_find_profile)
 @patch.object(Agent, "checkDependency", _mock_check_dependency)
-def test_aws_dash(
-    mock_user, mock_costs, mock_instances, mock_blocks, mock_profile
-):
+def test_aws_dash(mock_user, mock_costs, mock_instances, mock_blocks, mock_profile):
     sub_id = "436708548746"
     assert verinfast.user.initial_prompt is not None
     cfg_path = test_folder.joinpath("aws_dash.yaml").absolute()
@@ -225,9 +219,7 @@ def test_aws_dash(
 @patch("verinfast.agent.get_aws_blocks", side_effect=_mock_get_aws_blocks)
 @patch("verinfast.agent.find_profile", side_effect=_mock_find_profile)
 @patch.object(Agent, "checkDependency", _mock_check_dependency)
-def test_aws_profile(
-    mock_user, mock_costs, mock_instances, mock_blocks, mock_profile
-):
+def test_aws_profile(mock_user, mock_costs, mock_instances, mock_blocks, mock_profile):
     assert verinfast.user.initial_prompt is not None
     cfg_path = test_folder.joinpath("aws_profile.yaml").absolute()
     agent = Agent()

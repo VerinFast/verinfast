@@ -63,9 +63,7 @@ def _mock_get_gcp_blocks(sub_id, path_to_output="./", dry=False):
     output_file = os.path.join(path_to_output, f"gcp-storage-{sub_id}.json")
     data = {
         "metadata": {"provider": "gcp", "account": str(sub_id)},
-        "data": [
-            {"name": "test-bucket", "size": 100000, "public": False}
-        ],
+        "data": [{"name": "test-bucket", "size": 100000, "public": False}],
     }
     if not dry:
         with open(output_file, "w") as f:
