@@ -4,7 +4,6 @@ requires = [
   "setuptools",
   "setuptools_scm[toml]>=6.0",
   "build",
-  "hatch-requirements-txt"
 ]
 build-backend = "hatchling.build"
 
@@ -22,7 +21,33 @@ classifiers = [
     "License :: Free for non-commercial use",
     "Operating System :: OS Independent",
 ]
-dynamic = ["dependencies", "version"]
+dependencies = [
+    "azure-identity~=1.25.0",
+    "azure-mgmt-compute~=37.2.0",
+    "azure-mgmt-monitor~=7.0.0",
+    "azure-mgmt-network~=30.2.0",
+    "azure-mgmt-resource~=25.0.0",
+    "azure-mgmt-storage~=24.0.0",
+    "azure-monitor-query~=1.4.0",
+    "boto3~=1.42.0",
+    "defusedxml~=0.7.1",
+    "gemfileparser~=0.8.0",
+    "google-cloud-compute>=1.14.0",
+    "google-cloud-storage>=2.10.0",
+    "google-cloud-monitoring>=2.15.0",
+    "httpx[http2]~=0.28.1",
+    "Jinja2==3.1.6",
+    "johnnydep~=1.20.6",
+    "modernmetric>=1.5.9",
+    "pygments-tsx>=1.0.1",
+    "psutil~=7.2.0",
+    "pyyaml~=6.0.2",
+    "tomli>=2.0.0; python_version < '3.11'",
+    "semgrep==1.136.0; python_version == '3.9'",
+    "semgrep==1.152.0; python_version != '3.9'",
+    "windows-curses~=2.4.0; sys_platform == 'win32'",
+]
+dynamic = ["version"]
 
 [project.optional-dependencies]
 dev = [
@@ -51,9 +76,6 @@ where = ["src"]
 
 [tool.hatch.version]
 path = "VERSION.py"
-
-[tool.hatch.metadata.hooks.requirements_txt]
-files = ["requirements.txt"]
 
 [tool.black]
 line-length = 88

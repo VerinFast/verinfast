@@ -11,7 +11,6 @@ from verinfast.config import Config
 from verinfast.utils.utils import DebugLog
 from typing import Union
 
-
 file_path = Path(__file__)
 test_folder = file_path.parent.absolute()
 str_path = str(test_folder.joinpath("str_conf.yaml").absolute())

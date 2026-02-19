@@ -7,7 +7,6 @@ import subprocess
 import time
 from typing import List, Union
 
-
 STD_EXCLUDE_LIST = [
     "**/.git/**",
     "**/node_modules/**",

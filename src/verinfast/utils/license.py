@@ -3,7 +3,6 @@ from verinfast.config import Config
 from importlib.metadata import version
 from typing import Union
 
-
 requestx = httpx.Client(http2=True, timeout=None)
 
 

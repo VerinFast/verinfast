@@ -60,6 +60,8 @@ def walk(logger, path: str = "./", output_file="./dependencies.json"):
         manifest_files=[
             "requirements.txt",
             "requirements-dev.txt",
+            "requirements.in",
+            "Pipfile",
             "pyproject.toml",
             "poetry.lock",
         ],

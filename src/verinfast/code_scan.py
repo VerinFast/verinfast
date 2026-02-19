@@ -31,13 +31,11 @@ def run_scan(
         return
 
     if system.lower() == "windows":
-        log(
-            """
+        log("""
         Windows does not support Semgrep.
         Please see the open issues here:
         https://github.com/returntocorp/semgrep/issues/1330
-                    """
-        )
+                    """)
 
         return
 
@@ -133,12 +131,10 @@ def run_scan(
                     log(tag="ERROR", msg="Error in findings post-processing")
                     log(e)
                 else:
-                    log(
-                        msg=f"""
+                    log(msg=f"""
                             Attempted to format/truncate non existent file
                             {findings_file}
-                        """
-                    )
+                        """)
         else:
             log(msg="Scan Findings failed")
 
