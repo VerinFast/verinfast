@@ -15,7 +15,7 @@ authors = [
 ]
 description = "This tool safely and securely analyzes applications for benchmarking."
 readme = "README.md"
-requires-python = ">=3.9,<=3.14"
+requires-python = ">=3.11,<=3.14"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: Free for non-commercial use",
@@ -79,7 +79,7 @@ path = "VERSION.py"
 
 [tool.black]
 line-length = 88
-target-version = ['py39', 'py310', 'py311']
+target-version = ['py311', 'py312', 'py313', 'py314']
 include = '\.pyi?$'
 extend-exclude = '''
 ^/VERSION\.py$
