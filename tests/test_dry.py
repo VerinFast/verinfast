@@ -23,7 +23,7 @@ def test_no_config(self):
     os.makedirs(results_dir, exist_ok=True)
     agent = Agent()
     config = Config(str_path)
-    config.output_dir = results_dir.absolute( ).as_posix()
+    config.output_dir = results_dir.absolute().as_posix()
     print(agent.config.output_dir)
     agent.config = config
     assert agent.config.use_uuid is True
