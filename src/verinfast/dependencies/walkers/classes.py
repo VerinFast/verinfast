@@ -12,9 +12,9 @@ class Entry(dict):
         self,
         name: str,
         source: str,
-        specifier: str = None,
-        license: str = None,
-        summary: str = None,
+        specifier: str | None = None,
+        license: str | None = None,
+        summary: str | None = None,
         requires=None,
         required_by=None,
     ) -> None:
@@ -60,7 +60,7 @@ class Walker:
         manifest_files: List[str],  # ["package.json"]
         logger,
         root_dir: str = "./",
-        print_name: str = None,
+        print_name: str | None = None,
     ) -> None:
         if print_name:
             logger(print_name)

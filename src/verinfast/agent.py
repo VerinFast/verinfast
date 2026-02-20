@@ -44,7 +44,6 @@ from verinfast.code_scan import run_scan
 
 from verinfast.dependencies.walk import walk as dependency_walk
 
-
 patch_pygments()
 
 today = date.today()
@@ -96,7 +95,6 @@ class Agent:
                     loader=FileSystemLoader(templates_folder),
                     autoescape=select_autoescape(["html", "xml"]),
                 )
-                jinja_env.globals.update(zip=zip, sorted=sorted)
                 output = jinja_env.get_template("results.j2").render(
                     template_definition
                 )
@@ -904,10 +902,8 @@ def main():
         new_file_name = str(uuid4()) + ".txt"
         fp = f"{d}/{new_folder_name}/{new_file_name}"
         shutil.copy2(agent.config.log_file, fp)
-        print(
-            f"""The log for this run was copied to:
-            {d}/{new_folder_name}/{new_file_name}"""
-        )
+        print(f"""The log for this run was copied to:
+            {d}/{new_folder_name}/{new_file_name}""")
 
     # If user opts to upload results, upload and non-uploaded logs
     if agent.config.shouldUpload:

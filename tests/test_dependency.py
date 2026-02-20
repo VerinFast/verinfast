@@ -231,6 +231,137 @@ def test_go():
     return None
 
 
+def test_python_requirements_in():
+    folder_path = test_folder.joinpath(
+        "fixtures/python_walker/requirements_in"
+    ).absolute()
+    output_file_path = test_folder.joinpath("dependencies_py_req_in.json")
+    try:
+        os.remove(output_file_path)
+    except FileNotFoundError:
+        pass
+
+    output_path = walk(
+        path=folder_path, output_file=output_file_path, logger=enabled_logger(False)
+    )
+    with open(output_path) as output_file:
+        output = json.load(output_file)
+        assert len(output) >= 1
+        names = [d["name"] for d in output]
+        assert "requests" in names
+        for d in output:
+            if d["name"] == "requests":
+                assert d["source"] == "pip"
+
+    os.remove(output_path)
+
+
+def test_python_pipfile():
+    folder_path = test_folder.joinpath("fixtures/python_walker/pipfile").absolute()
+    output_file_path = test_folder.joinpath("dependencies_py_pipfile.json")
+    try:
+        os.remove(output_file_path)
+    except FileNotFoundError:
+        pass
+
+    output_path = walk(
+        path=folder_path, output_file=output_file_path, logger=enabled_logger(False)
+    )
+    with open(output_path) as output_file:
+        output = json.load(output_file)
+        assert len(output) >= 1
+        names = [d["name"] for d in output]
+        assert "requests" in names
+        for d in output:
+            assert d["source"] == "pip"
+
+    os.remove(output_path)
+
+
+def test_python_pyproject_pep621():
+    folder_path = test_folder.joinpath(
+        "fixtures/python_walker/pyproject_pep621"
+    ).absolute()
+    output_file_path = test_folder.joinpath("dependencies_py_pep621.json")
+    try:
+        os.remove(output_file_path)
+    except FileNotFoundError:
+        pass
+
+    output_path = walk(
+        path=folder_path, output_file=output_file_path, logger=enabled_logger(False)
+    )
+    with open(output_path) as output_file:
+        output = json.load(output_file)
+        assert len(output) >= 1
+        names = [d["name"] for d in output]
+        assert "requests" in names
+        for d in output:
+            assert d["source"] == "pip"
+
+    os.remove(output_path)
+
+
+def test_python_pyproject_poetry():
+    folder_path = test_folder.joinpath(
+        "fixtures/python_walker/pyproject_poetry"
+    ).absolute()
+    output_file_path = test_folder.joinpath("dependencies_py_poetry.json")
+    try:
+        os.remove(output_file_path)
+    except FileNotFoundError:
+        pass
+
+    output_path = walk(
+        path=folder_path, output_file=output_file_path, logger=enabled_logger(False)
+    )
+    with open(output_path) as output_file:
+        output = json.load(output_file)
+        assert len(output) >= 1
+        names = [d["name"] for d in output]
+        assert "requests" in names
+        assert "python" not in names
+        for d in output:
+            assert d["source"] == "pip"
+
+    os.remove(output_path)
+
+
+def test_python_poetry_lock():
+    folder_path = test_folder.joinpath("fixtures/python_walker/poetry_lock").absolute()
+    output_file_path = test_folder.joinpath("dependencies_py_poetry_lock.json")
+    try:
+        os.remove(output_file_path)
+    except FileNotFoundError:
+        pass
+
+    output_path = walk(
+        path=folder_path, output_file=output_file_path, logger=enabled_logger(False)
+    )
+    with open(output_path) as output_file:
+        output = json.load(output_file)
+        assert len(output) >= 1
+        found_requests = False
+        for d in output:
+            if d["name"] == "requests":
+                found_requests = True
+                assert d["specifier"] == "==2.31.0"
+                assert d["source"] == "pip"
+        assert found_requests
+
+    os.remove(output_path)
+
+
+def test_poetry_spec_to_pep():
+    from verinfast.dependencies.walkers.python import _poetry_spec_to_pep
+
+    assert _poetry_spec_to_pep("^1.2.3") == ">=1.2.3,<2.0.0"
+    assert _poetry_spec_to_pep("^0.2.3") == ">=0.2.3,<0.3.0"
+    assert _poetry_spec_to_pep("~1.2.3") == ">=1.2.3,<1.3.0"
+    assert _poetry_spec_to_pep(">=1.0") == ">=1.0"
+    assert _poetry_spec_to_pep("==2.0.0") == "==2.0.0"
+
+
 @patch("verinfast.user.__get_input__", return_value="y")
 def test_composer_config(self):
     try:

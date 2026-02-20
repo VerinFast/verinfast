@@ -9,13 +9,78 @@ from verinfast.config import Config
 from verinfast.utils.utils import DebugLog
 import verinfast.user
 
+file_path = Path(__file__)
+test_folder = file_path.parent.absolute()
+results_dir = test_folder.joinpath("results").absolute()
+
+
+def _mock_get_gcp_instances(sub_id, path_to_output="./", dry=False):
+    instances_file = os.path.join(path_to_output, f"gcp-instances-{sub_id}.json")
+    utilization_file = os.path.join(
+        path_to_output, f"gcp-instances-{sub_id}-utilization.json"
+    )
+    instances = {
+        "metadata": {"provider": "gcp", "account": str(sub_id)},
+        "data": [
+            {
+                "id": "1234567890",
+                "name": "test-instance",
+                "state": "RUNNING",
+                "type": "e2-medium",
+                "zone": "us-central1-a",
+                "region": "us-central1",
+                "subnet": "default",
+                "architecture": "x86_64",
+                "vpc": "default",
+                "publicIp": "35.0.0.1",
+            }
+        ],
+    }
+    utilization = {
+        "metadata": {"provider": "gcp", "account": str(sub_id)},
+        "data": [
+            {
+                "id": "1234567890",
+                "metrics": [
+                    {
+                        "timestamp": 1700000000 + (h * 3600),
+                        "cpu": {"minimum": 0.1, "average": 0.5, "maximum": 1.0},
+                    }
+                    for h in range(100)
+                ],
+            }
+        ],
+    }
+    if not dry:
+        with open(instances_file, "w") as f:
+            json.dump(instances, f, indent=4)
+        with open(utilization_file, "w") as f:
+            json.dump(utilization, f, indent=4)
+    return instances_file
+
+
+def _mock_get_gcp_blocks(sub_id, path_to_output="./", dry=False):
+    output_file = os.path.join(path_to_output, f"gcp-storage-{sub_id}.json")
+    data = {
+        "metadata": {"provider": "gcp", "account": str(sub_id)},
+        "data": [{"name": "test-bucket", "size": 100000, "public": False}],
+    }
+    if not dry:
+        with open(output_file, "w") as f:
+            json.dump(data, f, indent=4)
+    return output_file
+
+
+def _mock_check_dependency(self, cmd, name):
+    return True
+
 
 @patch("verinfast.user.__get_input__", return_value="y")
-def test_gcp_scan(self):
+@patch("verinfast.agent.get_gcp_instances", side_effect=_mock_get_gcp_instances)
+@patch("verinfast.agent.get_gcp_blocks", side_effect=_mock_get_gcp_blocks)
+@patch.object(Agent, "checkDependency", _mock_check_dependency)
+def test_gcp_scan(mock_user, mock_instances, mock_blocks):
     assert verinfast.user.initial_prompt is not None
-    file_path = Path(__file__)
-    test_folder = file_path.parent.absolute()
-    results_dir = test_folder.joinpath("results").absolute()
     cfg_path = test_folder.joinpath("gcp_conf.yaml").absolute()
     agent = Agent()
     config = Config(cfg_path=str(cfg_path))

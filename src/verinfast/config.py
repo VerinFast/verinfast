@@ -282,11 +282,18 @@ class Config(printable):
         which means it will overwrite a value already specified in
         a config file, which is not the desired behavior.
         """
+        from importlib.metadata import version
+
         parser = argparse.ArgumentParser(
             prog="verinfast",
             usage="%(prog)s [OPTION] [FILE]...",
-            # TODO: Description
-            # description="Print or check SHA1 (160-bit) checksums."
+        )
+
+        parser.add_argument(
+            "-v",
+            "--version",
+            action="version",
+            version=f"%(prog)s {version('verinfast')}",
         )
 
         parser.add_argument(

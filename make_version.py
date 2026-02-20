@@ -1,7 +1,6 @@
 import os
 import datetime
 
-
 # Get the version from the git tag, and write to VERSION.
 ref = None
 if "GITHUB_REF" in os.environ:

@@ -1,5 +1,5 @@
 # This is a sample config for test runs
-baseurl: https://beta.startupos.dev/api/v2
+baseurl: URL_OF_DASHBOARD_SERVER
 should_upload: false
 delete_temp: false
 report:

@@ -43,33 +43,13 @@ jobs:
       run: exit 1
 
   unit-tests:
-    permissions:
-      contents: 'read'
-      id-token: 'write'
     strategy:
         matrix:
             os: [ubuntu-latest, macos-latest]
-            python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+            python-version: ["3.11", "3.12", "3.13"]
     runs-on: ${{ matrix.os }}
-    env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_DEFAULT_REGION: 'us-east-1'
     steps:
       - uses: actions/checkout@v4
-      # Google Setup
-      - id: 'auth'
-        uses: 'google-github-actions/auth@v2'
-        with:
-          workload_identity_provider: 'projects/501851565537/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
-          service_account: 'sos-two@startupos-328814.iam.gserviceaccount.com'
-      - name: 'Set up Cloud SDK'
-        uses: 'google-github-actions/setup-gcloud@v2'
-        with:
-          version: '>= 363.0.0'
-      - name: 'Use gcloud CLI'
-        run: 'gcloud info'
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -92,13 +72,7 @@ jobs:
       - name: Make VERSION
         run: python make_version.py
       - name: install self
-        run: pip install -e .
-      - name: Configure AWS
-        run: |
-            aws --profile default configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
-            aws --profile default configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            aws --profile default configure set region "us-east-1"
-            aws sts get-caller-identity
+        run: pip install -e ".[dev]"
       - name: Unit Tests
         run: |
             [ -f "~/.ssh/id_rsa" ] && mv ~/.ssh/id_rsa ~/.ssh/id_rsa2 || echo "No id_rsa"

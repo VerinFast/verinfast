@@ -1,94 +1,154 @@
 <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-    </head>
-    <body>
-        {% if sizes and stats and filelist%}
-        <meta>This table shows the files scanned by the agent and the data collected.</meta>
-        <table class="table table-striped">
-            <tr>
-                <th>Name</th>
-                <th>File sizes</th>
-                <th>File stats</th>
-            </tr>
-            <tr>
-                <td>Current directory data</td>
-                <td>{{current_dir_size}}</td>
-            </tr>
-            {% for (file, file_size_data, file_stat_data) in zip(filelist|sort(attribute='path', case_sensitive=true), sizes.files.keys()|sort(case_sensitive=true), stats.files.values())%}
-                <tr>
-                    <td>{{file.name|escape}}</td>
-                    <td>{{file_size_data|escape}}</td>
-                    <td>{{file_stat_data|escape}}</td>
-                </tr>
-            {% endfor %}
-        </table>
-        {% else %}
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>VerinFast Scan Results</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YcnS/1p0IZQA4YgT1VSNY0Bnhillnp+8MT7" crossorigin="anonymous">
+</head>
+<body>
+    <div class="container my-4">
+        <h1 class="mb-4">VerinFast Scan Results</h1>
+
+        {% if sizes and stats and filelist %}
+        <section class="mb-5">
+            <h2>File Sizes &amp; Statistics</h2>
+            {% if current_dir_size %}
+            <p class="text-muted">
+                Repository size: {{ current_dir_size.size|filesizeformat if current_dir_size.size is number else current_dir_size.size }}
+            </p>
+            {% endif %}
+            <div class="table-responsive">
+                <table class="table table-striped table-sm">
+                    <thead>
+                        <tr>
+                            <th>File Path</th>
+                            <th>Size</th>
+                            <th>Lines of Code</th>
+                            <th>Extension</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for filepath, filedata in sizes.files.items()|sort %}
+                        <tr>
+                            <td>{{ filepath|escape }}</td>
+                            <td>{{ filedata.size|filesizeformat if filedata.size is number else filedata.size|escape }}</td>
+                            <td>{{ filedata.loc|escape }}</td>
+                            <td>{{ filedata.ext|escape if filedata.ext else '' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
         {% endif %}
+
         {% if gitlog %}
-        <table class="table table-striped">
-            <tr>
-                <th>Message</th>
-                <th>Author</th>
-                <th>Commit</th>
-                <th>Date</th>
-            </tr>
-            {% for commit in gitlog[:100]%}
-                <tr>
-                    <td>{{commit.message|escape}}</td>
-                    <td>{{commit.author|escape}}</td>
-                    <td>{{commit.commit|escape}}</td>
-                    <td>{{commit.date|escape}}</td>
-                </tr>
-            {% endfor %}
-        </table>
-        {% else %}
+        <section class="mb-5">
+            <h2>Git Log</h2>
+            <p class="text-muted">Showing last {{ gitlog[:100]|length }} commits</p>
+            <div class="table-responsive">
+                <table class="table table-striped table-sm">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Author</th>
+                            <th>Message</th>
+                            <th>Commit</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for commit in gitlog[:100] %}
+                        <tr>
+                            <td class="text-nowrap">{{ commit.date|escape }}</td>
+                            <td class="text-nowrap">{{ commit.author|escape }}</td>
+                            <td>{{ commit.message|escape }}</td>
+                            <td><code>{{ commit.commit[:7]|escape }}</code></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
         {% endif %}
+
         {% if gitfindings %}
-        <h3>Findings</h3>
-        <table class="table table-striped">
-            <tr>
-                <th>Paths Scanned</th>
-            </tr>
-            {% for path_scanned in gitfindings.paths.scanned%}
-                <tr>
-                    <td>{{path_scanned|escape}}</td>
-                </tr>
-            {% endfor %}
-        </table>
-        <table class="table table-striped">
-            <tr>
-                <th>Results</th>
-            </tr>
-            {% for result in gitfindings.results%}
-                <tr>
-                    <td>{{result|escape}}</td>
-                </tr>
-            {% endfor %}
-        </table>
-        {% else %}
+        <section class="mb-5">
+            <h2>Security Findings</h2>
+            <p class="text-muted">
+                {{ gitfindings.results|length }} finding{{ 's' if gitfindings.results|length != 1 else '' }}
+                across {{ gitfindings.paths.scanned|length }} scanned path{{ 's' if gitfindings.paths.scanned|length != 1 else '' }}
+            </p>
+            {% if gitfindings.results %}
+            <div class="table-responsive">
+                <table class="table table-striped table-sm">
+                    <thead>
+                        <tr>
+                            <th>Severity</th>
+                            <th>Rule</th>
+                            <th>Message</th>
+                            <th>File</th>
+                            <th>Line</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for result in gitfindings.results %}
+                        <tr>
+                            <td>
+                                {% if result.extra is defined and result.extra.severity is defined %}
+                                    {% if result.extra.severity == 'ERROR' %}
+                                    <span class="badge bg-danger">{{ result.extra.severity }}</span>
+                                    {% elif result.extra.severity == 'WARNING' %}
+                                    <span class="badge bg-warning text-dark">{{ result.extra.severity }}</span>
+                                    {% else %}
+                                    <span class="badge bg-info">{{ result.extra.severity }}</span>
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                            <td><code>{{ result.check_id|escape if result.check_id is defined else '' }}</code></td>
+                            <td>{{ result.extra.message|escape if result.extra is defined and result.extra.message is defined else '' }}</td>
+                            <td>{{ result.path|escape if result.path is defined else '' }}</td>
+                            <td>{{ result.start.line if result.start is defined and result.start.line is defined else '' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </section>
         {% endif %}
+
         {% if dependencies %}
-        <table class="table table-striped">
-            <tr>
-                <th>Name</th>
-                <th>Source</th>
-                <th>Specifier</th>
-                <th>License</th>
-                <th>Summary</th>
-            </tr>
-            {% for dependency in dependencies %}
-                <tr>
-                    <td>{{dependency.name|escape}}</td>
-                    <td>{{dependency.source|escape}}</td>
-                    <td>{{dependency.specifier|escape}}</td>
-                    <td>{{dependency.licnese|escape}}</td>
-                    <td>{{dependency.summary|escape}}</td>
-                </tr>
-            {% endfor %}
-        </table>
-        {% else %}
+        <section class="mb-5">
+            <h2>Dependencies</h2>
+            <p class="text-muted">{{ dependencies|length }} dependenc{{ 'ies' if dependencies|length != 1 else 'y' }}</p>
+            <div class="table-responsive">
+                <table class="table table-striped table-sm">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Version</th>
+                            <th>Source</th>
+                            <th>License</th>
+                            <th>Summary</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for dependency in dependencies %}
+                        <tr>
+                            <td>{{ dependency.name|escape }}</td>
+                            <td><code>{{ dependency.specifier|escape if dependency.specifier else '' }}</code></td>
+                            <td>{{ dependency.source|escape }}</td>
+                            <td>{{ dependency.license|escape if dependency.license else '' }}</td>
+                            <td>{{ dependency.summary|escape if dependency.summary else '' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
         {% endif %}
-    </body>
+
+    </div>
+</body>
 </html>

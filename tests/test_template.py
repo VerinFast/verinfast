@@ -27,7 +27,7 @@ def test_no_config(self):
     print(agent.config.output_dir)
     agent.config = config
     assert agent.config.use_uuid is True
-    agent.config.shouldUpload = True
+    agent.config.shouldUpload = False
     agent.debug = DebugLog(path=agent.config.output_dir, debug=False)
     agent.log = agent.debug.log
     print(agent.debug.file)
