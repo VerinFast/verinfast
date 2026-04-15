@@ -22,7 +22,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "azure-identity~=1.25.0",
+    "azure-identity~=1.25.1",
     "azure-mgmt-compute~=37.2.0",
     "azure-mgmt-monitor~=7.0.0",
     "azure-mgmt-network~=30.2.0",
