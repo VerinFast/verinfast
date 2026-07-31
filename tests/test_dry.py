@@ -35,7 +35,7 @@ def test_no_config(self):
     assert agent.config.use_uuid is True, f"Expected True, config {agent.config}"
     get_url = agent.uploader.make_upload_path("scan_id", report=agent.config.reportId)
     assert (
-        get_url == "/report/uuid/9a6e8696-f93a-4402-a64e-342ccb37592b/CorsisCode"
+        get_url == "/report/uuid/9a6e8696-f93a-4402-a64e-342ccb37592b/CodeScan"
     ), get_url
     agent.scan()
     assert Path(results_dir).exists()
