@@ -35,8 +35,20 @@ def test_no_config(self):
     assert agent.config.use_uuid is True, f"Expected True, config {agent.config}"
     get_url = agent.uploader.make_upload_path("scan_id", report=agent.config.reportId)
     assert (
-        get_url == "/report/uuid/9a6e8696-f93a-4402-a64e-342ccb37592b/CorsisCode"
+        get_url == "/report/uuid/9a6e8696-f93a-4402-a64e-342ccb37592b/CodeScan"
     ), get_url
+    # server.code_separator stays configurable for servers that expect a
+    # different segment (e.g. legacy deployments); prove the override is honored
+    default_separator = agent.uploader.config.code_separator
+    agent.uploader.config.code_separator = "/LegacySegment"
+    override_url = agent.uploader.make_upload_path(
+        "scan_id", report=agent.config.reportId
+    )
+    assert (
+        override_url
+        == "/report/uuid/9a6e8696-f93a-4402-a64e-342ccb37592b/LegacySegment"
+    ), override_url
+    agent.uploader.config.code_separator = default_separator
     agent.scan()
     assert Path(results_dir).exists()
     # Make sure there are no .json results files
