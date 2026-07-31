@@ -45,7 +45,8 @@ def test_no_config(self):
         "scan_id", report=agent.config.reportId
     )
     assert (
-        override_url == "/report/uuid/9a6e8696-f93a-4402-a64e-342ccb37592b/LegacySegment"
+        override_url
+        == "/report/uuid/9a6e8696-f93a-4402-a64e-342ccb37592b/LegacySegment"
     ), override_url
     agent.uploader.config.code_separator = default_separator
     agent.scan()
