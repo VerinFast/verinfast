@@ -208,8 +208,10 @@ def parse_frontmatter(markdown: str) -> tuple[dict, list[str], str]:
     tags: list[str] = []
     for key in list(meta):
         if key.lower() == "tags":
-            tags = [t.strip().lower() for t in re.split(r"[,;]", meta.pop(key)) if t.strip()]
-    return meta, tags, text[m.end():]
+            tags = [
+                t.strip().lower() for t in re.split(r"[,;]", meta.pop(key)) if t.strip()
+            ]
+    return meta, tags, text[m.end() :]
 
 
 def load_renderer(waikiki_path: str | None):
@@ -219,9 +221,14 @@ def load_renderer(waikiki_path: str | None):
         try:
             from waikiki import render as wk_render  # type: ignore
 
-            return lambda md, resolve: wk_render.render_markdown(md, resolve, allow_html=False)
+            return lambda md, resolve: wk_render.render_markdown(
+                md, resolve, allow_html=False
+            )
         except Exception as exc:  # pragma: no cover - optional path
-            print(f"  ! waikiki renderer unavailable ({exc}); falling back", file=sys.stderr)
+            print(
+                f"  ! waikiki renderer unavailable ({exc}); falling back",
+                file=sys.stderr,
+            )
 
     from markdown_it import MarkdownIt
 
@@ -269,11 +276,16 @@ def build(src: Path, out: Path, waikiki_path: str | None = None) -> int:
 
     for key, value in (
         ("title", "VerinFast v2"),
-        ("description", "Features, goals and requirements for the VerinFast v2 rewrite"),
+        (
+            "description",
+            "Features, goals and requirements for the VerinFast v2 rewrite",
+        ),
         ("allow_html", "0"),
         ("home_slug", "verinfast-v2"),
     ):
-        conn.execute("INSERT OR REPLACE INTO settings(key, value) VALUES (?,?)", (key, value))
+        conn.execute(
+            "INSERT OR REPLACE INTO settings(key, value) VALUES (?,?)", (key, value)
+        )
 
     ids = {}
     for p in pages:
@@ -290,9 +302,13 @@ def build(src: Path, out: Path, waikiki_path: str | None = None) -> int:
         if p["parent"]:
             parent_id = ids.get(p["parent"])
             if parent_id is None:
-                print(f"  ! {p['slug']}: unknown parent {p['parent']!r}", file=sys.stderr)
+                print(
+                    f"  ! {p['slug']}: unknown parent {p['parent']!r}", file=sys.stderr
+                )
                 continue
-            conn.execute("UPDATE pages SET parent_id=? WHERE id=?", (parent_id, ids[p["slug"]]))
+            conn.execute(
+                "UPDATE pages SET parent_id=? WHERE id=?", (parent_id, ids[p["slug"]])
+            )
         for tag in p["tags"]:
             conn.execute(
                 "INSERT OR IGNORE INTO page_tags(page_id, tag) VALUES (?,?)",
@@ -323,7 +339,9 @@ def check_links(src: Path) -> list[str]:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("-s", "--src", default=str(WIKI_SRC), help="directory of markdown pages")
+    ap.add_argument(
+        "-s", "--src", default=str(WIKI_SRC), help="directory of markdown pages"
+    )
     ap.add_argument("-o", "--out", default=str(HERE / "VerinFast-v2.wiki"))
     ap.add_argument("--waikiki", help="path to a waikiki checkout, for its renderer")
     ap.add_argument("--check-only", action="store_true", help="only validate wikilinks")
@@ -338,8 +356,10 @@ def main() -> None:
 
     out = Path(args.out)
     count = build(src, out, args.waikiki)
-    print(f"wrote {out} — {count} pages, {out.stat().st_size // 1024} KiB"
-          f"{f', {len(broken)} broken link(s)' if broken else ''}")
+    print(
+        f"wrote {out} — {count} pages, {out.stat().st_size // 1024} KiB"
+        f"{f', {len(broken)} broken link(s)' if broken else ''}"
+    )
 
 
 if __name__ == "__main__":
