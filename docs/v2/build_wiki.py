@@ -246,6 +246,14 @@ def load_renderer(waikiki_path: str | None):
 
 
 def build(src: Path, out: Path, waikiki_path: str | None = None) -> int:
+    try:
+        return _build(src, out, waikiki_path)
+    except BaseException:
+        out.with_name(out.name + ".building").unlink(missing_ok=True)
+        raise
+
+
+def _build(src: Path, out: Path, waikiki_path: str | None = None) -> int:
     pages = []
     for path in page_files(src):
         meta, tags, body = parse_frontmatter(path.read_text(encoding="utf-8"))
@@ -268,10 +276,12 @@ def build(src: Path, out: Path, waikiki_path: str | None = None) -> int:
         index[slugify(p["title"])] = p["slug"]
     render = load_renderer(waikiki_path)
 
-    if out.exists():
-        out.unlink()
+    # Build into a sibling temp file and swap it in only once the whole wiki
+    # is written, so a failed rebuild leaves the last good artifact in place.
     out.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(out)
+    tmp = out.with_name(out.name + ".building")
+    tmp.unlink(missing_ok=True)
+    conn = sqlite3.connect(tmp)
     conn.executescript(SCHEMA)
 
     for key, value in (
@@ -318,6 +328,7 @@ def build(src: Path, out: Path, waikiki_path: str | None = None) -> int:
     conn.commit()
     conn.execute("VACUUM")
     conn.close()
+    tmp.replace(out)
     return len(pages)
 
 
@@ -345,6 +356,11 @@ def main() -> None:
     ap.add_argument("-o", "--out", default=str(HERE / "VerinFast-v2.wiki"))
     ap.add_argument("--waikiki", help="path to a waikiki checkout, for its renderer")
     ap.add_argument("--check-only", action="store_true", help="only validate wikilinks")
+    ap.add_argument(
+        "--allow-broken",
+        action="store_true",
+        help="build anyway when a wikilink does not resolve",
+    )
     args = ap.parse_args()
 
     src = Path(args.src)
@@ -353,6 +369,10 @@ def main() -> None:
         print(f"  ! broken wikilink → {b}", file=sys.stderr)
     if args.check_only:
         raise SystemExit(1 if broken else 0)
+    if broken and not args.allow_broken:
+        raise SystemExit(
+            f"{len(broken)} broken wikilink(s); fix them or pass --allow-broken"
+        )
 
     out = Path(args.out)
     count = build(src, out, args.waikiki)

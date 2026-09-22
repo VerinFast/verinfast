@@ -6,9 +6,13 @@
 artifact; hand edits are lost on the next build. After changing any page:
 
 ```sh
-python docs/v2/build_wiki.py --check-only   # must exit 0 — no broken wikilinks
-python docs/v2/build_wiki.py                # regenerate the .wiki
+python docs/v2/build_wiki.py                # validates links, then regenerates
 ```
+
+The build validates wikilinks itself and refuses to write if any is broken, so
+a successful build is also a passing link check. `--check-only` runs the
+validation alone (for a pre-commit hook or CI); `--allow-broken` forces a build
+past a broken link, which you should not need.
 
 Commit both the markdown and the rebuilt `.wiki` in the same commit, or the
 two drift.

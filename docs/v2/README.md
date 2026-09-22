@@ -24,12 +24,17 @@ folder.
 ```sh
 pip install markdown-it-py mdit-py-plugins linkify-it-py pygments
 python docs/v2/build_wiki.py                      # → docs/v2/VerinFast-v2.wiki
-python docs/v2/build_wiki.py --check-only         # validate wikilinks only
+python docs/v2/build_wiki.py --check-only         # validate wikilinks, build nothing
 python docs/v2/build_wiki.py --waikiki ~/src/waikiki   # use Waikiki's own renderer
 ```
 
-`--check-only` exits non-zero if any `[[Wikilink]]` points at a page that does
-not exist, which makes it usable as a pre-commit or CI check.
+Every build validates wikilinks first and **refuses to build** if any
+`[[Wikilink]]` points at a page that does not exist — pass `--allow-broken` to
+override. `--check-only` runs just that validation and exits non-zero on a
+broken link, which makes it usable as a pre-commit or CI check.
+
+The build writes to a sibling temp file and swaps it in only on success, so a
+failed rebuild leaves the previous `.wiki` intact.
 
 ## Page frontmatter
 
