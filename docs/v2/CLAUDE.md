@@ -1,0 +1,42 @@
+# docs/v2/ — working notes
+
+## The rule
+
+**Edit `wiki/*.md`. Never edit `VerinFast-v2.wiki`.** It is a compiled
+artifact; hand edits are lost on the next build. After changing any page:
+
+```sh
+python docs/v2/build_wiki.py --check-only   # must exit 0 — no broken wikilinks
+python docs/v2/build_wiki.py                # regenerate the .wiki
+```
+
+Commit both the markdown and the rebuilt `.wiki` in the same commit, or the
+two drift.
+
+## Conventions
+
+- **One page per subject.** A fact lives on the page about its subject and is
+  referenced elsewhere with `[[Wikilinks]]`, never duplicated.
+- **Every page is parented.** Set `parent:` to an existing page's slug, and add
+  a link to the new page from that parent, or it is unreachable in the sidebar.
+- **Slug = filename.** `feature-semgrep.md` is the slug `feature-semgrep`.
+  Wikilinks may use either the slug or the page title.
+- **Requirements are MUST / SHOULD / MAY** and carry a stable id (`F1`, `N3`,
+  `L7`, `A2`, `S9`). Do not renumber; append.
+- **Defects carry a stable id** (`D1`…) and a requirement reference. Same rule.
+
+## Accuracy
+
+Every claim about v1 behaviour must be traceable to a file and, where it is
+specific, a line. Every claim about ATD v3 must be traceable to
+`VerinFast/good-place` `services/atd`. If you cannot find it in the source,
+write the open question on `open-questions.md` instead of asserting.
+
+When a claim is checked against a **newer** revision than the one recorded in a
+page's frontmatter, update the frontmatter too.
+
+## Scope
+
+This folder is workstream 1 (document) and holds the stub for workstream 2
+(dependency and license review). It is not a design doc for the
+implementation — that arrives with workstream 3 and will live beside the code.
