@@ -94,3 +94,42 @@ off. Given the threat model, should v2 default it on?
 consent-covered), keep it only for CLI use, or drop it?
 
 *Blocks:* S4, L9.
+
+## Q11 — What licence does VerinFast v2 ship under?
+
+`pyproject.toml` declares **CC BY-NC 4.0**. It is a content licence applied to
+code: no patent grant, no source-availability mechanics, and no settled notion
+of linking or derivative works for software. The **NC** term also sits oddly
+against [[Requirements: Embeddable Library API]] — workstream 5 imports
+VerinFast into ATD v3, a hosted commercial service. VerinFast owns its own
+copyright so it can licence to itself, but every other reader is told the
+commercial use they can see happening is not available to them, in a repository
+described as "an open sourced scanning agent".
+
+*Raised by:* [[Dependency & License Review]] § *VerinFast's own licence*.
+
+*Blocks:* workstream 5 shipping publicly. Not the review's call to make.
+
+## Q12 — Legal sign-off on the scanning ruleset
+
+Two questions, and they are separate:
+
+1. **The agent as it ships today.** `--config auto` pulls the Semgrep registry
+   at scan time. Since 2024-12-13 those rules carry the **Semgrep Rules License
+   v1.0**: internal use only, non-competing, not as part of a SaaS. Running
+   them inside a customer perimeter on behalf of a vendor is at least worth a
+   look. Subprocessing the engine does nothing about this — it is the *rules*,
+   not the engine.
+2. **The ruleset v2 ships instead.** `elttam/semgrep-rules` and
+   `0xdea/semgrep-rules` are both MIT, and the vendored copies carry their
+   upstream LICENSE files and a per-file manifest. `scripts/sync_rules.py`
+   enforces the policy mechanically — an allow-list of licences and a
+   forbidden-phrase check that rejects NonCommercial, Commons Clause and the
+   GNU family — so the claim is proven by construction rather than asserted.
+   Counsel still needs to confirm the posture, including redistribution inside
+   ATD v3.
+
+*Raised by:* [[Semgrep Alternatives]] § *Recommendation*.
+
+*Blocks:* nothing technically — the ruleset has landed. It blocks being
+comfortable about it.

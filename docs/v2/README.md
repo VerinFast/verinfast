@@ -1,7 +1,9 @@
 # docs/v2/ — the VerinFast v2 design record
 
-A [Waikiki](https://github.com/VerinFast/waikiki) wiki covering workstream 1 of
-the v2 rewrite: **features, goals and requirements**.
+A [Waikiki](https://github.com/VerinFast/waikiki) wiki holding the internal
+thinking behind the v2 rewrite: **features, goals and requirements**
+(workstream 1), the **dependency and license review** (workstream 2), and
+**Decisions Landed** — what has been settled, and why.
 
 | File | What it is |
 |---|---|
@@ -52,6 +54,8 @@ how pages carry things like `artifact:`, `route:` and `status:`.
 ## Where the content came from
 
 Everything was derived by reading `VerinFast/verinfast@ea5ad24` and
-`VerinFast/good-place@74e41ff` (`services/atd`). Claims about the ATD v3 upload
+`VerinFast/good-place@74e41ff` (`services/atd`). `main` has since advanced;
+`wiki/decisions.md` tracks what changed, while the as-is pages continue to
+describe `ea5ad24`, which is the thing being replaced. Claims about the ATD v3 upload
 contract come from that service's routes and its own agent-contract test, not
 from memory.

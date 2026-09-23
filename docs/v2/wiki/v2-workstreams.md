@@ -6,33 +6,43 @@ tags: v2, plan
 
 # v2 Workstreams
 
-## 1 — Document features, goals, requirements ← *current*
+## 1 — Document features, goals, requirements ← *this wiki*
 
 **Deliverable:** this wiki.
 
 Done when [[Feature Inventory]], [[Requirements]], [[ATD v3 Upload Contract]]
 and [[Known Defects & Debt]] are reviewed and [[Open Questions]] has answers.
 
-## 2 — Dependency keep/replace + license confirmation
+## 2 — Dependency keep/replace + license confirmation ← *done*
 
-**Deliverable:** [[Dependency & License Review]], filled in.
+**Deliverable:** [[Dependency & License Review]], filled in, plus
+[[Semgrep Alternatives]] — which was scoped in mid-stream when the registry
+licensing turned out to be the sharp edge rather than the engine licence.
 
 Sequenced second because the answers change the architecture: whether AWS goes
 through `boto3` or the CLI, whether Semgrep can be pinned or must be
-subprocessed, and whether the nine cloud SDKs stay in the base install or move
+subprocessed, and whether the eleven cloud SDKs stay in the base install or move
 behind extras.
 
-Depends on: nothing. Can start immediately, in parallel with Q1–Q10.
+Outcome: Opengrep in, vendored MIT rulesets in, `--config auto` out. See
+[[Decisions Landed]] D-1 and D-2. Q11 and Q12 came out of this workstream and
+are counsel's, not engineering's.
 
-## 3 — Re-architect the folder structure
+## 3 — Re-architect the folder structure ← *partly landed*
 
 **Deliverable:** the new tree, README.md + CLAUDE.md in every folder, line
 ceiling enforced.
 
-Blocked on: Q1 (isolation model), Q2 (result model), Q4 (line ceiling), and
-workstream 2's verdict on the cloud SDKs.
+The skeleton is on `main` at `438d291`: `models`, `config`, `transport`,
+`core`, `scanners`, `rules`, with README.md + CLAUDE.md parity and the line
+ceiling held. What is *not* done is the scanners themselves — only the ruleset
+loader exists.
 
-Sketch in [[v1 Architecture (As-Is)]] § *Proposed v2 shape*.
+Still blocked on: Q1 (isolation model) and Q2 (result model). The cloud-SDK
+verdict from workstream 2 is in but unapplied.
+
+Sketch in [[v1 Architecture (As-Is)]] § *Proposed v2 shape*; the landed
+decisions in [[Decisions Landed]].
 
 ## 4 — Rebuild against atd_v3
 
@@ -40,7 +50,8 @@ Sketch in [[v1 Architecture (As-Is)]] § *Proposed v2 shape*.
 `tests/e2e/test_agent_contract.py` unchanged, plus the two new cloud
 collectors (F8).
 
-The contract is already captured in [[ATD v3 Upload Contract]], so this
+The contract is already captured in [[ATD v3 Upload Contract]] and pinned by
+44 tests in `tests/v2/test_upload_paths.py` ([[Decisions Landed]] D-3), so this
 workstream is implementation, not discovery. The one thing to confirm with the
 ATD side: whether they want the `user_activity` and `load_balancers` collectors
 in the first v2 release or a follow-up.
@@ -56,9 +67,9 @@ Blocked on: 3 (the structure *is* the API) and Q1/Q3.
 ## Sequencing
 
 ```
-1 ──┬── 2 ──┬── 3 ── 4
-    │       │        └── 5
-    └── Q1…Q10 ──────┘
+1 ──┬── 2 ✓ ──┬── 3 (skeleton ✓, scanners ✗) ── 4
+    │         │                                  └── 5
+    └── Q1…Q10 ──────────────────────────────────┘
 ```
 
 Workstreams 2 and the open questions run in parallel with the tail of 1.

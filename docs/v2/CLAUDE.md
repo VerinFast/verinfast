@@ -41,6 +41,10 @@ page's frontmatter, update the frontmatter too.
 
 ## Scope
 
-This folder is workstream 1 (document) and holds the stub for workstream 2
-(dependency and license review). It is not a design doc for the
-implementation — that arrives with workstream 3 and will live beside the code.
+This folder holds workstream 1 (document) and workstream 2 (dependency and
+license review, now complete — see `wiki/dependency-review.md` and
+`wiki/semgrep-alternatives.md`). It also carries `wiki/decisions.md`, the
+record of what has been decided and merged.
+
+It is not a design doc for the implementation — that lives beside the code
+under `src/verinfast2/`, one README.md + CLAUDE.md per folder.
