@@ -104,10 +104,14 @@ not legal advice** — see the action items.
 
 Two related notes:
 
-- `--config auto` fetches rules from the Semgrep Registry at scan time. The
-  *rules* are licensed separately from the engine and the registry has its own
-  terms. Pinning a ruleset (`S18`) is worth doing for reproducibility anyway,
-  and makes the question answerable rather than open-ended.
+- **`--config auto` is the bigger licensing exposure, and subprocessing the
+  engine does nothing for it.** The rules are licensed separately from the
+  engine: since 2024-12-13, Semgrep-maintained registry rules are under the
+  **Semgrep Rules License v1.0**, which permits use *"only for your own
+  internal business purposes"* and not *"to make them available to others as a
+  service"*. VerinFast is a commercial diligence product heading into a hosted
+  one. This applies to the agent **as it ships today**, not just to v2. Fully
+  worked through, with alternatives, in [[Semgrep Alternatives]].
 - The 1.152.0 wheel ships **no LICENSE file** in its dist-info; the LGPL
   declaration is in the metadata only. If VerinFast redistributes Semgrep in a
   container image, attribution has to come from upstream, not from the wheel.
@@ -127,11 +131,17 @@ a full **OpenTelemetry** stack. Installing VerinFast installs an ASGI web
 server. For `S17` ("keep the dependency surface small enough to audit") this is
 the single biggest lever available.
 
-**Decision: KEEP the scanner, CHANGE the integration.** Run Semgrep as a
-subprocess against a pinned version, and take it out of the base install —
-either an optional extra or a resolved external binary. That takes the default
-runtime footprint from **127 packages to 82**, and moves the LGPL boundary to a
-process call.
+**Decision: CHANGE the integration, and re-examine the engine.** Run the
+scanner as a subprocess against a pinned version, and take it out of the base
+install. That takes the default runtime footprint from **127 packages to 82**
+and moves the LGPL boundary to a process call.
+
+On the engine itself, [[Semgrep Alternatives]] recommends **Opengrep** — the
+LGPL-2.1 community fork, rule- and output-compatible, governed by a vendor
+consortium, and distributed as a binary rather than a PyPI package, which
+deletes those 44 packages outright instead of relocating them. Semgrep CE
+remains a working fallback; the engine licence is fine either way. **The
+ruleset has to change regardless of which engine runs it.**
 
 ## 2. `pygments-tsx` — CC BY-NC-**ND**-4.0 (first-party)
 
@@ -275,6 +285,7 @@ page and the rest of the wiki meet on `main`.
 | 1 | Run Semgrep as a subprocess; move it out of the base install | `L6`, `S17` |
 | 2 | Get legal confirmation on in-process LGPL imports (Semgrep, `chardet`) | `S16` |
 | 3 | Pin/record the Semgrep ruleset version in the findings artifact | `S18` |
+| 3a | **Replace `--config auto` with a pinned, explicitly-licensed ruleset** — see [[Semgrep Alternatives]] | `S18` |
 | 4 | Elect **MIT** for `gemfileparser` and record the election | `S16` |
 | 5 | Raise the **ND** term on `pygments-tsx` with its owner | `S16` |
 | 6 | Declare `cachehash` — or drop it with the cache | `N3`, `D11` |
@@ -292,4 +303,4 @@ belong to workstream 3 rather than here.
 
 ## Related
 
-[[Feature: Dependency & License Inventory]] · [[Requirements: Security & Privacy]] · [[Known Defects & Debt]] · [[v2 Workstreams]]
+[[Semgrep Alternatives]] · [[Feature: Dependency & License Inventory]] · [[Requirements: Security & Privacy]] · [[Known Defects & Debt]] · [[v2 Workstreams]]
