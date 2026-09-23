@@ -2,7 +2,7 @@
 title: Semgrep Alternatives
 parent: dependency-review
 workstream: 2
-status: recommendation — needs legal sign-off
+status: decided — engine and rulesets verified; legal sign-off still open
 verified: 2026-09-23
 tags: v2, licensing, dependencies, security
 ---
@@ -92,14 +92,43 @@ Why it fits VerinFast unusually well:
 The cost: **Opengrep ships no ruleset of its own.** Sourcing and maintaining
 rules becomes ours. See below — that is unavoidable either way.
 
-### ast-grep
+### ast-grep — tested, and it cannot read these rules
 
 MIT, Rust, zero Python dependencies, and genuinely excellent at structural
-search and rewrite. But it is a *code search* tool, not a security scanner:
-there is no curated vulnerability ruleset behind it. Adopting it would mean
-authoring VerinFast's entire security corpus from scratch. **Not a
-replacement.** Worth remembering if v2 ever wants cheap structural queries
-that aren't security findings.
+search and rewrite. The obvious question is whether it could run
+Semgrep-format rules and let us avoid an OCaml binary entirely. **It cannot**,
+and this was settled empirically rather than by reading documentation:
+
+```
+$ ast-grep scan --rule elttam/…/gorilla-cookiestore-default-samesite-none.yaml probe/
+Error: Cannot parse rule …
+╰▻ Fail to parse yaml as RuleConfig
+╰▻ missing field `language`
+```
+
+Both candidate rulesets are rejected outright. The two formats are not a key
+rename apart — across the 157 rules in these sets:
+
+| Semgrep construct | Occurrences | ast-grep equivalent |
+|---|---|---|
+| `patterns` | 225 | different composition model |
+| `pattern-either` | 196 | `any` (different semantics) |
+| `pattern-inside` | 171 | `inside` (different semantics) |
+| `pattern-not-inside` | 141 | — |
+| `pattern-not` | 80 | `not` |
+| `metavariable-regex` | 68 | `constraints` (different shape) |
+| `metavariable-pattern` | 46 | — |
+| `focus-metavariable` | 14 | — |
+| `pattern-sources` / `-sinks` / `-sanitizers` | 26 | **none — no dataflow analysis** |
+
+The last row is the decisive one. **12 of the 157 rules are taint-mode**, and
+ast-grep has no dataflow or taint analysis at all. Those rules cannot be
+ported, only rewritten as something weaker.
+
+Verified 2026-09-23 with `ast-grep` 0.45.3.
+
+**Not a replacement.** Worth remembering if v2 ever wants cheap structural
+queries that are not security findings.
 
 ## Rules — the part that actually needs deciding
 
@@ -151,6 +180,34 @@ and several are permissively licensed with small footprints.
 Similarly, `trufflehog` on PyPI is the abandoned 2.x Python line; current
 TruffleHog is a Go program. Name-matching a PyPI package to a known tool is
 exactly the mistake VerinFast's own dependency scanner exists to catch.
+
+## Verified end to end
+
+The recommendation below is not a paper exercise — the engine and the
+ruleset were run together, offline, on 2026-09-23.
+
+| | Opengrep 1.27.1 | Semgrep 1.152.0 |
+|---|---|---|
+| Rules loaded from the vendored corpus | **157, zero parse errors** | 12 parse errors |
+| Java annotation-on-class rules (jax-rs, struts2, spring) | **13 rules, 2 findings** | 2 parse errors, 0 findings |
+| Findings on a C + Go probe | 4 | 4 |
+| Telemetry flag | none — `--metrics` does not exist | `--metrics=off` needed |
+
+Opengrep does not merely tolerate these rules; it parses rules that current
+Semgrep rejects (`Invalid pattern for Java: Stdlib.Parsing.Parse_error` on
+`@jakarta.ws.rs.Path(...) class $CLASS`), and therefore reports findings
+Semgrep misses on this corpus. The fork is from Semgrep v1.100.0, so its
+Java parser predates whatever tightened.
+
+Two operational notes found while testing:
+
+- **Opengrep has no telemetry flag** because it has no telemetry. Semgrep
+  needs `--metrics=off` and still attempts `metrics.semgrep.dev`.
+- **The engine needs a UTF-8 locale.** Its bundled interpreter takes its
+  default encoding from `LANG`; on a container without one it dies with
+  `UnicodeDecodeError: 'ascii' codec can't decode byte 0xe2` while *reading a
+  rule*. Several shipped rules contain typographic punctuation, so this
+  reproduces on a stock slim image.
 
 ## Recommendation
 
