@@ -52,8 +52,10 @@ def registry() -> dict[Artifact, type]:
     """
     from verinfast2.scanners.git import GitScanner
     from verinfast2.scanners.sizes import SizesScanner
+    from verinfast2.scanners.stats import StatsScanner
 
     return {
         Artifact.GIT: GitScanner,
         Artifact.SIZES: SizesScanner,
+        Artifact.STATS: StatsScanner,
     }

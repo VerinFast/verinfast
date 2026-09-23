@@ -130,6 +130,20 @@ def walk_files(root: Path, exclude: list[str]) -> Iterator[_Entry]:
             yield _Entry(rel=rel.replace(os.sep, "/"), size=size, is_link=is_link)
 
 
+def relative_files(root: Path, exclude: list[str]) -> list[str]:
+    """Every scannable file under *root*, ``./``-prefixed and sorted.
+
+    The shared form: :class:`SizesScanner` keys its ``files`` map on these,
+    and :mod:`verinfast2.scanners.stats` hands the same strings to
+    modernmetric so its output merges with them rather than producing a
+    second row per file. Symlinks are excluded — nothing should try to read
+    one.
+    """
+    return sorted(
+        f"./{entry.rel}" for entry in walk_files(root, exclude) if not entry.is_link
+    )
+
+
 def directory_size(root: Path) -> int:
     """Recursive size of one directory, symlinks excluded. Used for ``.git``."""
     total = 0
@@ -169,21 +183,25 @@ class SizesScanner:
                 error="no local path for this target",
             )
         root = target.path
+        # One walk for the whole scan: `stats` asks for the same list, and
+        # the context hands back what this computed (`N12`).
+        relative = ctx.files_in(
+            target.name, lambda: relative_files(root, ctx.config.exclude)
+        )
+
         files: dict[str, Any] = {}
         total = 0
-
-        for entry in walk_files(root, ctx.config.exclude):
-            total += entry.size
-            if entry.is_link:
-                # Counted as present, never read, never sized. v1 dropped
-                # them entirely, so a symlink-heavy tree looked smaller than
-                # it is without saying so.
-                continue
-            path = root / entry.rel
-            files[f"./{entry.rel}"] = {
-                "size": entry.size,
+        for rel in relative:
+            path = root / rel[2:]
+            try:
+                size = path.stat().st_size
+            except OSError:
+                size = 0
+            total += size
+            files[rel] = {
+                "size": size,
                 "loc": count_lines(path),
-                "ext": extension_of(os.path.basename(entry.rel)),
+                "ext": extension_of(os.path.basename(rel)),
                 "directory": False,
             }
 

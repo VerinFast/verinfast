@@ -7,11 +7,13 @@ never do to a target.
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import logging
 import os
 import shutil
 import subprocess
+import sys
 from datetime import date
 from pathlib import Path
 
@@ -35,11 +37,18 @@ from verinfast2.scanners.sizes import (
     count_lines,
     extension_of,
     is_binary,
+    relative_files,
     walk_files,
 )
+from verinfast2.scanners.stats import StatsScanner, command, write_filelist
 
 HAS_GIT = shutil.which("git") is not None
 needs_git = pytest.mark.skipif(not HAS_GIT, reason="git is not installed")
+
+HAS_MODERNMETRIC = importlib.util.find_spec("modernmetric") is not None
+needs_modernmetric = pytest.mark.skipif(
+    not HAS_MODERNMETRIC, reason="modernmetric is not installed"
+)
 
 
 @pytest.fixture
@@ -497,7 +506,6 @@ def test_a_scan_records_a_result_for_every_repo_artifact(repo: Path, tmp_path: P
     }
     unported = [a for a in result.artifacts if a.outcome is Outcome.SKIPPED]
     assert {a.artifact for a in unported} >= {
-        Artifact.STATS,
         Artifact.FINDINGS,
         Artifact.DEPENDENCIES,
     }
@@ -576,3 +584,153 @@ def test_scan_path_treats_the_directory_as_a_sample(repo: Path):
     assert result.of(Artifact.GIT)[0].outcome is Outcome.SKIPPED
     assert result.of(Artifact.SIZES)[0].outcome is Outcome.OK
     assert sorted(p.name for p in repo.iterdir()) == before
+
+
+# -- The stats artifact -----------------------------------------------------
+
+
+def test_modernmetric_is_invoked_as_a_module_not_imported():
+    """v1 did `from modernmetric.__main__ import main` and called it. That
+    is a CLI entry point: it may `sys.exit()`, and a SystemExit inside ATD
+    v3's worker takes the worker down rather than failing one artifact
+    (`D18`, `L6`)."""
+    argv = command("modernmetric", Path("/w/filelist.json"), Path("/w/stats.json"))
+
+    assert argv[0] == sys.executable
+    assert argv[1:3] == ["-m", "modernmetric"]
+    assert "--file=/w/filelist.json" in argv
+    assert "--output=/w/stats.json" in argv
+
+
+def test_the_filelist_carries_repo_relative_paths(tmp_path: Path):
+    """modernmetric echoes back exactly the paths it was given, so the
+    filelist decides the output's path form."""
+    path = tmp_path / "filelist.json"
+    write_filelist(path, ["./src/engine.py", "./assets/logo.png"])
+
+    entries = json.loads(path.read_text())
+
+    assert entries == [
+        {"name": "engine.py", "path": "./src/engine.py"},
+        {"name": "logo.png", "path": "./assets/logo.png"},
+    ]
+
+
+@needs_git
+@needs_modernmetric
+def test_stats_produces_atds_shape(repo: Path, ctx_for):
+    result = StatsScanner().run(ctx_for(), ScanTarget(name="s", path=repo))
+
+    assert result.outcome is Outcome.OK, result.error
+    assert set(result.data) >= {"files", "overall", "stats"}
+    assert set(result.data["stats"]) == {"mean", "median", "min", "max", "sd"}
+
+
+@needs_git
+@needs_modernmetric
+def test_stats_paths_need_no_temp_repo_rewrite(repo: Path, ctx_for):
+    """The payoff. v1 handed modernmetric absolute paths inside
+    `~/.verinfast/temp_repo`, and ATD rewrites `temp_repo/…` to `./…` to
+    compensate. Emit the right form and the rewrite is a no-op — and the row
+    merges with the same file's sizes entry instead of creating a second."""
+    result = StatsScanner().run(ctx_for(), ScanTarget(name="s", path=repo))
+    paths = set(result.data["files"])
+
+    assert "./src/engine.py" in paths
+    assert all(p.startswith("./") for p in paths)
+    assert not any("temp_repo" in p for p in paths)
+
+
+@needs_git
+@needs_modernmetric
+def test_stats_and_sizes_agree_on_every_path(repo: Path, ctx_for):
+    """If these ever diverge, ATD stores two rows per file and every
+    per-file join silently halves."""
+    ctx = ctx_for()
+    target = ScanTarget(name="s", path=repo)
+    sizes = SizesScanner().run(ctx, target)
+    stats = StatsScanner().run(ctx, target)
+
+    sized = set(sizes.data["files"]) - {"."}
+    measured = set(stats.data["files"])
+
+    assert measured <= sized
+
+
+@needs_git
+def test_stats_never_runs_in_the_scanned_tree(repo: Path, ctx_for):
+    """Scratch goes in the scan's work directory. v1 wrote its filelist and
+    output next to the customer's code."""
+    before = sorted(p.name for p in repo.iterdir())
+    StatsScanner().run(ctx_for(), ScanTarget(name="s", path=repo))
+
+    assert sorted(p.name for p in repo.iterdir()) == before
+
+
+def test_stats_on_an_empty_tree_is_a_skip_with_a_reason(tmp_path: Path, ctx_for):
+    """Nothing to measure is not the same as measured nothing (`F18`)."""
+    empty = tmp_path / "empty"
+    empty.mkdir()
+
+    result = StatsScanner().run(ctx_for(), ScanTarget(name="s", path=empty))
+
+    assert result.outcome is Outcome.SKIPPED
+    assert "no files" in result.error
+
+
+def test_a_missing_modernmetric_fails_the_artifact_not_the_scan(
+    tmp_path: Path, ctx_for
+):
+    """`python -m does_not_exist` exits non-zero; that must land as a failed
+    artifact carrying the reason, not as an exception."""
+    root = tmp_path / "code"
+    root.mkdir()
+    (root / "a.py").write_text("x = 1\n")
+    ctx = ctx_for()
+
+    import verinfast2.scanners.stats as stats_module
+
+    original = stats_module.MODULE
+    stats_module.MODULE = "verinfast2_no_such_module"
+    try:
+        result = StatsScanner().run(ctx, ScanTarget(name="s", path=root))
+    finally:
+        stats_module.MODULE = original
+
+    assert result.outcome is Outcome.FAILED
+    assert "modernmetric exited" in result.error
+
+
+# -- The shared file list ---------------------------------------------------
+
+
+def test_the_tree_is_walked_once_per_target(tmp_path: Path, ctx_for):
+    """`sizes` and `stats` both need every file. Walking a large monorepo
+    twice is the same waste N12 exists to remove — it just moves the second
+    traversal from inside one scanner to between two."""
+    root = tmp_path / "code"
+    root.mkdir()
+    (root / "a.py").write_text("x = 1\n")
+    ctx = ctx_for()
+    calls = {"n": 0}
+
+    def walk():
+        calls["n"] += 1
+        return relative_files(root, [])
+
+    assert ctx.files_in("s", walk) == ["./a.py"]
+    assert ctx.files_in("s", walk) == ["./a.py"]
+    assert calls["n"] == 1
+
+
+def test_different_targets_get_different_file_lists(tmp_path: Path, ctx_for):
+    first = tmp_path / "one"
+    second = tmp_path / "two"
+    first.mkdir()
+    second.mkdir()
+    (first / "a.py").write_text("x = 1\n")
+    (second / "b.py").write_text("y = 2\n")
+    ctx = ctx_for()
+
+    assert ctx.files_in("one", lambda: relative_files(first, [])) == ["./a.py"]
+    assert ctx.files_in("two", lambda: relative_files(second, [])) == ["./b.py"]

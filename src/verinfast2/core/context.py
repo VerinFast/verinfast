@@ -50,10 +50,28 @@ class ScanContext:
     log: logging.Logger
     progress: ProgressFn = _noop_progress
     _owns_work_dir: bool = field(default=False, repr=False)
+    #: Per-target file lists, memoised. See :meth:`files_in`.
+    _file_lists: dict[str, list[str]] = field(default_factory=dict, repr=False)
 
     @property
     def embedded(self) -> bool:
         return self.config.embedded
+
+    def files_in(self, target: str, walk: Callable[[], list[str]]) -> list[str]:
+        """The repo-relative file list for *target*, computed at most once.
+
+        ``sizes`` and ``stats`` both need every file under a target. Walking
+        a large monorepo twice is the same waste `N12` exists to remove — it
+        just moves the second traversal from inside one scanner to between
+        two. The list lives here because it is per-scan derived state, which
+        is what a context is for; ``walk`` is called only on a miss.
+
+        Paths are ``./``-prefixed, the form both artifacts must emit so ATD
+        merges their rows rather than creating two per file.
+        """
+        if target not in self._file_lists:
+            self._file_lists[target] = walk()
+        return self._file_lists[target]
 
     def artifact_path(self, target: str, name: str) -> Path | None:
         """Where ``<target>.<name>.json`` goes, or None if not writing files.

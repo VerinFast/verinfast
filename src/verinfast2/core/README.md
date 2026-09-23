@@ -24,8 +24,31 @@ up on the happy path.
 walking, cloud dispatch and HTTP upload. This file decides what runs and
 nothing else; each of those jobs belongs to another package.
 
+## Never two traversals
+
+`ScanContext.files_in` memoises a target's file list. `sizes` and `stats` both
+need every file under a target, and walking a large monorepo twice is the same
+waste `N12` exists to remove — it just moves the second traversal from inside
+one scanner to between two. The list lives on the context because it is
+per-scan derived state, which is what a context is for.
+
+## What a result means
+
+`_scan_target` records an outcome for **every** artifact in `REPO_ARTIFACTS`,
+in upload order, so a partial scan is a prefix rather than an arbitrary
+subset:
+
+- **ok** — it ran and produced data.
+- **skipped** — with a reason: disabled by config, no scanner ported yet, or
+  nothing applicable (a code sample has no git history).
+- **failed** — with an error. One scanner failing never aborts the others
+  (`F19`), and the backstop around each `run()` reports rather than swallows.
+
+"Found nothing" and "never ran" must never look alike (`F18`), which is why
+there is no fourth state and no silent absence.
+
 ## Current state
 
-`context.py` is implemented. `Scanner.scan()` and `scan_path()` are wired but
-`_scan_target` / `_scan_cloud` raise `NotImplementedError` pending the scanner
-and provider registries.
+`context.py` and `_scan_target` are implemented; `git`, `sizes` and `stats`
+are wired through `scanners.base.registry()`. `_scan_cloud` still raises
+`NotImplementedError` pending the provider registry.

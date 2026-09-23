@@ -25,9 +25,15 @@
 - **Never pass a bare `YYYY-MM-DD` to `git --since`.** git's approxidate
   fills in the current time of day, so the window silently depends on when
   the scan ran. `since_argument` pins midnight, and there is a test.
-- **`sizes` paths are `./`-prefixed and `stats` must match.** ATD merges
-  `ReportCodeFile` by path and rewrites modernmetric paths to `./…`; a bare
-  path from one artifact lands in a different row from the other.
+- **`sizes` and `stats` paths are both `./`-prefixed, and must stay that
+  way.** ATD merges `ReportCodeFile` by path and rewrites modernmetric paths
+  to `./…`; if the two artifacts disagree, ATD stores two rows per file and
+  every per-file join halves. There is a test asserting they agree.
+- **Get the file list from `ctx.files_in`, never by walking again.** The
+  context memoises it per target so the tree is walked once per scan.
+- **modernmetric runs as `sys.executable -m modernmetric`.** Not a console
+  script (may not be on `PATH` in an embedded install) and never an
+  in-process import of its `__main__` (`D18`, `L6`).
 - **The `"."` root entry's size includes `.git`; `metadata.real_size` does
   not.** ATD lifts the root entry onto `repository.file_size`, so changing
   what that number means breaks every historical comparison.

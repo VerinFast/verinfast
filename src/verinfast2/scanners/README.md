@@ -47,13 +47,26 @@ passed it straight through, so every scan has had this: the same scan of the
 same repository returned different history depending on what time it ran.
 `since_argument` pins midnight.
 
-## Path form
+## Path form, and why it is load-bearing
 
-`sizes` emits `./`-prefixed paths, as v1 did. ATD merges `ReportCodeFile`
-rows by path and rewrites modernmetric's `temp_repo/…` paths to `./…`, so a
-bare `src/engine.py` from `sizes` lands in a *different* row from the same
-file's `stats`. ATD's own contract test demonstrates that split. `stats` must
-emit the same form when it is ported.
+`sizes` and `stats` both emit `./`-prefixed paths. ATD merges
+`ReportCodeFile` rows by path, and it rewrites modernmetric's `temp_repo/…`
+paths to `./…` on ingest — a workaround for v1 handing modernmetric absolute
+paths inside `~/.verinfast/temp_repo`. ATD's own contract test demonstrates
+the split that causes: `sizes` sends `src/compiler.py`, `stats` sends the
+rewritten `./src/compiler.py`, and ATD ends up with **two rows for one file**.
+
+modernmetric echoes back exactly the paths it is given, so the filelist
+decides the output. Feed it `./src/engine.py` and ATD's rewrite becomes a
+no-op and the rows merge. If these two scanners ever disagree on path form,
+every per-file join silently halves — there is a test asserting they agree.
+
+## One walk per target
+
+`sizes` and `stats` both need every file under a target. `ScanContext.files_in`
+memoises the list, so the tree is walked once for the whole scan rather than
+once per scanner — the same waste `N12` exists to remove, just moved from
+inside one scanner to between two.
 
 ## Current state
 
@@ -61,7 +74,7 @@ emit the same form when it is ported.
 | ------- | ----- |
 | `git` | implemented |
 | `sizes` | implemented |
-| `stats` | stub |
+| `stats` | implemented |
 | `findings` | stub — ruleset loading is done; the run is not |
 | `dependencies` | stub |
 
