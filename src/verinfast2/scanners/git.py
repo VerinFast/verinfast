@@ -1,6 +1,6 @@
 """Git history: commits, authorship and per-file churn.
 
-Ports src/verinfast/agent.py::parseRepo + formatGitHash.
+Ports ``src/verinfast/agent.py::parseRepo + formatGitHash``.
 
 Two things to fix on the way across:
 

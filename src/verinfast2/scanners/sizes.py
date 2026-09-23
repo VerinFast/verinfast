@@ -1,6 +1,6 @@
 """File inventory: sizes, line counts and extensions.
 
-Ports src/verinfast/agent.py::parseRepo (get_raw_size, getloc, allowfile).
+Ports ``src/verinfast/agent.py::parseRepo (get_raw_size, getloc, allowfile)``.
 
 One traversal, not three (`D24`, `N12`), and binary files are not read line
 by line to count newlines (`D26`, `N15`). The exclusion list comes from

@@ -1,6 +1,6 @@
 """Code statistics: complexity, Halstead, maintainability.
 
-Ports src/verinfast/agent.py::parseRepo (the modernmetric call).
+Ports ``src/verinfast/agent.py::parseRepo (the modernmetric call)``.
 
 Run modernmetric as a subprocess or behind an adapter — never by calling
 its ``__main__.main()`` in-process, which is how a ``SystemExit`` ends up in

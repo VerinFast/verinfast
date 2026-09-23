@@ -1,17 +1,30 @@
-"""Security findings from a Semgrep-compatible engine.
+"""Security findings, from Opengrep over the ruleset VerinFast ships.
 
-Ports src/verinfast/code_scan.py::run_scan.
+Ports ``src/verinfast/code_scan.py::run_scan``.
 
-**Subprocess, not an in-process import.** Two independent reasons: a
-``SystemExit`` from a vendored CLI must not reach a caller (`L6`), and the
-engine is LGPL-2.1 — a process boundary is the posture nobody argues about.
+**The engine is Opengrep**, the LGPL-2.1 community fork of Semgrep CE. It is
+rule- and output-compatible, so ATD v3's findings ingest is unaffected, and
+it ships as a binary rather than a PyPI package — which removes the 44
+Semgrep-only packages from the runtime closure outright.
 
-**Do not use ``--config auto``.** It fetches rules from a registry whose
-licence permits internal, non-competing, non-SaaS use only, and it makes
-scans irreproducible. Ship a pinned, explicitly-licensed ruleset and record
-its version in the artifact (`S18`).
+**Subprocess, not an in-process import.** A ``SystemExit`` from a vendored
+CLI must not reach a caller (`L6`), and a process boundary is the
+unambiguous posture for an LGPL engine. Opengrep being a binary makes this
+the only option anyway.
 
-See the wiki's *Semgrep Alternatives* for the engine and ruleset decision.
+**Never ``--config auto``.** Those registry rules are licensed for internal,
+non-competing, non-SaaS use only, and fetching them at scan time makes a
+scan irreproducible. :mod:`verinfast2.scanners.ruleset` points at the
+vendored, MIT-licensed, revision-pinned rules instead, and its
+``provenance`` goes into the artifact so a finding set stays explainable
+(`S18`).
+
+Build the subprocess environment with
+:func:`~verinfast2.scanners.ruleset.engine_env` — Opengrep's bundled
+interpreter dies on a non-UTF-8 locale, and shipped rules contain non-ASCII
+characters.
+
+See the wiki's *Semgrep Alternatives* for how the engine was chosen.
 """
 
 from __future__ import annotations

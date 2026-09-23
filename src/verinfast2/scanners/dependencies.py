@@ -1,6 +1,6 @@
 """Dependency and licence inventory across ecosystems.
 
-Ports src/verinfast/dependencies/ (walk.py + walkers/).
+Ports ``src/verinfast/dependencies/ (walk.py + walkers/)``.
 
 The walker decomposition was the right shape; keep it. Fix the interface —
 v1's base ``Walker.initialize(command)`` and its subclasses'
