@@ -19,8 +19,15 @@
 - **415 must stay out of `RETRYABLE`.** `test_uploader.py` asserts it
   directly. Adding it looks like a reasonable generalisation and would make
   every AV rejection cost three round-trips.
-- Tests run offline. No network, no cloud credentials, no `npm`/`gem`/
-  `composer`, no real repositories to clone (`N16`).
+- **Tests run offline, and `conftest.py` enforces it.** An autouse fixture
+  patches the socket layer; a test that opens a real connection fails with an
+  explanation. Never weaken or opt out of that fixture to make something
+  pass — a scanner that needs the network in a test is a scanner that will
+  make a customer's scan phone out. Inject an `httpx.MockTransport` or a
+  client with `enabled=False`.
+- **`subprocess` is monkeypatched to fail in the dependency tests.** That is
+  the test proving no package manager is ever run (`S7`); it is not
+  incidental.
 - Add a route to `transport/paths.py` → add a case here in the same PR.
 - v1's fixtures under `tests/fixtures/` are good and should be reused when the
   dependency walkers are ported; don't write new ones from scratch.

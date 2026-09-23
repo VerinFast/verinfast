@@ -28,8 +28,7 @@ other four unaffected.
   emit repo-relative paths.
 - **findings** — subprocess the engine; drop `--config auto` for a pinned,
   explicitly-licensed ruleset.
-- **dependencies** — lockfile-first; package-manager execution is opt-in and
-  refused in library mode.
+- **dependencies** — lockfile-first; no package manager is ever run.
 
 ## Two behaviour changes worth knowing about
 
@@ -75,8 +74,8 @@ inside one scanner to between two.
 | `git` | implemented |
 | `sizes` | implemented |
 | `stats` | implemented |
+| `dependencies` | implemented — see `../dependencies/` |
 | `findings` | stub — ruleset loading is done; the run is not |
-| `dependencies` | stub |
 
 `registry()` returns only the scanners that exist. An artifact missing from it
 is a **recorded skip with a reason**, never a silent absence — a clean scan

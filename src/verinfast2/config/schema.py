@@ -75,6 +75,16 @@ class PrivacyConfig(BaseModel):
     #: Upload the agent's own diagnostic logs.
     upload_logs: bool = False
 
+    #: Look up licences and descriptions from public package registries
+    #: (npm, PyPI, RubyGems, NuGet) for dependencies whose manifests do not
+    #: carry them. On by default, matching v1.
+    #:
+    #: What leaves the machine is a package name and version, to that
+    #: ecosystem's own public registry — the same host the project's package
+    #: manager already contacts. Never source, never a path. Turning it off
+    #: leaves licences to whatever the local manifest or lockfile records.
+    enrich_dependencies: bool = True
+
 
 class ScanConfig(BaseModel):
     """Everything one scan needs to know.
@@ -122,11 +132,24 @@ class ScanConfig(BaseModel):
     #: Wall-clock ceiling for any single subprocess (`L10`, `S10`).
     subprocess_timeout_seconds: float = 900.0
 
+    #: Per-request ceiling for a package-registry lookup. There is one
+    #: request per dependency, so this is not the subprocess budget. v1 used
+    #: ``timeout=None``, which lets a stalled registry hang a scan forever.
+    registry_timeout_seconds: float = 10.0
+
     def for_library(self) -> ScanConfig:
         """A copy with every interactive or ambient behaviour disabled.
 
         :class:`~verinfast2.core.scanner.Scanner` applies this itself when
         ``embedded`` is set, so a caller cannot forget to.
+
+        Registry enrichment is **not** turned off here. It is on by default
+        in library mode too, which is a deliberate choice rather than an
+        oversight: the licence data ATD stores comes from it. An embedded
+        caller that does not want its worker making outbound calls per
+        dependency sets ``privacy.enrich_dependencies=False`` — see
+        :class:`~verinfast2.dependencies.registry.RegistryClient` for exactly
+        what leaves the machine.
 
         Turns file writing off unless an ``output_dir`` was named explicitly.
         Without that, "writes nothing to the home directory" would only hold
