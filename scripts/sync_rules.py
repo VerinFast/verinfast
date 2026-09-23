@@ -63,6 +63,61 @@ MANIFEST = RULES_DIR / "MANIFEST.json"
 #: body hash so the same logic under two names still collides.
 IDENTITY_KEYS = frozenset({"id", "message", "metadata"})
 
+#: Licences a source may carry to be vendored here, and a phrase that must
+#: appear in its LICENSE text.
+#:
+#: The whole point of shipping rules is to escape the registry's
+#: internal-only, non-competing, non-SaaS terms, so a source that drags a
+#: different restriction back in defeats the exercise. Permissive only: no
+#: copyleft, no non-commercial clause, no Commons Clause.
+ALLOWED_LICENSES: dict[str, str] = {
+    "MIT": "Permission is hereby granted, free of charge",
+    "Apache-2.0": "Apache License",
+    "BSD-3-Clause": "Redistribution and use in source and binary forms",
+    "BSD-2-Clause": "Redistribution and use in source and binary forms",
+}
+
+#: Phrases that disqualify a licence text whatever it calls itself. Checked
+#: after the match above, because "MIT" in the metadata means nothing if the
+#: file says something else.
+FORBIDDEN_PHRASES: tuple[str, ...] = (
+    "NonCommercial",
+    "Commons Clause",
+    "GNU GENERAL PUBLIC LICENSE",
+    "GNU AFFERO",
+    "GNU LESSER",
+)
+
+
+def verify_license(source: "Source", text: str) -> None:
+    """Check a source's declared licence against the text it ships.
+
+    ``Source.license`` is a string someone typed. This makes it a claim the
+    script checks rather than a label it trusts.
+
+    Raises:
+        SystemExit: the licence is not on the allowlist, the text does not
+            match the declaration, or the text carries a disqualifying term.
+    """
+    if source.license not in ALLOWED_LICENSES:
+        raise SystemExit(
+            f"{source.name}: licence {source.license!r} is not on the allowlist "
+            f"({', '.join(sorted(ALLOWED_LICENSES))}). Shipping it would reintroduce "
+            "the restriction this ruleset exists to escape."
+        )
+    marker = ALLOWED_LICENSES[source.license]
+    if marker.lower() not in text.lower():
+        raise SystemExit(
+            f"{source.name}: declared {source.license} but its LICENSE file does not "
+            f"read like one (expected to find {marker!r})."
+        )
+    for phrase in FORBIDDEN_PHRASES:
+        if phrase.lower() in text.lower():
+            raise SystemExit(
+                f"{source.name}: LICENSE text contains {phrase!r}, which is not "
+                f"compatible with shipping it in a commercial hosted product."
+            )
+
 
 @dataclass(frozen=True)
 class Source:
@@ -73,7 +128,8 @@ class Source:
         url: git remote.
         revision: the pinned commit. Never a branch — a scan has to be
             reproducible, and "whatever main said that day" is not.
-        license: SPDX identifier, verified from the upstream LICENSE file.
+        license: SPDX identifier. Checked against the shipped LICENSE text
+            by :func:`verify_license` — not taken on trust.
     """
 
     name: str
@@ -200,7 +256,9 @@ def build(checkouts: dict[str, Path]) -> Build:
         for license_name in ("LICENSE", "LICENSE.md", "LICENSE.txt", "COPYING"):
             candidate = root / license_name
             if candidate.exists():
-                result.licenses[source.name] = candidate.read_text(errors="replace")
+                text = candidate.read_text(errors="replace")
+                verify_license(source, text)
+                result.licenses[source.name] = text
                 break
         else:
             raise SystemExit(f"{source.name}: no LICENSE file; refusing to vendor it")

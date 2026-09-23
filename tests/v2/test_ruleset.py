@@ -5,9 +5,15 @@ here should ever be fixed by editing `src/verinfast2/rules/` directly.
 """
 
 import json
+import sys
+from pathlib import Path
 
 import pytest
 import yaml
+
+# The vendoring policy lives with the script that enforces it.
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
+from sync_rules import ALLOWED_LICENSES, FORBIDDEN_PHRASES  # noqa: E402
 
 from verinfast2.scanners.ruleset import (
     MANIFEST,
@@ -40,10 +46,32 @@ def test_manifest_matches_the_tree():
 def test_every_source_records_provenance_and_a_licence():
     """S18/S16: a finding set has to be attributable to a rule revision."""
     for source in json.loads(MANIFEST.read_text())["sources"]:
-        assert source["license"] == "MIT", source
+        assert source["license"] in ALLOWED_LICENSES, source
         assert len(source["revision"]) == 40, "pin a commit, never a branch"
         assert source["url"].startswith("https://")
         assert (RULES_DIR / "LICENSES" / f"{source['name']}.LICENSE").exists()
+
+
+def test_shipped_licence_text_matches_what_the_manifest_declares():
+    """The manifest's licence is a claim; the LICENSE file is the evidence."""
+    for source in json.loads(MANIFEST.read_text())["sources"]:
+        text = (RULES_DIR / "LICENSES" / f"{source['name']}.LICENSE").read_text()
+        assert (
+            ALLOWED_LICENSES[source["license"]].lower() in text.lower()
+        ), f"{source['name']} declares {source['license']} but its LICENSE does not read like one"
+
+
+def test_no_shipped_licence_carries_a_disqualifying_term():
+    """A source that reintroduces a restriction defeats the whole exercise.
+
+    The rules ship precisely to escape the registry's internal-only,
+    non-competing, non-SaaS terms — so no copyleft, no NonCommercial, no
+    Commons Clause may creep in behind a permissive-looking label.
+    """
+    for path in (RULES_DIR / "LICENSES").glob("*.LICENSE"):
+        text = path.read_text().lower()
+        for phrase in FORBIDDEN_PHRASES:
+            assert phrase.lower() not in text, f"{path.name} contains {phrase!r}"
 
 
 def test_rule_ids_are_unique():
