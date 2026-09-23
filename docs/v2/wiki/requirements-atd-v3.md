@@ -21,9 +21,10 @@ negotiate.**
   design and 404 on an unknown report or scan session.
 - **A3 (MUST)** Mint a scan session first: `GET {prefix}{report}{code_sep}`
   returns an opaque scan id used in every per-repo path that follows.
-- **A4 (MUST)** Default `code_separator` to `/CodeScan`, and keep honouring a
-  server-supplied override. ATD pins it in every served config precisely
-  because older agents default to the pre-rename name.
+- **A4 (MUST)** Default `code_separator` to `/CodeScan` — already true on
+  `main` since PR #814 (`4ae508b`) — and keep honouring a server-supplied
+  override. ATD pins it in every served config because agents already in the
+  field predate that fix.
 - **A5 (MUST)** Support both addressing modes — `uuid/`-prefixed and the
   deprecated legacy integer id — since ATD keeps both route families.
 - **A6 (MUST)** Keep the payload shapes ATD parses: numstat strings including

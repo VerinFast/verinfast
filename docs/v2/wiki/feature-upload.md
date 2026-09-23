@@ -42,9 +42,10 @@ expectations.
   that reads it is behind the same flag, so it works — but it is an attribute
   that may or may not exist depending on config, and `make_upload_path` raises
   if it is missing.
-- The default `code_separator` is the **old product name**, not `/CodeScan`.
-  ATD v3 works around this by pinning `server.code_separator` in every served
-  config. v2 should default to `/CodeScan` and keep honouring the override.
+- ~~The default `code_separator` is the old product name.~~ **Fixed on `main`
+  in PR #814** (`4ae508b`), after this page's base revision: the default is now
+  `/CodeScan`. ATD v3 still pins `server.code_separator` in every served config
+  so older agent releases keep working, so v2 must keep honouring the override.
 - Uploads are sequential, unretried and unthrottled. A large scan uploads a
   dozen files one at a time and gives up on the first 500.
 - `upload()` returns `True` for "skipped because uploads are off", which makes

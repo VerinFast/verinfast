@@ -96,8 +96,11 @@ The served YAML sets `report.uuid`, `modules.code.git.start`,
 
 Recorded so v2 can retire them, without breaking agents still in the field:
 
-- The agent's default `code_separator` is the **old product name**, so ATD pins
-  `/CodeScan` in every served config.
+- ~~The agent's default `code_separator` is the old product name.~~ **Fixed on
+  `main` in PR #814** (`4ae508b`), after this page's base revision. ATD still
+  pins `/CodeScan` in every served config because agents already in the field
+  predate the fix — so the pin stays load-bearing even though the default is
+  now correct.
 - `modules.code.git.start` is ignored by the agent (a typo in `config.py`), so
   ATD emits its preferred window "for forward compatibility" and depends on
   none of it.

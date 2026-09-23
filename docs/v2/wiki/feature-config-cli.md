@@ -60,8 +60,9 @@ With no repos, no local_repos and no cloud module configured, the agent scans
 - Remote-config fetch. ATD v3's whole onboarding flow depends on
   `verinfast -c https://.../VerinFastConfig.yaml`.
 - The YAML key names, unchanged — ATD v3's `services/code_scan.py` emits them.
-- `server.code_separator` honouring. ATD pins `/CodeScan`; v1 defaults to the
-  old product name. See [[ATD v3 Upload Contract]].
+- `server.code_separator` honouring. ATD pins `/CodeScan`; so does v1's default
+  as of PR #814 (`4ae508b`). The override must keep working regardless.
+  See [[ATD v3 Upload Contract]].
 
 ## What v2 must change
 
