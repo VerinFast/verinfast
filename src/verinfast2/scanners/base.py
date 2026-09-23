@@ -43,7 +43,17 @@ class CodeScanner(Protocol):
 def registry() -> dict[Artifact, type]:
     """Every code scanner, keyed by the artifact it produces.
 
-    Raises:
-        NotImplementedError: no scanner is ported yet.
+    Imported here rather than at module scope so this module stays importable
+    by a scanner that wants the ``CodeScanner`` protocol without a cycle.
+
+    An artifact missing from this mapping is not an error — it means no
+    scanner is ported yet, and the orchestrator records a skip with that
+    reason rather than a silent empty result (`F18`).
     """
-    raise NotImplementedError("scanners.base.registry")
+    from verinfast2.scanners.git import GitScanner
+    from verinfast2.scanners.sizes import SizesScanner
+
+    return {
+        Artifact.GIT: GitScanner,
+        Artifact.SIZES: SizesScanner,
+    }

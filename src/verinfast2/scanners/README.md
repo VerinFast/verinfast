@@ -31,7 +31,40 @@ other four unaffected.
 - **dependencies** — lockfile-first; package-manager execution is opt-in and
   refused in library mode.
 
+## Two behaviour changes worth knowing about
+
+**`signed` will differ from every historical scan.** v1 ran
+`git show --format='%G?'`, which returns the value wrapped in the format
+string's literal quotes, so the comparison against a bare `"N"` never matched
+and every commit was recorded as signed. The value here is the real one.
+Whether ATD backfills the old rows is `Q7`.
+
+**The git window now means what it says.** git parses a bare `2024-02-22`
+with *approxidate*, which fills in the **current time of day** — so
+`--since=2024-02-22` run at 18:00 silently means `2024-02-22T18:00`, and a
+commit made that morning is dropped. ATD sends a bare `YYYY-MM-DD` and v1
+passed it straight through, so every scan has had this: the same scan of the
+same repository returned different history depending on what time it ran.
+`since_argument` pins midnight.
+
+## Path form
+
+`sizes` emits `./`-prefixed paths, as v1 did. ATD merges `ReportCodeFile`
+rows by path and rewrites modernmetric's `temp_repo/…` paths to `./…`, so a
+bare `src/engine.py` from `sizes` lands in a *different* row from the same
+file's `stats`. ATD's own contract test demonstrates that split. `stats` must
+emit the same form when it is ported.
+
 ## Current state
 
-`base.py` defines the protocol. Every scanner is a stub whose docstring names
-the v1 source and the defects to fix. `registry()` is not wired.
+| Scanner | State |
+| ------- | ----- |
+| `git` | implemented |
+| `sizes` | implemented |
+| `stats` | stub |
+| `findings` | stub — ruleset loading is done; the run is not |
+| `dependencies` | stub |
+
+`registry()` returns only the scanners that exist. An artifact missing from it
+is a **recorded skip with a reason**, never a silent absence — a clean scan
+and a scan that never ran must not look alike (`F18`).

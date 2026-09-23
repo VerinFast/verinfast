@@ -22,5 +22,18 @@
   stats keeps `overall` and `stats.<agg>.<prop>`; dependencies stays a flat
   array with `name` and `source` required. Changing one needs the matching
   change on the ATD side.
+- **Never pass a bare `YYYY-MM-DD` to `git --since`.** git's approxidate
+  fills in the current time of day, so the window silently depends on when
+  the scan ran. `since_argument` pins midnight, and there is a test.
+- **`sizes` paths are `./`-prefixed and `stats` must match.** ATD merges
+  `ReportCodeFile` by path and rewrites modernmetric paths to `./…`; a bare
+  path from one artifact lands in a different row from the other.
+- **The `"."` root entry's size includes `.git`; `metadata.real_size` does
+  not.** ATD lifts the root entry onto `repository.file_size`, so changing
+  what that number means breaks every historical comparison.
+- **A missing scanner is a skip with a reason, not an absent artifact.**
+  `registry()` returning nothing for an artifact is expected during the port;
+  the orchestrator records it. Never let "found nothing" and "never ran" look
+  alike (`F18`).
 - Adding a scanner: implement the protocol, register it in `base.registry()`,
   add its artifact to `models.Artifact`, and confirm it has an upload route.
