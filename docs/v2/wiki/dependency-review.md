@@ -90,8 +90,9 @@ Dev extras — `black` (MIT), `pytest` (MIT), `pytest-cov` (MIT),
 The most consequential finding in this review, for two independent reasons.
 
 **Licensing.** `semgrep` is **LGPL-2.1-or-later**. VerinFast imports it
-*in-process* (`from semgrep.commands.scan import scan`, then calls it and
-catches its `SystemExit`). LGPL's reciprocity turns on linking, and the
+*in-process* — `code_scan.py` does `import semgrep.commands.scan as
+semgrep_scan`, calls `semgrep_scan.scan(custom_args)` and catches the
+`SystemExit` that comes back. LGPL's reciprocity turns on linking, and the
 in-process import is the most aggressive reading of that boundary; running the
 same binary as a **subprocess** is the posture nobody argues about.
 
@@ -185,7 +186,7 @@ to the program that uses them. Neither is modified.
 
 ### Keep, behind optional extras
 
-The nine cloud SDKs — **7 Azure (MIT), `boto3` (Apache-2.0), 3 Google
+The eleven cloud SDKs — **7 Azure (MIT), `boto3` (Apache-2.0), 3 Google
 (Apache-2.0)** — are all permissively licensed and all worth keeping. But a
 customer who only wants a code scan currently installs three cloud SDK
 families. Split into `verinfast[aws]`, `[azure]`, `[gcp]`, `[cloud]`.
