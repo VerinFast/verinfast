@@ -11,7 +11,11 @@
 - **Consent is a config field, not a constructor prompt.** v1 called
   `input()` from `Agent.__init__`, which a library can never do.
 - **Don't write to `~` on behalf of the library.** Preference storage is a CLI
-  concern; `embedded` mode writes nothing there at all (`S15`).
+  concern. The library never *chooses* a path under the home directory — no
+  defaults, no cache, no preferences file — and an embedded scan that names no
+  `output_dir` writes no files at all. An `output_dir` the caller supplies
+  explicitly is honoured wherever it points, including under `~`; refusing it
+  would break every container whose `HOME` is the working root (`S15`, `L7`).
 - Progress goes through `ScanContext.progress`, not `print` — the dependency
   walker's hardcoded "Dependency Scan 40%" lines are the anti-pattern (`N11`).
 - Keep the flag names v1 shipped (`-c/--config`, `-o/--output`, `--dry`,

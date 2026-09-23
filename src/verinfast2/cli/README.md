@@ -30,6 +30,14 @@ interaction. A library caller sets `privacy.telemetry` and
 `privacy.upload_logs` explicitly; `embedded=True` forces both off, because
 there is no human to ask.
 
+## The home directory
+
+Preference and cache storage are CLI concerns. The library never *chooses* a
+path under `~`, and an embedded scan that names no `output_dir` writes no
+files at all. An `output_dir` supplied explicitly is honoured wherever it
+points — refusing one under `~` would break every container whose `HOME` is
+the working root.
+
 ## Current state
 
 Stub. `build_parser` and `main` raise `NotImplementedError`.

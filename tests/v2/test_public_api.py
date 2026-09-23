@@ -174,3 +174,92 @@ def test_artifact_values_match_upload_routes():
         if artifact is Artifact.SYSTEM_INFO:
             continue  # produced locally; ATD has no ingest route for it (Q6)
         assert artifact.value in known, f"{artifact.value} has no upload route"
+
+
+# -- Home-directory and cleanup guarantees (Sourcery, #817) -----------------
+
+
+def test_embedded_scan_without_an_output_dir_writes_nothing(tmp_path):
+    """S15: the guarantee is enforced, not emergent.
+
+    Before this was explicit, `for_library()` left `write_files` on, so
+    nothing stopped an artifact landing somewhere the caller never named.
+    """
+    cfg = ScanConfig(embedded=True)
+    assert cfg.output_dir is None
+
+    scanner = Scanner(cfg)
+    assert scanner.config.write_files is False
+
+    from verinfast2.core.context import scan_context
+
+    with scan_context(scanner.config) as ctx:
+        assert ctx.artifact_path("repo", "findings") is None
+
+
+def test_embedded_scan_honours_an_explicit_output_dir(tmp_path):
+    """An output directory the caller named is used, wherever it points.
+
+    Refusing paths under ``~`` would break any container whose HOME is the
+    working root, so the guarantee is about paths the library *chooses*.
+    """
+    out = tmp_path / "results"
+    cfg = ScanConfig(embedded=True, output_dir=out)
+
+    scanner = Scanner(cfg)
+    assert scanner.config.write_files is True
+
+    from verinfast2.core.context import scan_context
+
+    with scan_context(scanner.config) as ctx:
+        path = ctx.artifact_path("repo", "findings")
+    assert path == out / "repo.findings.json"
+
+
+def test_work_directory_is_removed_and_is_not_under_home():
+    from verinfast2.core.context import scan_context
+
+    with scan_context(ScanConfig(embedded=True)) as ctx:
+        work = ctx.work_dir
+        assert work.exists()
+        assert Path.home() not in work.parents
+    assert not work.exists()
+
+
+def test_a_supplied_work_directory_is_left_alone(tmp_path):
+    """We only delete scratch space we created."""
+    from verinfast2.core.context import scan_context
+
+    mine = tmp_path / "mine"
+    mine.mkdir()
+    with scan_context(ScanConfig(embedded=True, work_dir=mine)):
+        pass
+    assert mine.exists()
+
+
+def test_cleanup_failure_is_logged_not_swallowed(monkeypatch, caplog):
+    """N10: an undeletable scratch tree leaves a clone on someone's disk."""
+    import logging
+    import shutil
+
+    from verinfast2.core import context as context_mod
+
+    real_rmtree = shutil.rmtree
+    leaked = []
+
+    def boom(path, *a, **kw):
+        leaked.append(path)
+        raise OSError(16, "Device or resource busy")
+
+    monkeypatch.setattr(shutil, "rmtree", boom)
+
+    with caplog.at_level(logging.WARNING, logger="verinfast"):
+        with context_mod.scan_context(ScanConfig(embedded=True)):
+            pass
+
+    assert any(
+        "could not remove scan work directory" in r.getMessage() for r in caplog.records
+    ), [r.getMessage() for r in caplog.records]
+
+    for path in leaked:  # the failure was simulated; don't actually leak
+        real_rmtree(path, ignore_errors=True)

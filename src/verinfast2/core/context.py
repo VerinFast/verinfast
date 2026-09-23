@@ -56,7 +56,17 @@ class ScanContext:
         return self.config.embedded
 
     def artifact_path(self, target: str, name: str) -> Path | None:
-        """Where ``<target>.<name>.json`` goes, or None if not writing files."""
+        """Where ``<target>.<name>.json`` goes, or None if not writing files.
+
+        Returns None — writing nothing — when there is no output directory or
+        ``write_files`` is off. In library mode both are the default, so an
+        embedded caller that names no output directory gets no files
+        anywhere, including under ``~``.
+
+        An ``output_dir`` the caller supplied explicitly is honoured wherever
+        it points. The guarantee is that the library never *chooses* a path
+        under the home directory, not that it refuses one it was handed.
+        """
         if self.output_dir is None or not self.config.write_files:
             return None
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -71,6 +81,10 @@ def scan_context(
     progress: ProgressFn | None = None,
 ) -> Iterator[ScanContext]:
     """Build a context, and clean up its scratch space on the way out.
+
+    A work directory we created is removed in a ``finally``; if removal
+    fails it is logged at warning level rather than discarded, because the
+    consequence is a leftover clone on someone else's disk.
 
     The work directory is removed in a ``finally``, so an exception mid-scan
     does not leave a clone behind — v1 only deleted it on the happy path.
@@ -92,4 +106,12 @@ def scan_context(
         yield ctx
     finally:
         if owns:
-            shutil.rmtree(work_dir, ignore_errors=True)
+            try:
+                shutil.rmtree(work_dir)
+            except OSError as exc:
+                # Reported, not swallowed: an undeletable scratch tree means
+                # a scanner left a handle open or the OS refused removal, and
+                # it leaves a clone on the caller's disk. `N10`.
+                ctx.log.warning(
+                    "could not remove scan work directory %s: %s", work_dir, exc
+                )

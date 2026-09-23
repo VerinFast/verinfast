@@ -127,10 +127,18 @@ class ScanConfig(BaseModel):
 
         :class:`~verinfast2.core.scanner.Scanner` applies this itself when
         ``embedded`` is set, so a caller cannot forget to.
+
+        Turns file writing off unless an ``output_dir`` was named explicitly.
+        Without that, "writes nothing to the home directory" would only hold
+        by accident — nothing else stops an artifact landing somewhere the
+        caller never asked for. With it, an embedded scan that names no
+        output directory writes no files at all, and one that does names
+        where (`S15`, `L7`).
         """
         return self.model_copy(
             update={
                 "embedded": True,
+                "write_files": self.write_files and self.output_dir is not None,
                 "privacy": self.privacy.model_copy(
                     update={"telemetry": False, "upload_logs": False}
                 ),
