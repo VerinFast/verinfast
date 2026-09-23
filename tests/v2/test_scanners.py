@@ -504,12 +504,13 @@ def test_a_scan_records_a_result_for_every_repo_artifact(repo: Path, tmp_path: P
         Artifact.FINDINGS,
         Artifact.DEPENDENCIES,
     }
-    unported = [a for a in result.artifacts if a.outcome is Outcome.SKIPPED]
-    assert {a.artifact for a in unported} >= {
-        Artifact.FINDINGS,
-        Artifact.DEPENDENCIES,
-    }
-    assert all(a.error for a in unported)
+    # Every artifact that did not produce data says why. "Found nothing" and
+    # "never ran" must not look alike (`F18`).
+    for artifact in result.artifacts:
+        if artifact.outcome is Outcome.OK:
+            assert artifact.data is not None
+        else:
+            assert artifact.error, f"{artifact.artifact} gave no reason"
 
 
 @needs_git

@@ -13,7 +13,18 @@
 - **`--config auto` is not allowed.** It fetches rules whose licence permits
   internal, non-competing, non-SaaS use only, and it makes scans
   irreproducible. Pin a ruleset and record its version in the artifact
-  (`S18`). See the wiki's *Semgrep Alternatives*.
+  (`S18`). See the wiki's *Semgrep Alternatives*. A test asserts the string
+  never appears in the argv.
+- **Scan `.` with `cwd=` the target, never an absolute path.** The engine
+  copies the path it was given into every finding, so an absolute one puts
+  the scanning machine's directory layout into ATD (`S3`).
+- **Exit 1 means findings were found, not that the engine failed.** Only
+  codes outside `RAN` are errors.
+- **Never truncate findings in the scanner.** That is the upload boundary's
+  job (`transport/payloads.py`); the local HTML report wants the full text
+  and the same object serves both.
+- **A missing engine is a FAILED result, not a skip.** Findings were asked
+  for and there are none — that must not look like a clean scan (`F18`).
 - **Package-manager execution is opt-in and refused when `embedded`.**
   `npm install` / `composer install` / `gem install` run arbitrary code from
   the scanned project's dependency graph (`S7`).

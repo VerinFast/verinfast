@@ -51,6 +51,7 @@ def registry() -> dict[Artifact, type]:
     reason rather than a silent empty result (`F18`).
     """
     from verinfast2.scanners.dependencies import DependencyScanner
+    from verinfast2.scanners.findings import FindingsScanner
     from verinfast2.scanners.git import GitScanner
     from verinfast2.scanners.sizes import SizesScanner
     from verinfast2.scanners.stats import StatsScanner
@@ -59,5 +60,6 @@ def registry() -> dict[Artifact, type]:
         Artifact.GIT: GitScanner,
         Artifact.SIZES: SizesScanner,
         Artifact.STATS: StatsScanner,
+        Artifact.FINDINGS: FindingsScanner,
         Artifact.DEPENDENCIES: DependencyScanner,
     }

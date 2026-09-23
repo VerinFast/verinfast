@@ -12,6 +12,7 @@ the v2 suite can run and fail independently during the rewrite.
 | `test_payloads.py` | truncation — the privacy boundary |
 | `test_scanners.py` | git, sizes, stats, and the orchestration around them |
 | `test_dependencies.py` | the nine-ecosystem inventory |
+| `test_findings.py` | the Opengrep scanner, mostly via a stub engine |
 | `test_public_api.py` | the promises that make `verinfast2` importable |
 | `test_ruleset.py` | the vendored rules' integrity and licences |
 | `atd_fixtures.py` | payload shapes copied from ATD's own contract test |

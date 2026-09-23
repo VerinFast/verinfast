@@ -75,8 +75,22 @@ inside one scanner to between two.
 | `sizes` | implemented |
 | `stats` | implemented |
 | `dependencies` | implemented — see `../dependencies/` |
-| `findings` | stub — ruleset loading is done; the run is not |
+| `findings` | implemented |
 
-`registry()` returns only the scanners that exist. An artifact missing from it
-is a **recorded skip with a reason**, never a silent absence — a clean scan
-and a scan that never ran must not look alike (`F18`).
+All five code scanners are wired through `registry()`. Every artifact gets an
+outcome; anything that is not `ok` carries a reason, because a clean scan and
+a scan that never ran must not look alike (`F18`).
+
+`_scan_cloud` is still unwired — that is where the `user_activity` and
+`load_balancers` collectors ATD is waiting on (`F8`) would go.
+
+## The findings engine is a binary
+
+Opengrep is not a PyPI package, so it may be absent. A missing engine is a
+**failure**, not a skip: findings were asked for and there are none, and the
+operator has an install problem. How the binary ships is action item 19 in
+the dependency review, still open.
+
+Tests use a stub engine — a small executable that behaves like the real one —
+so the argv, the `cwd` and the environment are exercised end to end without
+it. Two tests need the real binary and skip cleanly without it.
