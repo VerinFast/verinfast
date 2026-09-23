@@ -42,9 +42,27 @@
   every per-file join halves. There is a test asserting they agree.
 - **Get the file list from `ctx.files_in`, never by walking again.** The
   context memoises it per target so the tree is walked once per scan.
-- **modernmetric runs as `sys.executable -m modernmetric`.** Not a console
-  script (may not be on `PATH` in an embedded install) and never an
-  in-process import of its `__main__` (`D18`, `L6`).
+- **modernmetric runs via its CONSOLE SCRIPT, never `python -m`.** This is
+  not a style preference and reverting it silently breaks macOS. modernmetric
+  submits `process_file` to a `multiprocessing.Pool`, and a function pickles
+  by `__module__` + `__qualname__`. Under `python -m modernmetric` that
+  module is `"__main__"`, which in a **spawned** child is the `-m` launcher —
+  so the child raises `AttributeError`, the parent's `async_result.get()`
+  times out, and `__main__.py` drops the file with a bare `continue`. Every
+  file. **Exit code 0, empty `files` map**, `files × file_timeout` seconds
+  spent. `fork` hides it; macOS defaults to `spawn`. `resolve_tool()` looks
+  beside `sys.executable` first, then `PATH`, and only then falls back to
+  `-m`.
+- **`_check_coverage` is load-bearing.** A run that analysed none of the
+  files it was given is a FAILED artifact, not an empty one — that is `F18`
+  applied to a third-party tool that fails silently by design. Never relax it
+  to make a platform pass.
+- **modernmetric's cache goes in the scan's work directory, absolute.** It
+  builds its path as `Path(Path.home(), cache_dir, cache_db)`, and pathlib
+  discards everything left of an absolute component — an absolute
+  `--cache-dir` is the only way to stop it writing SQLite into the user's
+  home (`L7`, `S15`).
+- **Never an in-process import of another tool's `__main__`** (`D18`, `L6`).
 - **The `"."` root entry's size includes `.git`; `metadata.real_size` does
   not.** ATD lifts the root entry onto `repository.file_size`, so changing
   what that number means breaks every historical comparison.

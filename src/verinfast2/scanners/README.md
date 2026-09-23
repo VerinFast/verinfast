@@ -60,6 +60,32 @@ decides the output. Feed it `./src/engine.py` and ATD's rewrite becomes a
 no-op and the rows merge. If these two scanners ever disagree on path form,
 every per-file join silently halves — there is a test asserting they agree.
 
+## A platform bug worth knowing about
+
+modernmetric analyses files through a `multiprocessing.Pool`. A function
+pickles by `__module__` + `__qualname__`, and under `python -m modernmetric`
+that module is `"__main__"` — which in a **spawned** child is the `-m`
+launcher, not modernmetric. The child raises `AttributeError`, the parent
+times out, and `__main__.py` drops the file:
+
+```python
+if file_result is None:
+    continue
+```
+
+Every file. The run **exits 0 with an empty `files` map**, having spent
+`files × file_timeout` seconds getting there.
+
+`fork` hides it entirely, which is why Linux never saw it. macOS defaults to
+`spawn` — so on the platform most customer laptops run, code statistics were
+silently empty and the scan was very slow. Running the console script instead
+makes `modernmetric.__main__` an ordinary imported module, the qualified name
+resolves in the child, and it works under either start method.
+
+`StatsScanner._check_coverage` is the safety net: a run that analysed none of
+the files it was given is a **failure**, not an empty result. That is `F18`
+applied to a tool that fails silently by design.
+
 ## One walk per target
 
 `sizes` and `stats` both need every file under a target. `ScanContext.files_in`

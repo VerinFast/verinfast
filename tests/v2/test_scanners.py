@@ -40,7 +40,12 @@ from verinfast2.scanners.sizes import (
     relative_files,
     walk_files,
 )
-from verinfast2.scanners.stats import StatsScanner, command, write_filelist
+from verinfast2.scanners.stats import (
+    StatsScanner,
+    command,
+    resolve_tool,
+    write_filelist,
+)
 
 HAS_GIT = shutil.which("git") is not None
 needs_git = pytest.mark.skipif(not HAS_GIT, reason="git is not installed")
@@ -590,17 +595,77 @@ def test_scan_path_treats_the_directory_as_a_sample(repo: Path):
 # -- The stats artifact -----------------------------------------------------
 
 
-def test_modernmetric_is_invoked_as_a_module_not_imported():
+def test_modernmetric_is_invoked_as_a_subprocess_not_imported():
     """v1 did `from modernmetric.__main__ import main` and called it. That
     is a CLI entry point: it may `sys.exit()`, and a SystemExit inside ATD
     v3's worker takes the worker down rather than failing one artifact
     (`D18`, `L6`)."""
-    argv = command("modernmetric", Path("/w/filelist.json"), Path("/w/stats.json"))
+    argv = command(
+        ["/venv/bin/modernmetric"],
+        Path("/w/filelist.json"),
+        Path("/w/stats.json"),
+        file_timeout=60,
+        cache_dir=Path("/w/cache"),
+    )
 
-    assert argv[0] == sys.executable
-    assert argv[1:3] == ["-m", "modernmetric"]
     assert "--file=/w/filelist.json" in argv
     assert "--output=/w/stats.json" in argv
+
+
+@needs_modernmetric
+def test_the_console_script_is_preferred_over_dash_m():
+    """Not cosmetic. modernmetric submits `process_file` to a
+    multiprocessing Pool, and a function pickles by `__module__` +
+    `__qualname__`. Under `python -m modernmetric` that module is
+    `"__main__"` — which in a *spawned* child is the `-m` launcher, so the
+    child raises AttributeError, the parent times out, and `__main__.py`
+    drops the file silently. Every file. Exit code 0, empty `files`.
+
+    `fork` hides it, which is why Linux never saw it; macOS defaults to
+    `spawn`, so on the platform most customer laptops run, stats were
+    silently empty."""
+    launcher = resolve_tool()
+
+    assert launcher is not None
+    assert launcher[0].endswith("modernmetric")
+    assert "-m" not in launcher
+
+
+def test_an_uninstalled_tool_resolves_to_nothing():
+    assert resolve_tool("verinfast-no-such-tool") is None
+
+
+def test_the_cache_directory_is_absolute_so_it_escapes_home():
+    """modernmetric builds its cache path as `Path(Path.home(), cache_dir,
+    cache_db)`, and pathlib discards everything left of an absolute
+    component. An absolute directory is the only way to stop it writing a
+    SQLite file into the user's home (`L7`, `S15`)."""
+    argv = command(
+        ["modernmetric"],
+        Path("/w/f.json"),
+        Path("/w/o.json"),
+        file_timeout=60,
+        cache_dir=Path("/scan/work/cache"),
+    )
+    cache_arg = next(a for a in argv if a.startswith("--cache-dir="))
+    given = Path(cache_arg.split("=", 1)[1])
+
+    assert given.is_absolute()
+    assert Path(Path.home(), given, "db") == Path("/scan/work/cache/db")
+
+
+def test_the_per_file_timeout_is_pinned_not_left_at_180_seconds():
+    """A run that is going to produce nothing should say so in seconds, not
+    in hours."""
+    argv = command(
+        ["modernmetric"],
+        Path("/w/f.json"),
+        Path("/w/o.json"),
+        file_timeout=30,
+        cache_dir=Path("/w/c"),
+    )
+
+    assert "--file_timeout=30" in argv
 
 
 def test_the_filelist_carries_repo_relative_paths(tmp_path: Path):
@@ -658,6 +723,68 @@ def test_stats_and_sizes_agree_on_every_path(repo: Path, ctx_for):
     assert measured <= sized
 
 
+def test_a_run_that_analysed_nothing_is_a_failure(tmp_path: Path, ctx_for):
+    """The safety net. modernmetric drops a file it cannot process and
+    carries on, so an empty `files` map is indistinguishable from "analysed
+    everything and found nothing" — `F18`, inside a tool we shell out to.
+
+    This is exactly the shape the spawn bug produced: exit 0, empty output.
+    """
+    root = tmp_path / "code"
+    root.mkdir()
+    (root / "a.py").write_text("x = 1\n")
+    empty = tmp_path / "empty-tool"
+    empty.write_text(
+        "#!" + sys.executable + "\n"
+        "import json, sys\n"
+        "out = next(a.split('=',1)[1] for a in sys.argv if a.startswith('--output='))\n"
+        "open(out,'w').write(json.dumps({'files': {}, 'overall': {}, 'stats': {}}))\n"
+    )
+    empty.chmod(0o755)
+
+    import verinfast2.scanners.stats as stats_module
+
+    original = stats_module.resolve_tool
+    stats_module.resolve_tool = lambda name=stats_module.MODULE: [str(empty)]
+    try:
+        result = StatsScanner().run(ctx_for(), ScanTarget(name="s", path=root))
+    finally:
+        stats_module.resolve_tool = original
+
+    assert result.outcome is Outcome.FAILED
+    assert "analysed none of the" in result.error
+
+
+def test_a_partial_run_is_a_warning_not_a_failure(tmp_path: Path, ctx_for, caplog):
+    """One unparseable file should not cost the artifact."""
+    root = tmp_path / "code"
+    root.mkdir()
+    (root / "a.py").write_text("x = 1\n")
+    (root / "b.py").write_text("y = 2\n")
+    partial = tmp_path / "partial-tool"
+    partial.write_text(
+        "#!" + sys.executable + "\n"
+        "import json, sys\n"
+        "out = next(a.split('=',1)[1] for a in sys.argv if a.startswith('--output='))\n"
+        "open(out,'w').write(json.dumps("
+        "{'files': {'./a.py': {}}, 'overall': {}, 'stats': {}}))\n"
+    )
+    partial.chmod(0o755)
+
+    import verinfast2.scanners.stats as stats_module
+
+    original = stats_module.resolve_tool
+    stats_module.resolve_tool = lambda name=stats_module.MODULE: [str(partial)]
+    try:
+        with caplog.at_level(logging.WARNING):
+            result = StatsScanner().run(ctx_for(), ScanTarget(name="s", path=root))
+    finally:
+        stats_module.resolve_tool = original
+
+    assert result.outcome is Outcome.OK
+    assert "analysed 1 of 2" in caplog.text
+
+
 @needs_git
 def test_stats_never_runs_in_the_scanned_tree(repo: Path, ctx_for):
     """Scratch goes in the scan's work directory. v1 wrote its filelist and
@@ -680,26 +807,44 @@ def test_stats_on_an_empty_tree_is_a_skip_with_a_reason(tmp_path: Path, ctx_for)
 
 
 def test_a_missing_modernmetric_fails_the_artifact_not_the_scan(
-    tmp_path: Path, ctx_for
+    tmp_path: Path, ctx_for, monkeypatch
 ):
-    """`python -m does_not_exist` exits non-zero; that must land as a failed
-    artifact carrying the reason, not as an exception."""
+    """An uninstalled tool must land as a failed artifact carrying the
+    reason, not as an exception."""
+    import verinfast2.scanners.stats as stats_module
+
     root = tmp_path / "code"
     root.mkdir()
     (root / "a.py").write_text("x = 1\n")
-    ctx = ctx_for()
+    monkeypatch.setattr(stats_module, "resolve_tool", lambda name=None: None)
 
-    import verinfast2.scanners.stats as stats_module
-
-    original = stats_module.MODULE
-    stats_module.MODULE = "verinfast2_no_such_module"
-    try:
-        result = StatsScanner().run(ctx, ScanTarget(name="s", path=root))
-    finally:
-        stats_module.MODULE = original
+    result = StatsScanner().run(ctx_for(), ScanTarget(name="s", path=root))
 
     assert result.outcome is Outcome.FAILED
-    assert "modernmetric exited" in result.error
+    assert "not installed" in result.error
+
+
+def test_a_nonzero_exit_fails_the_artifact_not_the_scan(
+    tmp_path: Path, ctx_for, monkeypatch
+):
+    import verinfast2.scanners.stats as stats_module
+
+    root = tmp_path / "code"
+    root.mkdir()
+    (root / "a.py").write_text("x = 1\n")
+    broken = tmp_path / "broken-tool"
+    broken.write_text(
+        "#!" + sys.executable + "\nimport sys\n"
+        "sys.stderr.write('boom\\n')\nsys.exit(3)\n"
+    )
+    broken.chmod(0o755)
+    monkeypatch.setattr(stats_module, "resolve_tool", lambda name=None: [str(broken)])
+
+    result = StatsScanner().run(ctx_for(), ScanTarget(name="s", path=root))
+
+    assert result.outcome is Outcome.FAILED
+    assert "exited 3" in result.error
+    assert "boom" in result.error
 
 
 # -- The shared file list ---------------------------------------------------

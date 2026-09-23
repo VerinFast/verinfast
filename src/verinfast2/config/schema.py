@@ -132,6 +132,11 @@ class ScanConfig(BaseModel):
     #: Wall-clock ceiling for any single subprocess (`L10`, `S10`).
     subprocess_timeout_seconds: float = 900.0
 
+    #: Per-**file** ceiling for the code-statistics tool. Its own default is
+    #: 180 seconds, which means a run that is going to produce nothing takes
+    #: ``files x 180s`` to say so.
+    stats_file_timeout_seconds: float = 60.0
+
     #: Per-request ceiling for a package-registry lookup. There is one
     #: request per dependency, so this is not the subprocess budget. v1 used
     #: ``timeout=None``, which lets a stalled registry hang a scan forever.
