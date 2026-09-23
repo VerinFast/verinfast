@@ -22,7 +22,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "azure-identity~=1.25.0",
+    "azure-identity~=1.25.1",
     "azure-mgmt-compute~=37.2.0",
     "azure-mgmt-monitor~=7.0.0",
     "azure-mgmt-network~=30.2.0",
@@ -56,6 +56,12 @@ dev = [
     "pytest-cov",
     "pytest-xdist",
     "coverage",
+    # v2 (src/verinfast2) is pydantic-based. Declared here rather than in the
+    # runtime set because v2 is not shipped yet -- the wheel is pinned to
+    # src/verinfast below. It moves to `dependencies` at cutover. Declared
+    # explicitly and not left to arrive transitively via semgrep: that is the
+    # `cachehash` mistake this rewrite is documenting.
+    "pydantic>=2.7",
 ]
 
 [project.urls]
@@ -76,6 +82,12 @@ where = ["src"]
 
 [tool.hatch.version]
 path = "VERSION.py"
+
+# Pin the wheel to v1. `src/verinfast2/` is the in-progress rewrite: it lives
+# in the repo and is importable in tests (pytest.ini sets `pythonpath = src`),
+# but it must not ship until cutover, when it becomes `verinfast`.
+[tool.hatch.build.targets.wheel]
+packages = ["src/verinfast"]
 
 [tool.black]
 line-length = 88

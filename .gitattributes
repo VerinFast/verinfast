@@ -1,0 +1,10 @@
+# Vendored security rules. Written only by scripts/sync_rules.py from pinned
+# upstream revisions -- see src/verinfast2/rules/README.md. Marking them keeps
+# 130 generated files out of language stats and collapses them by default in
+# diffs, so review lands on the code that produced them.
+src/verinfast2/rules/** linguist-vendored=true
+src/verinfast2/rules/** linguist-generated=true
+
+# The compiled Waikiki wiki is a SQLite database built from docs/v2/wiki/*.md
+# by docs/v2/build_wiki.py. Binary; never hand-edited.
+docs/v2/VerinFast-v2.wiki binary linguist-generated=true
