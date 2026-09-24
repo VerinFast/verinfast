@@ -23,7 +23,7 @@ classifiers = [
 ]
 dependencies = [
     "azure-identity~=1.25.1",
-    "azure-mgmt-compute~=37.2.0",
+    "azure-mgmt-compute>=37.2,<38.4",
     "azure-mgmt-monitor~=7.0.0",
     "azure-mgmt-network~=30.2.0",
     "azure-mgmt-resource~=25.0.0",
