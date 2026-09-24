@@ -13,8 +13,10 @@
 - **`--config auto` is not allowed.** It fetches rules whose licence permits
   internal, non-competing, non-SaaS use only, and it makes scans
   irreproducible. Pin a ruleset and record its version in the artifact
-  (`S18`). See the wiki's *Semgrep Alternatives*. A test asserts the string
-  never appears in the argv.
+  (`S18`). A test asserts the string never appears in the argv. The
+  reasoning is on *Semgrep Alternatives* in the v2 design wiki, which is
+  kept locally in Waikiki and deliberately **not** in this repository — do
+  not "restore" it here.
 - **Scan `.` with `cwd=` the target, never an absolute path.** The engine
   copies the path it was given into every finding, so an absolute one puts
   the scanning machine's directory layout into ATD (`S3`).
