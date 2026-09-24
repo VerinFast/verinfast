@@ -9,11 +9,19 @@ only decides what runs and collects what comes back.
 from __future__ import annotations
 
 import logging
+import time
 from datetime import datetime, timezone
 
 from verinfast2.config.schema import ScanConfig
 from verinfast2.core.context import ProgressFn, ScanContext, scan_context
-from verinfast2.models import ArtifactResult, Outcome, ScanResult, ScanTarget
+from verinfast2.models import (
+    CLOUD_ARTIFACTS,
+    ArtifactResult,
+    CloudAccount,
+    Outcome,
+    ScanResult,
+    ScanTarget,
+)
 
 
 class Scanner:
@@ -85,13 +93,72 @@ class Scanner:
         """
         raise NotImplementedError("core.scanner.Scanner._scan_target")
 
-    def _scan_cloud(self, ctx: ScanContext, account) -> list[ArtifactResult]:
+    def _scan_cloud(
+        self, ctx: ScanContext, account: CloudAccount
+    ) -> list[ArtifactResult]:
         """Collect every artifact for one cloud account.
 
-        Raises:
-            NotImplementedError: the provider registry is not wired yet.
+        One result per artifact in :data:`CLOUD_ARTIFACTS`, always -- six in,
+        six out. A provider that cannot run, an artifact that is not ported
+        and an artifact that raised are three different results, and none of
+        them is an absent one. v1 dispatched this through a 150-line ``if``
+        chain under a single bare ``except``, which made a missing credential
+        and an unparseable response look identical and dropped whatever came
+        after the first failure (`N7`, `N10`, `F19`).
+
+        The provider is asked for each artifact by name rather than handed a
+        list to iterate, so adding an artifact is a change here and in the
+        protocol, not in three providers at once.
         """
-        raise NotImplementedError("core.scanner.Scanner._scan_cloud")
+        # Imported here, not at module scope: importing the orchestrator
+        # should not drag in all three provider modules, and `cloud/__init__`
+        # imports every one of them.
+        from verinfast2.cloud.base import provider_for
+
+        try:
+            provider = provider_for(str(account.provider))
+        except KeyError:
+            # A provider name the registry does not know is a config error.
+            # Every artifact says so; none of them quietly collects nothing.
+            return [
+                ArtifactResult(
+                    artifact=artifact,
+                    target=account.account,
+                    outcome=Outcome.FAILED,
+                    error=f"unknown cloud provider {account.provider!r}",
+                )
+                for artifact in CLOUD_ARTIFACTS
+            ]
+
+        if not provider.available(ctx):
+            why = f"the {account.provider} SDK is not installed"
+            return [
+                skipped(artifact, account.account, why) for artifact in CLOUD_ARTIFACTS
+            ]
+
+        results: list[ArtifactResult] = []
+        for artifact in CLOUD_ARTIFACTS:
+            ctx.progress(f"{account.provider} {artifact.value} {account.account}")
+            started = time.monotonic()
+            try:
+                result = getattr(provider, artifact.value)(ctx, account)
+            except Exception as exc:
+                # The providers are written to return rather than raise, so
+                # reaching here is a bug in one of them -- but a bug in the
+                # storage collector must still not cost us load balancers.
+                ctx.log.exception(
+                    "cloud %s/%s raised", account.provider, artifact.value
+                )
+                result = ArtifactResult(
+                    artifact=artifact,
+                    target=account.account,
+                    outcome=Outcome.FAILED,
+                    error=f"{type(exc).__name__}: {exc}",
+                )
+            if result.duration_seconds is None:
+                result.duration_seconds = time.monotonic() - started
+            results.append(result)
+        return results
 
 
 def skipped(artifact, target: str, why: str) -> ArtifactResult:
