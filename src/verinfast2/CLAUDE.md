@@ -15,7 +15,9 @@
   Progress is the `ScanContext.progress` callback; failure is a returned
   `ArtifactResult` or an exception. Only `cli/` talks to a human.
 - **Requirement ids are real.** `L1`, `S7`, `D23` and friends resolve to pages
-  under `docs/v2/`. Cite them; don't invent new ones.
+  in the VerinFast v2 wiki, which is kept locally in Waikiki and is
+  deliberately **not** in this repository. Cite the ids; don't invent new
+  ones, and don't add the wiki (or a copy of it) here.
 - Files stay under 500 lines. Split rather than grow.
 - Every folder has a `README.md` and a `CLAUDE.md`, and they must say the same
   things — same edit, same PR.
