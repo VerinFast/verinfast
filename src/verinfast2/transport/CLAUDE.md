@@ -38,9 +38,11 @@
   import puts an HTTP stack behind `from verinfast2 import ScanConfig`, and
   behind the module ATD copies verbatim. The lazy `__getattr__` is
   load-bearing and there is a test for it.
-- **An upload never raises.** Failures come back as `UploadResult`. The one
-  exception is a bad route name, which is a caller bug and raises from
-  `paths` before any request — don't "helpfully" catch it.
+- **An upload never raises.** Failures come back as `UploadResult`, including
+  a payload `json.dumps` rejects — serialisation is inside the contract, and
+  its result is `permanent=True` so nothing retries it. The one exception is a
+  bad route name, which is a caller bug and raises from `paths` before any
+  request — don't "helpfully" catch it.
 - **The report UUID is the credential.** Anything bound for a log goes
   through `_redact` first; agent logs themselves get uploaded.
 - **Truncation lives in `payloads.py`, not in the findings scanner.** The

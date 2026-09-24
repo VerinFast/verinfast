@@ -30,7 +30,10 @@ test instead of a comment.
 - **Maven** — poms are namespaced. v1 searched a bare
   `dependencies/dependency` path, which matches nothing in a real pom.
   Versions may be `${property}` references.
-- **NuGet** — a version can be an attribute *or* a child element.
+- **NuGet** — a version can be an attribute *or* a child element, and a
+  legacy MSBuild `.csproj` is namespaced exactly as a pom is. Both
+  selectors use `{*}`; a bare `ItemGroup/PackageReference` path reported
+  such a project as having no dependencies at all.
 - **npm** — `license` is a string, a `{"type": ...}` dict, or a list of
   either. Lockfile v3 drops the `dependencies` map v1 read.
 - **Containers** — the colon in `registry:5000/app` looks exactly like the

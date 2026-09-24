@@ -187,6 +187,38 @@ def test_csproj_also_reads_the_version_child_element():
     assert spec_of(entries, "Newtonsoft.Json") == "==13.0.1"
 
 
+#: What a legacy (non-SDK-style) MSBuild project declares. An SDK-style one
+#: declares nothing, which is why the bare path looked correct.
+MSBUILD_NS = "http://schemas.microsoft.com/developer/msbuild/2003"
+
+
+@pytest.mark.parametrize("extra", ["", ' ToolsVersion="15.0"'])
+def test_a_namespaced_csproj_is_read_like_a_pom(extra: str):
+    """A legacy MSBuild project declares a default namespace, so every element
+    is `{that}PackageReference`. A bare path matched none of them and the
+    project reported no .NET dependencies at all — "found nothing" and "never
+    ran" made to look alike (`F18`)."""
+    text = f"""<Project xmlns="{MSBUILD_NS}"{extra}><ItemGroup>
+      <PackageReference Include="Serilog" Version="3.1.1" />
+    </ItemGroup></Project>"""
+    entries = dotnet.parse(text, "Legacy.csproj")
+
+    assert [(e.name, e.specifier) for e in entries] == [("Serilog", "==3.1.1")]
+
+
+def test_a_namespaced_csproj_also_reads_the_version_child_element():
+    """The child lookup is namespaced too, and missing it loses the version
+    rather than the whole entry — the quieter half of the same bug."""
+    text = f"""<Project xmlns="{MSBUILD_NS}"><ItemGroup>
+      <PackageReference Include="Newtonsoft.Json">
+        <Version>13.0.1</Version>
+      </PackageReference>
+    </ItemGroup></Project>"""
+    entries = dotnet.parse(text, "Legacy.csproj")
+
+    assert spec_of(entries, "Newtonsoft.Json") == "==13.0.1"
+
+
 def test_csproj_is_matched_by_suffix():
     assert parser_for("Some.Project.csproj") is dotnet.parse
 

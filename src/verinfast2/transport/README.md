@@ -71,6 +71,9 @@ decoded a body it had never fetched.
 
 **An upload never raises.** Every call returns an `UploadResult`. A scan that
 produced five good artifacts and failed to upload one reports exactly that.
+That covers a payload that will not serialise, not only a transport failure:
+`json.dumps` runs inside the contract, and what it rejects comes back as a
+`permanent` result — non-retryable, because there are no bytes to resend.
 
 ## Truncation is the privacy boundary
 

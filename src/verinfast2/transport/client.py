@@ -7,9 +7,11 @@ because ``paths`` has no I/O in it.
 
 **An upload never raises.** Every call returns an :class:`UploadResult`. A
 scan that produced five good artifacts and failed to upload one must report
-exactly that, not lose four (`F19`, `N10`). The one exception is a
-programming error in path construction, which surfaces as ``ValueError`` from
-``paths`` before any request is made.
+exactly that, not lose four (`F19`, `N10`). That covers a payload that will
+not serialise as well as a transport failure — both come back as a result.
+The one exception is a programming error in path construction, which surfaces
+as ``ValueError`` from ``paths`` before any request is made: a route name this
+module does not know is a typo in our own source, not a condition to report.
 
 **Retry is driven by ATD's documented status semantics, not by guesswork:**
 
@@ -120,6 +122,9 @@ class UploadResult:
         error: why it failed, with the report id redacted.
         body: the decoded response body, when there was one.
         skipped: no request was made — uploads are off, or dry run.
+        permanent: the failure is a property of the payload, not of the
+            transport, so no status was ever received and resending the same
+            object cannot help. The 415 of the local side.
     """
 
     ok: bool
@@ -129,15 +134,18 @@ class UploadResult:
     error: str | None = None
     body: Any = None
     skipped: bool = False
+    permanent: bool = False
 
     @property
     def retryable(self) -> bool:
         """Whether sending the same bytes again could plausibly work.
 
         A result with no status at all (connection refused, DNS failure,
-        timeout) is retryable; the request may never have reached ATD.
+        timeout) is retryable; the request may never have reached ATD. A
+        :attr:`permanent` failure is the exception — there are no bytes to
+        resend, because serialising them is what failed.
         """
-        if self.ok or self.skipped:
+        if self.ok or self.skipped or self.permanent:
             return False
         return is_retryable(self.status)
 
@@ -386,7 +394,25 @@ class Uploader:
         content: bytes | None = None
         headers: dict[str, str] | None = None
         if json_body is not None:
-            content = json.dumps(json_body).encode("utf-8")
+            try:
+                content = json.dumps(json_body).encode("utf-8")
+            except (TypeError, ValueError) as exc:
+                # An upload never raises (`F19`, `N10`). A payload that will
+                # not serialise is a bug in whatever built it, but a caller
+                # that scanned five repositories must still be told which one
+                # failed rather than have the scan taken down from here.
+                # Non-retryable: the object is the problem, so the next
+                # attempt fails identically.
+                return UploadResult(
+                    ok=False,
+                    route=route,
+                    permanent=True,
+                    error=_redact(
+                        f"{route}: payload is not JSON-serialisable: "
+                        f"{type(exc).__name__}: {exc}",
+                        self.report,
+                    ),
+                )
             headers = dict(_JSON_HEADERS)
 
         last = UploadResult(ok=False, route=route, error="no attempt was made")

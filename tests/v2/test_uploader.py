@@ -489,3 +489,57 @@ def test_a_directory_passed_as_a_log_file_does_not_raise(tmp_path):
 
     assert not result.ok
     assert result.error
+
+
+# -- A payload that will not serialise --------------------------------------
+
+
+def test_an_unserialisable_payload_is_a_failed_result_not_an_exception():
+    """`json.dumps` runs inside the no-raise contract (`F19`, `N10`).
+
+    It used to run before the try, so a payload holding a set — or anything
+    else `json` will not encode — raised `TypeError` straight out of
+    `upload_artifact` and took down a scan that had five good artifacts and
+    one bad one.
+    """
+    counter = Counter(200)
+    result = uploader_for(counter).upload_artifact(
+        "sizes", "repo.git", {"files": {"a.py": {"size": {1, 2}}}}
+    )
+
+    assert not result.ok
+    assert "not JSON-serialisable" in result.error
+    assert counter.calls == 0, "nothing should have been sent"
+
+
+def test_an_unserialisable_payload_is_never_retried():
+    """There are no bytes to resend: serialising them is what failed."""
+    counter = Counter(200)
+    result = uploader_for(counter).upload_artifact(
+        "git", "repo.git", {"commits": [{"date": object()}]}
+    )
+
+    assert result.permanent is True
+    assert result.retryable is False
+    assert counter.calls == 0
+
+
+def test_a_circular_payload_does_not_raise_either():
+    payload: dict[str, object] = {}
+    payload["self"] = payload
+
+    result = uploader_for(Counter(200)).upload_artifact("stats", "repo.git", payload)
+
+    assert not result.ok
+    assert result.permanent is True
+
+
+def test_one_unserialisable_artifact_does_not_stop_the_others():
+    """The whole point: a scan reports which artifact failed, not nothing."""
+    uploader = uploader_for(Counter(200))
+
+    bad = uploader.upload_artifact("sizes", "repo.git", {"x": {1}})
+    good = uploader.upload_artifact("git", "repo.git", {"commits": []})
+
+    assert not bad.ok
+    assert good.ok
