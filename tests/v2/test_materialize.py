@@ -214,3 +214,120 @@ def test_a_repository_that_cannot_be_cloned_fails_loudly(tmp_path: Path):
     assert not result.ok
     assert len(result.failed()) == 5
     assert all("could not clone" in a.error for a in result.failed())
+
+
+# -- Two repositories can share a basename ---------------------------------
+
+
+@pytest.fixture
+def twins(tmp_path: Path) -> tuple[Path, Path]:
+    """Two different repositories that both basename to `utils`.
+
+    `org-a/utils` and `org-b/utils` is an ordinary shape for a served
+    config, and `_repo_name()` reduces both to `utils`.
+    """
+    made = []
+    for org in ("org-a", "org-b"):
+        root = tmp_path / org / "utils"
+        root.mkdir(parents=True)
+        for args in (
+            ["init", "-q"],
+            ["config", "user.email", "a@b.c"],
+            ["config", "user.name", "A"],
+        ):
+            subprocess.run(["git", *args], cwd=root, check=True, capture_output=True)
+        (root / "marker.py").write_text(f"MARKER = {org!r}\n")
+        subprocess.run(["git", "add", "-A"], cwd=root, check=True, capture_output=True)
+        subprocess.run(
+            ["git", "commit", "-q", "-m", org],
+            cwd=root,
+            check=True,
+            capture_output=True,
+        )
+        made.append(root)
+    return made[0], made[1]
+
+
+def test_targets_sharing_a_name_have_different_identities(tmp_path: Path):
+    """`name` is the repository basename, so it cannot be the key for a
+    cache or a directory."""
+    a = ScanTarget(name="utils", url="https://git.example/org-a/utils.git")
+    b = ScanTarget(name="utils", url="https://git.example/org-b/utils.git")
+
+    assert a.name == b.name
+    assert a.identity != b.identity
+
+
+def test_identity_is_stable_for_the_same_target():
+    a = ScanTarget(name="utils", url="https://git.example/org-a/utils.git")
+    same = ScanTarget(name="utils", url="https://git.example/org-a/utils.git")
+
+    assert a.identity == same.identity
+
+
+def test_a_different_branch_is_a_different_identity():
+    main = ScanTarget(name="u", url="https://x/u.git", branch="main")
+    other = ScanTarget(name="u", url="https://x/u.git", branch="release")
+
+    assert main.identity != other.identity
+
+
+@needs_git
+def test_two_repositories_with_one_name_are_cloned_separately(twins, ctx_for):
+    """The bug: keying the clone directory on `name` alone made the second
+    call see an existing directory and silently hand back the *first*
+    repository — so one repo's code was scanned and reported under the
+    other's name."""
+    first, second = twins
+    ctx = ctx_for()
+
+    a = materialize(ctx, ScanTarget(name="utils", url=str(first)))
+    b = materialize(ctx, ScanTarget(name="utils", url=str(second)))
+
+    assert a.target.path != b.target.path
+    assert "org-a" in (a.target.path / "marker.py").read_text()
+    assert "org-b" in (b.target.path / "marker.py").read_text()
+
+
+@needs_git
+def test_a_whole_scan_of_two_same_named_repositories_keeps_them_apart(twins):
+    """End to end, through the orchestrator: every per-target cache —
+    the clone, the shared file list, and both scratch directories — has to
+    key on identity, not name."""
+    first, second = twins
+    config = ScanConfig(
+        targets=[
+            ScanTarget(name="utils", url=str(first)),
+            ScanTarget(name="utils", url=str(second)),
+        ],
+        privacy={"enrich_dependencies": False},
+        write_files=False,
+    )
+    result = Scanner(config).scan()
+
+    sizes = result.of(Artifact.SIZES)
+    assert len(sizes) == 2
+    for entry in sizes:
+        assert entry.outcome is Outcome.OK
+        assert "./marker.py" in entry.data["files"]
+
+
+def test_scratch_directories_differ_when_the_key_differs(ctx_for):
+    """`scratch_for` takes a readable label and a distinct key; passing the
+    same label with different keys must not collide."""
+    ctx = ctx_for()
+    a = ctx.scratch_for("utils", "stats", key="utils:aaa")
+    b = ctx.scratch_for("utils", "stats", key="utils:bbb")
+
+    assert a != b
+    assert a.name.startswith("utils-") and b.name.startswith("utils-")
+
+
+def test_the_shared_file_list_is_keyed_per_target(tmp_path: Path, ctx_for):
+    """Two targets named alike must not share a cached file list."""
+    ctx = ctx_for()
+    a = ScanTarget(name="utils", url="https://x/org-a/utils.git")
+    b = ScanTarget(name="utils", url="https://x/org-b/utils.git")
+
+    assert ctx.files_in(a.identity, lambda: ["./a.py"]) == ["./a.py"]
+    assert ctx.files_in(b.identity, lambda: ["./b.py"]) == ["./b.py"]

@@ -24,6 +24,12 @@
   `ScanTarget` is public and `scan_path(name=...)` takes what it is given —
   so `../..` or an absolute name escapes the workspace. Use
   `ScanContext.scratch_for`, which sanitises and disambiguates with a digest.
+- **Never *key* anything on `target.name` either.** It is the repository
+  basename, so `org-a/utils` and `org-b/utils` are both `utils`. Keying a
+  clone directory or a cached file list on it made the second target reuse
+  the first's — one repository's code scanned and reported under the other's
+  name. Use `target.identity`; pass it as `scratch_for(..., key=...)` and as
+  the `files_in` key. `name` is for ATD's wire and for humans.
 - **A remote target must be materialised before scanners see it.** Without
   it, a served config's `repos:` reaches every scanner as "no local path"
   and produces five quiet skips per repository — a scan that uploads nothing

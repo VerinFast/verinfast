@@ -89,7 +89,7 @@ def materialize(ctx: ScanContext, target: ScanTarget) -> Materialized:
             target=None, error="target has neither a local path nor a URL"
         )
 
-    destination = ctx.scratch_for(target.name, "clones") / "repo"
+    destination = ctx.scratch_for(target.name, "clones", key=target.identity) / "repo"
     if destination.exists():
         # A second call for the same target in one scan. The clone is
         # already there; re-cloning would fail on a non-empty directory.

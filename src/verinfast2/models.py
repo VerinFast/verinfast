@@ -12,6 +12,7 @@ without a translation layer, and validation at the boundary is free.
 
 from __future__ import annotations
 
+import hashlib
 from datetime import date, datetime, timezone
 from enum import Enum
 from pathlib import Path
@@ -83,6 +84,25 @@ class ScanTarget(BaseModel):
     #: A directory of code with no git history and no remote — the ATD v3
     #: "scan this sample" case. Git collection is skipped rather than faked.
     is_sample: bool = False
+
+    @property
+    def identity(self) -> str:
+        """A stable key that distinguishes this target from every other.
+
+        ``name`` does **not**: it is the repository basename, so
+        ``org-a/utils`` and ``org-b/utils`` are both ``utils``. Keying a
+        clone directory or a cached file list on the name alone made the
+        second target reuse the first's — scanning one repository's code and
+        reporting it under the other's name.
+
+        ATD still keys its repository rows on ``name``; this is for our own
+        per-scan caches and directories, never for the wire.
+        """
+        source = self.url or (str(self.path) if self.path else "")
+        digest = hashlib.sha256(
+            f"{self.name}\x00{source}\x00{self.branch or ''}".encode("utf-8")
+        ).hexdigest()[:12]
+        return f"{self.name}:{digest}"
 
 
 class CloudAccount(BaseModel):

@@ -74,20 +74,25 @@ class ScanContext:
             self._file_lists[target] = walk()
         return self._file_lists[target]
 
-    def scratch_for(self, target: str, kind: str) -> Path:
-        """A scratch directory for *target*, guaranteed to stay inside
-        :attr:`work_dir`.
+    def scratch_for(self, label: str, kind: str, key: str | None = None) -> Path:
+        """A scratch directory, guaranteed to stay inside :attr:`work_dir`.
 
-        ``target`` is caller-controlled — :class:`~verinfast2.models.ScanTarget`
-        is public and ``scan_path(name=...)`` takes whatever it is given — so
-        joining it to a path directly lets a name like ``../../etc`` or an
-        absolute path escape the scan's workspace. The name is reduced to
-        safe characters and disambiguated with a digest of the original, so
-        two targets that slugify alike still get separate directories.
+        Args:
+            label: the readable part of the directory name. Caller-controlled
+                — :class:`~verinfast2.models.ScanTarget` is public and
+                ``scan_path(name=...)`` takes what it is given — so joining
+                it to a path directly lets ``../../etc`` or an absolute path
+                escape the workspace. It is reduced to safe characters.
+            kind: which scratch space (``stats``, ``findings``, ``clones``).
+            key: what actually distinguishes this directory, digested into
+                the name. Defaults to *label*, but a caller with two targets
+                sharing a name must pass
+                :attr:`~verinfast2.models.ScanTarget.identity` — otherwise
+                the second silently reuses the first's directory.
         """
-        safe = "".join(c if c.isalnum() or c in "-_." else "-" for c in target)
+        safe = "".join(c if c.isalnum() or c in "-_." else "-" for c in label)
         safe = safe.strip(".-")[:48] or "target"
-        digest = hashlib.sha256(target.encode("utf-8")).hexdigest()[:8]
+        digest = hashlib.sha256((key or label).encode("utf-8")).hexdigest()[:12]
         path = self.work_dir / kind / f"{safe}-{digest}"
         path.mkdir(parents=True, exist_ok=True)
         return path

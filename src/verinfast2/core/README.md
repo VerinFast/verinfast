@@ -47,9 +47,21 @@ carry a token in its userinfo (`S5`).
 
 ## Scratch paths are derived, never concatenated
 
-`ScanContext.scratch_for` sanitises `target.name` and disambiguates it with a
-digest. The name is caller-controlled, so joining it to a path directly let
+`ScanContext.scratch_for` sanitises the readable label and digests a separate
+key. The name is caller-controlled, so joining it to a path directly let
 stats and findings scratch files land outside the workspace.
+
+## `name` identifies a repository to ATD; `identity` identifies a target to us
+
+`ScanTarget.name` is the repository basename — `org-a/utils` and
+`org-b/utils` are both `utils`. Keying anything per-target on it makes the
+second target reuse the first's: the clone directory, the shared file list,
+both scratch directories. The observable result is one repository's code
+scanned and uploaded under the other's name, with nothing failing.
+
+`ScanTarget.identity` folds in the URL or path and the branch. Every
+per-scan cache and directory keys on it. `name` stays what goes on the wire,
+because that is what ATD keys its repository rows on.
 
 ## What a result means
 

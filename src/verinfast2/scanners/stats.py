@@ -155,7 +155,8 @@ class StatsScanner:
             )
 
         files = ctx.files_in(
-            target.name, lambda: relative_files(target.path, ctx.config.exclude)
+            target.identity,
+            lambda: relative_files(target.path, ctx.config.exclude),
         )
         if not files:
             # Not a failure and not an empty success: there was nothing to
@@ -170,7 +171,7 @@ class StatsScanner:
 
         # Scratch lives in the scan's own work directory, never beside the
         # customer's code and never under ~ (`S12`, `S14`).
-        scratch = ctx.scratch_for(target.name, "stats")
+        scratch = ctx.scratch_for(target.name, "stats", key=target.identity)
         filelist = scratch / "filelist.json"
         output = scratch / "stats.json"
         cache_dir = (ctx.config.cache_dir or ctx.work_dir / "stats-cache").resolve()

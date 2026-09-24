@@ -186,7 +186,7 @@ class SizesScanner:
         # One walk for the whole scan: `stats` asks for the same list, and
         # the context hands back what this computed (`N12`).
         relative = ctx.files_in(
-            target.name, lambda: relative_files(root, ctx.config.exclude)
+            target.identity, lambda: relative_files(root, ctx.config.exclude)
         )
 
         # `per_file_detail` off means the caller wants the totals without a
