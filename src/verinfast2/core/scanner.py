@@ -95,7 +95,25 @@ class Scanner:
         a silent absence — "found nothing" and "never ran" must not look
         alike (`F18`).
         """
+        from verinfast2.core.materialize import materialize
         from verinfast2.scanners.base import registry
+
+        # A target from a served config's `repos:` list has a URL and no
+        # path. Without this it reaches every scanner as "no local path" and
+        # produces five quiet skips instead of a scan (`F18`).
+        obtained = materialize(ctx, target)
+        if not obtained.ok:
+            ctx.log.warning("%s: %s", target.name, obtained.error)
+            return [
+                ArtifactResult(
+                    artifact=artifact,
+                    target=target.name,
+                    outcome=Outcome.FAILED,
+                    error=obtained.error,
+                )
+                for artifact in REPO_ARTIFACTS
+            ]
+        target = obtained.target
 
         available = registry()
         results: list[ArtifactResult] = []

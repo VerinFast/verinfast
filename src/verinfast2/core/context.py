@@ -11,6 +11,7 @@ handed to every scanner. Nothing is global.
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import shutil
 import tempfile
@@ -72,6 +73,24 @@ class ScanContext:
         if target not in self._file_lists:
             self._file_lists[target] = walk()
         return self._file_lists[target]
+
+    def scratch_for(self, target: str, kind: str) -> Path:
+        """A scratch directory for *target*, guaranteed to stay inside
+        :attr:`work_dir`.
+
+        ``target`` is caller-controlled — :class:`~verinfast2.models.ScanTarget`
+        is public and ``scan_path(name=...)`` takes whatever it is given — so
+        joining it to a path directly lets a name like ``../../etc`` or an
+        absolute path escape the scan's workspace. The name is reduced to
+        safe characters and disambiguated with a digest of the original, so
+        two targets that slugify alike still get separate directories.
+        """
+        safe = "".join(c if c.isalnum() or c in "-_." else "-" for c in target)
+        safe = safe.strip(".-")[:48] or "target"
+        digest = hashlib.sha256(target.encode("utf-8")).hexdigest()[:8]
+        path = self.work_dir / kind / f"{safe}-{digest}"
+        path.mkdir(parents=True, exist_ok=True)
+        return path
 
     def artifact_path(self, target: str, name: str) -> Path | None:
         """Where ``<target>.<name>.json`` goes, or None if not writing files.

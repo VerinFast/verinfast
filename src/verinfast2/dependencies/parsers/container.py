@@ -36,9 +36,14 @@ def parse(text: str, path: str) -> list[Entry]:
         line = raw.strip()
         lowered = line.lower()
         if lowered.startswith("from "):
-            address = line.split(None, 1)[1].strip()
+            # `FROM --platform=linux/amd64 python:3.11` is valid: options come
+            # before the image. Taking the first token made `--platform=...`
+            # the dependency name.
+            tokens = [token for token in line.split()[1:] if not token.startswith("--")]
+            if not tokens:
+                continue
             # `FROM x AS builder` names a stage, not part of the image.
-            address = address.split()[0]
+            address = tokens[0]
             source = DOCKERFILE_SOURCE
         elif lowered.startswith("image:"):
             address = line.partition(":")[2].strip().strip("\"'")

@@ -170,8 +170,7 @@ class StatsScanner:
 
         # Scratch lives in the scan's own work directory, never beside the
         # customer's code and never under ~ (`S12`, `S14`).
-        scratch = ctx.work_dir / "stats" / target.name
-        scratch.mkdir(parents=True, exist_ok=True)
+        scratch = ctx.scratch_for(target.name, "stats")
         filelist = scratch / "filelist.json"
         output = scratch / "stats.json"
         cache_dir = (ctx.config.cache_dir or ctx.work_dir / "stats-cache").resolve()

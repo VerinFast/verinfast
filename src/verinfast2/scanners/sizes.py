@@ -189,6 +189,13 @@ class SizesScanner:
             target.name, lambda: relative_files(root, ctx.config.exclude)
         )
 
+        # `per_file_detail` off means the caller wants the totals without a
+        # row per file. The size still has to be summed — the root entry is
+        # what ATD lifts onto the repository — but the expensive part, a
+        # line count that reads every text file, is skipped along with the
+        # map itself. Reading the flag and then building the map anyway is
+        # exactly the `D2` defect v2 exists to stop repeating.
+        detail = ctx.config.code.per_file_detail
         files: dict[str, Any] = {}
         total = 0
         for rel in relative:
@@ -198,6 +205,8 @@ class SizesScanner:
             except OSError:
                 size = 0
             total += size
+            if not detail:
+                continue
             files[rel] = {
                 "size": size,
                 "loc": count_lines(path),

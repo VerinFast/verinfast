@@ -42,7 +42,10 @@ Three behaviours are load-bearing and each fixes a v1 defect:
   ``upload.uuid``, exactly as v1 inferred it.
 - **``repos`` absent and ``repos: []`` are different.** ATD only emits the
   key when non-empty, precisely because an explicit empty list suppresses
-  the scan-the-working-directory fallback. Preserve the distinction.
+  the scan-the-working-directory fallback. Both parse to no targets, so the
+  distinction is carried separately on
+  :attr:`~verinfast2.config.schema.ScanConfig.targets_configured` — losing it
+  in the list alone meant the caller could not tell them apart.
 
 Anything ATD may add later is ignored rather than rejected: a served config
 is an input from another team's deploy cadence, and a new key must not take
@@ -172,7 +175,15 @@ def from_dict(document: dict[str, Any]) -> ScanConfig:
     if "truncate_findings" in document:
         privacy["truncate_findings"] = bool(document["truncate_findings"])
     if "truncate_findings_length" in document:
-        privacy["truncate_findings_length"] = int(document["truncate_findings_length"])
+        try:
+            privacy["truncate_findings_length"] = int(
+                document["truncate_findings_length"]
+            )
+        except (TypeError, ValueError):
+            # A malformed value from ATD costs that setting, not the scan —
+            # the same trade `_as_date` makes. Raising here aborted the whole
+            # config load over one bad key.
+            pass
 
     # ``dry`` and ``should_upload`` are separate switches in the served
     # document and either one alone turns uploading off.
@@ -180,8 +191,15 @@ def from_dict(document: dict[str, Any]) -> ScanConfig:
         document.get("dry", False)
     )
 
+    # An absent `repos`/`local_repos` and an explicit empty one both yield no
+    # targets, but they mean different things to the scan-the-cwd fallback.
+    configured = any(
+        isinstance(document.get(key), list) for key in ("repos", "local_repos")
+    )
+
     fields: dict[str, Any] = {
         "targets": _targets(document),
+        "targets_configured": configured,
         "cloud": _cloud(document),
         "base_url": document.get("baseurl"),
         "report_id": report_id,

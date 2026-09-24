@@ -32,6 +32,25 @@ waste `N12` exists to remove — it just moves the second traversal from inside
 one scanner to between two. The list lives on the context because it is
 per-scan derived state, which is what a context is for.
 
+## Remote targets are cloned first
+
+A target built from a served config's `repos:` list has a URL and no path.
+Every scanner needs `ScanTarget.path`, so without `core/materialize.py` each
+of the five skips it with "no local path" — five quiet skips per repository,
+and a scan that uploads nothing while reporting no failure.
+
+Clones go in the scan's work directory, removed on the way out. They are
+**not shallow**: git history is one of the five artifacts and `--depth` would
+silently truncate it; the `--since` window bounds the work instead.
+Credentials are ambient, and a URL is never echoed into an error — it can
+carry a token in its userinfo (`S5`).
+
+## Scratch paths are derived, never concatenated
+
+`ScanContext.scratch_for` sanitises `target.name` and disambiguates it with a
+digest. The name is caller-controlled, so joining it to a path directly let
+stats and findings scratch files land outside the workspace.
+
 ## What a result means
 
 `_scan_target` records an outcome for **every** artifact in `REPO_ARTIFACTS`,

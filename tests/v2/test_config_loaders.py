@@ -203,3 +203,45 @@ def test_from_yaml_uses_safe_load():
 
     with pytest.raises(yaml.constructor.ConstructorError):
         from_yaml("!!python/object/apply:os.system ['echo pwned']")
+
+
+# -- Absent versus explicitly empty -----------------------------------------
+
+
+def test_an_absent_repos_key_is_distinguishable_from_an_empty_one():
+    """ATD emits `repos:` only when non-empty, because an explicit empty
+    list suppresses the scan-the-cwd fallback and an absent key does not.
+    `targets` alone cannot tell them apart, so the answer is recorded."""
+    assert from_dict({}).targets_configured is False
+    assert from_dict({"repos": []}).targets_configured is True
+    assert from_dict({"local_repos": []}).targets_configured is True
+
+
+def test_a_populated_list_also_counts_as_configured():
+    config = from_dict({"repos": ["https://example.invalid/a.git"]})
+
+    assert config.targets_configured is True
+    assert len(config.targets) == 1
+
+
+def test_the_served_config_is_configured(served):
+    assert served.targets_configured is True
+
+
+# -- A malformed value costs that setting, not the load ---------------------
+
+
+@pytest.mark.parametrize("value", ["abc", None, [], {"a": 1}])
+def test_a_malformed_truncation_length_falls_back_to_the_default(value):
+    """`int(...)` raised and aborted the whole config load over one bad key,
+    which is not the trade `_as_date` makes for dates."""
+    config = from_dict({"truncate_findings_length": value})
+
+    assert config.privacy.truncate_findings_length == 30
+
+
+def test_a_numeric_string_truncation_length_is_still_accepted():
+    assert (
+        from_dict({"truncate_findings_length": "45"}).privacy.truncate_findings_length
+        == 45
+    )

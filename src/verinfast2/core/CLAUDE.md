@@ -20,5 +20,14 @@
   the caller cannot forget. Don't move that to the caller's side.
 - `scan_path()` is the ATD v3 entry point: a directory with no git history and
   no remote. Skip git cleanly — never `git init` the tree (`S12`, `L8`).
+- **Never join `target.name` to a path.** It is caller-controlled —
+  `ScanTarget` is public and `scan_path(name=...)` takes what it is given —
+  so `../..` or an absolute name escapes the workspace. Use
+  `ScanContext.scratch_for`, which sanitises and disambiguates with a digest.
+- **A remote target must be materialised before scanners see it.** Without
+  it, a served config's `repos:` reaches every scanner as "no local path"
+  and produces five quiet skips per repository — a scan that uploads nothing
+  and reports no failure. `core/materialize.py` clones; a clone that fails
+  is one clear failure per artifact, naming the cause.
 - Every subprocess needs an explicit timeout; ATD runs this inside a
   request-serving worker (`L10`).

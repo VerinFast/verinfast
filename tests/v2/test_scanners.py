@@ -880,3 +880,146 @@ def test_different_targets_get_different_file_lists(tmp_path: Path, ctx_for):
 
     assert ctx.files_in("one", lambda: relative_files(first, [])) == ["./a.py"]
     assert ctx.files_in("two", lambda: relative_files(second, [])) == ["./b.py"]
+
+
+# -- Scratch directories stay inside the workspace --------------------------
+
+
+@pytest.mark.parametrize(
+    "hostile",
+    ["../../../etc/passwd", "/absolute/evil", "..", "", "a/b/c", "....//....//x"],
+)
+def test_a_hostile_target_name_cannot_escape_the_work_directory(hostile: str, ctx_for):
+    """`ScanTarget` is public and `scan_path(name=...)` takes whatever it is
+    given, so `target.name` is caller-controlled. Joining it to a path
+    directly let stats and findings scratch files land outside the scan
+    workspace."""
+    ctx = ctx_for()
+    path = ctx.scratch_for(hostile, "stats")
+
+    assert ctx.work_dir.resolve() in path.resolve().parents
+    assert path.is_dir()
+
+
+def test_names_that_slugify_alike_still_get_separate_directories(ctx_for):
+    """`../evil` and `..-evil` must not collide once sanitised."""
+    ctx = ctx_for()
+
+    assert ctx.scratch_for("../evil", "stats") != ctx.scratch_for("..-evil", "stats")
+
+
+def test_the_same_name_gets_the_same_directory(ctx_for):
+    ctx = ctx_for()
+
+    assert ctx.scratch_for("repo.git", "stats") == ctx.scratch_for("repo.git", "stats")
+
+
+@needs_git
+@needs_modernmetric
+def test_stats_scratch_is_inside_the_work_directory(repo: Path, ctx_for):
+    ctx = ctx_for()
+    StatsScanner().run(ctx, ScanTarget(name="../../escape", path=repo))
+
+    assert not (repo.parent.parent / "escape").exists()
+
+
+# -- per_file_detail has to gate something ---------------------------------
+
+
+def test_per_file_detail_off_drops_the_file_map(tmp_path: Path, ctx_for):
+    """v1's `run_sizes` was read from config, reported to telemetry, and
+    gated nothing (`D2`). A v2 flag that does the same is the same bug."""
+    root = tmp_path / "code"
+    root.mkdir()
+    for index in range(5):
+        (root / f"f{index}.py").write_text("x = 1\n" * 50)
+
+    ctx = ctx_for(ScanConfig(code={"per_file_detail": False}))
+    result = SizesScanner().run(ctx, ScanTarget(name="t", path=root))
+
+    assert set(result.data["files"]) == {"."}
+
+
+def test_per_file_detail_off_still_reports_the_totals(tmp_path: Path, ctx_for):
+    """ATD lifts the root entry onto `repository.file_size`, so the totals
+    survive even when the per-file rows do not."""
+    root = tmp_path / "code"
+    root.mkdir()
+    (root / "a.py").write_text("x = 1\n" * 50)
+
+    detailed = SizesScanner().run(
+        ctx_for(ScanConfig(code={"per_file_detail": True})),
+        ScanTarget(name="t", path=root),
+    )
+    summary = SizesScanner().run(
+        ctx_for(ScanConfig(code={"per_file_detail": False})),
+        ScanTarget(name="t", path=root),
+    )
+
+    assert summary.data["files"]["."] == detailed.data["files"]["."]
+    assert (
+        summary.data["metadata"]["real_size"] == detailed.data["metadata"]["real_size"]
+    )
+
+
+def test_per_file_detail_on_is_the_default(tmp_path: Path, ctx_for):
+    root = tmp_path / "code"
+    root.mkdir()
+    (root / "a.py").write_text("x = 1\n")
+
+    result = SizesScanner().run(ctx_for(), ScanTarget(name="t", path=root))
+
+    assert "./a.py" in result.data["files"]
+
+
+# -- git: option-like refs and worktrees ------------------------------------
+
+
+def test_end_of_options_protects_a_ref_that_looks_like_a_flag():
+    """A trailing `--` does not: it separates revisions from paths, and git
+    has already parsed the option by then. Branch names come from the served
+    config and from the repository, so this is reachable input (`S11`)."""
+    command = log_command(None, "--upload-pack=evil")
+
+    assert "--end-of-options" in command
+    assert command.index("--end-of-options") < command.index("--upload-pack=evil")
+
+
+@needs_git
+def test_an_option_like_ref_is_rejected_as_a_revision_not_run_as_an_option(
+    repo: Path, ctx_for
+):
+    """The behavioural half. git must complain about a *revision*, which
+    means it never reached option parsing."""
+    config = ScanConfig(code={"git_start": date(2024, 1, 1)})
+    result = GitScanner().run(
+        ctx_for(config),
+        ScanTarget(name="s", path=repo, branch="--upload-pack=evil"),
+    )
+
+    assert result.outcome is Outcome.FAILED
+    assert "unrecognized argument" not in result.error
+
+
+@needs_git
+def test_a_linked_worktree_is_a_git_repository(tmp_path: Path, ctx_for):
+    """`.git` is a **file** holding `gitdir: ...` in a linked worktree and in
+    a submodule. Requiring a directory silently skipped both."""
+    main = tmp_path / "main"
+    main.mkdir()
+    git("init", "-q", cwd=main)
+    git("config", "user.email", "a@b.c", cwd=main)
+    git("config", "user.name", "A", cwd=main)
+    (main / "a.py").write_text("x = 1\n")
+    git("add", "-A", cwd=main)
+    commit(main, "one", FIRST_COMMIT_DATE)
+    linked = tmp_path / "linked"
+    git("worktree", "add", "-q", str(linked), "-b", "other", cwd=main)
+
+    assert (linked / ".git").is_file()
+
+    config = ScanConfig(code={"git_start": date(2024, 1, 1)})
+    result = GitScanner().run(ctx_for(config), ScanTarget(name="w", path=linked))
+
+    assert result.outcome is Outcome.OK
+    assert len(result.data) == 1

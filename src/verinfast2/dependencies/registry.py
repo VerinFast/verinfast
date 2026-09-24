@@ -120,10 +120,15 @@ class RegistryClient:
             return None
 
         if response.status_code != 200:
-            # A 404 is a real answer — the package is not there — and should
-            # not count against a budget meant for connectivity problems.
             if response.status_code >= 500:
                 self._failures[host] = self._failures.get(host, 0) + 1
+            else:
+                # A 404 is a real answer — the package is not there. It has
+                # to *clear* the run of connectivity failures, not merely
+                # avoid adding to it; leaving the count standing let a few
+                # transient errors plus some missing packages abandon a
+                # registry that was working.
+                self._failures[host] = 0
             return None
 
         try:
@@ -212,8 +217,16 @@ class RegistryClient:
         self._nuget_discovered = True
         index = self._get_json(NUGET_INDEX)
         for resource in (index or {}).get("resources") or []:
-            if isinstance(resource, dict) and resource.get("@type") == (
-                "RegistrationsBaseUrl"
+            if not isinstance(resource, dict):
+                continue
+            # `@type` is a string or a list, and is often versioned —
+            # "RegistrationsBaseUrl/3.6.0". Exact equality against the bare
+            # name missed those, so .NET enrichment quietly returned nothing.
+            declared = resource.get("@type")
+            types = declared if isinstance(declared, list) else [declared]
+            if any(
+                isinstance(item, str) and item.split("/")[0] == "RegistrationsBaseUrl"
+                for item in types
             ):
                 self._nuget_registration = resource.get("@id")
                 break

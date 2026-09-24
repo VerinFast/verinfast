@@ -57,6 +57,18 @@ budget. Retrying at all is safe only because every ingest route is
 idempotent — `findings` and `dependencies` delete-and-replace, the rest
 upsert on a natural key.
 
+`is_retryable()` takes the **whole 500–599 range**, not a hand-listed subset:
+listing them by hand meant a 501 or 507 was given up on after one attempt
+despite the rule above saying otherwise.
+
+## Uploads disabled must cost nothing
+
+`should_upload: false` and `dry: true` make every call a no-op success
+(`F17`). That means `enabled` is checked *first* — before a `scan_id` is
+demanded, before a log file is opened. Checking the session first turned
+every artifact in a dry run into a failed upload, and `mint_scan_session`
+decoded a body it had never fetched.
+
 **An upload never raises.** Every call returns an `UploadResult`. A scan that
 produced five good artifacts and failed to upload one reports exactly that.
 
@@ -66,6 +78,13 @@ produced five good artifacts and failed to upload one reports exactly that.
 preserving the keys in `NO_TRUNCATE` (rule ids, CWE, OWASP, path, message).
 It returns a new object; v1 mutated in place, which is why the same findings
 could not be both uploaded and rendered locally.
+
+**It is applied by the uploader, in `_shape`.** The findings scanner returns
+full source on purpose, because the local HTML report needs it — so cutting
+it is a property of *leaving the machine*. Leaving that to the caller meant
+`privacy.truncate_findings` defaulted to on and was enforced nowhere, which
+is the worst shape a privacy control can take. Use `Uploader.for_config` and
+the setting cannot be lost on the way.
 
 ## Importing this package does not import httpx
 

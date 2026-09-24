@@ -153,9 +153,14 @@ def log_command(since: str | None, ref: str | None) -> list[str]:
     if since:
         command.append(f"--since={since}")
     if ref:
-        command.append(ref)
-    # Terminate the revision list so a ref that is also a filename cannot be
-    # read as a path.
+        # `--end-of-options` is what stops a ref beginning with `-` being
+        # read as a git option. A trailing `--` does not: it only separates
+        # revisions from paths, and git has already parsed the option by
+        # then. A branch name comes from the served config or the
+        # repository, so `--upload-pack=...` is reachable input (`S11`).
+        command.extend(["--end-of-options", ref])
+    # Separate revisions from paths, so a ref that is also a filename is not
+    # read as one.
     command.append("--")
     return command
 
@@ -176,9 +181,13 @@ class GitScanner:
             # a sample with no history must not look like a repository with
             # no commits (`F5`, `F18`).
             return self._skip(target, "code sample: no git history to collect")
-        if not (target.path / ".git").is_dir():
-            # v1 ran `git init` here, creating a .git directory in someone
-            # else's tree (`D3`, `S12`).
+        if not (target.path / ".git").exists():
+            # `.git` is a **file** in a linked worktree or a submodule — it
+            # holds `gitdir: ...` rather than being the repository. Requiring
+            # a directory silently skipped both.
+            #
+            # v1 ran `git init` here instead, creating a .git directory in
+            # someone else's tree (`D3`, `S12`).
             return self._skip(target, "not a git repository")
 
         command = log_command(since_argument(ctx.config.code.git_start), target.branch)

@@ -39,6 +39,13 @@ round-trip, never a duplicate row.
 **There is no authentication.** The report UUID in the URL is the credential,
 so it must never be written to a log or an error message — see
 :func:`_redact`.
+
+**Truncation is applied here, on the way out.** The findings scanner returns
+the matched source in full, because the local HTML report needs it. Cutting
+it is a property of *leaving the machine*, so the uploader does it — see
+:meth:`Uploader._shape`. Leaving it to the caller meant
+``privacy.truncate_findings`` defaulted to on and was enforced nowhere, which
+is the worst shape a privacy control can take (`S2`).
 """
 
 from __future__ import annotations
@@ -53,9 +60,32 @@ from typing import Any, Final
 import httpx
 
 from verinfast2.transport.paths import UploadConfig, upload_path
+from verinfast2.transport.payloads import truncate_findings
 
-#: Statuses worth sending the same bytes again for. 415 is pointedly absent.
-RETRYABLE: Final[frozenset[int]] = frozenset({408, 429, 500, 502, 503, 504})
+#: Non-5xx statuses worth sending the same bytes again for.
+#:
+#: Every 5xx is retryable too — see :func:`is_retryable`, which takes the
+#: whole 500–599 range rather than a hand-listed subset. Listing them by hand
+#: meant a 501 or 507 was silently given up on despite the documented rule.
+RETRYABLE: Final[frozenset[int]] = frozenset({408, 429})
+
+#: The one status that is **never** retried, whatever range it falls in.
+#: ClamAV rejecting a payload is a verdict about the bytes.
+NEVER_RETRY: Final[frozenset[int]] = frozenset({415})
+
+
+def is_retryable(status: int | None) -> bool:
+    """Whether *status* is worth another attempt.
+
+    ``None`` means no response arrived at all — connection refused, DNS
+    failure, timeout — so the request may never have reached ATD.
+    """
+    if status is None:
+        return True
+    if status in NEVER_RETRY:
+        return False
+    return status in RETRYABLE or 500 <= status <= 599
+
 
 #: Field name for every multipart upload. ATD reads exactly this key.
 LOG_FIELD: Final = "logFile"
@@ -109,7 +139,7 @@ class UploadResult:
         """
         if self.ok or self.skipped:
             return False
-        return self.status is None or self.status in RETRYABLE
+        return is_retryable(self.status)
 
 
 @dataclass
@@ -168,6 +198,10 @@ class Uploader:
         retry: see :class:`RetryPolicy`.
         timeout: per-request ceiling, seconds.
         sleep: injectable for tests; defaults to :func:`time.sleep`.
+        truncate: cut matched source out of the findings payload before
+            sending. Defaults to on, matching ``PrivacyConfig`` and what ATD
+            serves. Build one with :meth:`for_config`.
+        truncate_length: characters of each string to keep.
     """
 
     base_url: str
@@ -178,6 +212,8 @@ class Uploader:
     retry: RetryPolicy = field(default_factory=RetryPolicy)
     timeout: float = 120.0
     sleep: Any = time.sleep
+    truncate: bool = True
+    truncate_length: int = 30
     #: Minted by :meth:`mint_scan_session`; required by per-repo routes.
     scan_id: str | None = None
 
@@ -187,6 +223,37 @@ class Uploader:
 
     def __post_init__(self) -> None:
         self.base_url = self.base_url.rstrip("/")
+
+    @classmethod
+    def for_config(cls, config: Any, **overrides: Any) -> Uploader:
+        """Build an uploader from a :class:`~verinfast2.config.schema.ScanConfig`.
+
+        The only constructor that cannot silently lose a privacy setting:
+        ``should_upload`` and both truncation settings come across together.
+        Prefer it over calling ``Uploader(...)`` by hand.
+        """
+        kwargs: dict[str, Any] = {
+            "base_url": config.base_url or "",
+            "report": config.report_id,
+            "config": config.upload,
+            "enabled": config.should_upload,
+            "truncate": config.privacy.truncate_findings,
+            "truncate_length": config.privacy.truncate_findings_length,
+        }
+        kwargs.update(overrides)
+        return cls(**kwargs)
+
+    def _shape(self, route: str, payload: Any) -> Any:
+        """Apply the privacy policy that belongs to leaving the machine.
+
+        Only ``findings`` carries customer source. Everything else goes as
+        the scanner produced it.
+        """
+        if route == "findings" and self.truncate:
+            return truncate_findings(
+                payload, enabled=True, max_length=self.truncate_length
+            )
+        return payload
 
     def _http(self) -> httpx.Client:
         if self.client is None:
@@ -220,6 +287,10 @@ class Uploader:
         route needs.
         """
         result = self._send("scan_id", method="GET")
+        if result.skipped:
+            # Uploads are off. There is no session to mint and no body to
+            # decode; the documented no-op success has to survive intact.
+            return result
         if result.ok:
             self.scan_id = _decode_scan_id(result.body)
             if not self.scan_id:
@@ -244,13 +315,19 @@ class Uploader:
             payload: already in ATD's shape. This module does not reshape
                 anything — see :mod:`verinfast2.transport.payloads`.
         """
+        if not self.enabled:
+            # Nothing was minted because nothing is being sent. Checking the
+            # session first turned every dry run into a failed upload.
+            return UploadResult(ok=True, route=route, skipped=True)
         if self.scan_id is None:
             return UploadResult(
                 ok=False,
                 route=route,
                 error="no scan session; call mint_scan_session() first",
             )
-        return self._send(route, method="POST", json_body=payload, repo=repo)
+        return self._send(
+            route, method="POST", json_body=self._shape(route, payload), repo=repo
+        )
 
     def upload_cloud(self, route: str, payload: Any) -> UploadResult:
         """POST one cloud artifact. Report-scoped: no scan id, no repo."""
@@ -267,12 +344,20 @@ class Uploader:
                 silent success; v1 returned ``False`` here and callers
                 ignored it.
         """
+        if not self.enabled:
+            return UploadResult(ok=True, route=route, skipped=True)
         file_path = Path(path)
-        if not file_path.is_file():
+        try:
+            data = file_path.read_bytes()
+        except OSError as exc:
+            # `upload_log` promises never to raise. A permission error or a
+            # log rotated out from under us must not abort a scan that
+            # otherwise succeeded.
             return UploadResult(
-                ok=False, route=route, error=f"no such file: {file_path.name}"
+                ok=False,
+                route=route,
+                error=_redact(f"could not read {file_path.name}: {exc}", self.report),
             )
-        data = file_path.read_bytes()
         files = {LOG_FIELD: (file_path.name, data, "application/octet-stream")}
         return self._send(route, method="POST", files=files)
 

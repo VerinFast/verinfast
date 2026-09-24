@@ -236,10 +236,12 @@ def test_log_uploads_use_the_logFile_field_name(uploader: Uploader, atd, tmp_pat
 
 
 def test_a_missing_log_file_fails_rather_than_silently_succeeding(uploader, atd):
+    """A missing file and an unreadable one take the same path now: both are
+    "could not read", reported rather than raised."""
     result = uploader.upload_log("logs", "/nonexistent/agent.log")
 
     assert not result.ok
-    assert "no such file" in result.error
+    assert "could not read" in result.error
     assert atd.calls == []
 
 

@@ -7,13 +7,15 @@ decides whether a flaky ATD costs a scan or a retry.
 
 from __future__ import annotations
 
+import copy
+import json
 import random
 
 import httpx
 import pytest
 
 from verinfast2.transport import RETRYABLE, RetryPolicy, UploadConfig, Uploader
-from verinfast2.transport.client import _redact
+from verinfast2.transport.client import NEVER_RETRY, _redact, is_retryable
 
 REPORT = "9a6e8696-f93a-4402-a64e-342ccb37592b"
 BASE = "https://atd.example/api"
@@ -95,10 +97,35 @@ def test_422_is_not_retried_and_says_it_is_our_bug():
     assert "agent bug" in result.error
 
 
-def test_415_is_absent_from_the_retryable_set():
+def test_415_is_never_retryable():
     """The single most consequential line in the module, asserted directly."""
-    assert 415 not in RETRYABLE
-    assert 502 in RETRYABLE
+    assert 415 in NEVER_RETRY
+    assert not is_retryable(415)
+
+
+@pytest.mark.parametrize("status", [500, 501, 502, 503, 504, 505, 507, 599])
+def test_every_5xx_is_retryable_not_a_hand_listed_few(status: int):
+    """The documented rule is "5xx: yes". A hand-written set meant a 501 or
+    507 was given up on after one attempt despite that."""
+    assert is_retryable(status)
+
+
+@pytest.mark.parametrize("status", [200, 400, 404, 409, 415, 422])
+def test_no_4xx_except_the_documented_two_is_retryable(status: int):
+    assert not is_retryable(status)
+
+
+def test_408_and_429_are_retryable_despite_being_4xx():
+    assert is_retryable(408) and is_retryable(429)
+    assert 408 in RETRYABLE and 429 in RETRYABLE
+
+
+def test_a_501_actually_gets_retried():
+    """The behavioural half of the test above."""
+    handler = Counter(501)
+    uploader_for(handler).upload_artifact("git", "r.git", [])
+
+    assert handler.calls == 3
 
 
 def test_a_retry_that_eventually_succeeds_reports_success():
@@ -163,6 +190,57 @@ def test_uploads_disabled_makes_every_call_a_no_op_success():
     assert result.skipped
     assert handler.calls == 0
     assert not result.retryable
+
+
+def disabled() -> Uploader:
+    """A dry-run uploader built the way a caller actually would.
+
+    Deliberately **not** via ``uploader_for``: that fixture pre-sets
+    ``scan_id``, which is exactly what hid this whole family of bugs. In a
+    real dry run nothing is minted, so nothing sets it.
+    """
+    return Uploader(base_url=BASE, report=REPORT, enabled=False)
+
+
+def test_minting_is_a_no_op_success_when_uploads_are_off():
+    """`_send` returns ok+skipped, and mint then tried to decode a body that
+    was never fetched — so a dry run failed at the first call."""
+    result = disabled().mint_scan_session()
+
+    assert result.ok
+    assert result.skipped
+    assert result.error is None
+
+
+def test_a_dry_run_uploads_every_artifact_without_a_session():
+    """Requiring `scan_id` before checking `enabled` turned every artifact
+    in a dry run into a failed upload."""
+    uploader = disabled()
+    uploader.mint_scan_session()
+
+    for route in ("git", "sizes", "stats", "findings", "dependencies"):
+        result = uploader.upload_artifact(route, "r.git", [])
+        assert result.ok and result.skipped, f"{route}: {result.error}"
+
+
+def test_a_dry_run_does_not_need_the_log_file_to_exist():
+    result = disabled().upload_log("logs", "/nonexistent/agent.log")
+
+    assert result.ok
+    assert result.skipped
+
+
+def test_a_whole_dry_run_reports_no_failures():
+    """The property that matters: `should_upload: false` costs nothing."""
+    uploader = disabled()
+    results = [
+        uploader.mint_scan_session(),
+        uploader.upload_artifact("git", "r.git", []),
+        uploader.upload_cloud("costs", {}),
+        uploader.upload_log("logs", "/nonexistent"),
+    ]
+
+    assert all(r.ok and r.skipped for r in results)
 
 
 # -- Retry policy arithmetic ------------------------------------------------
@@ -278,3 +356,136 @@ def test_a_retried_json_upload_resends_the_same_body():
 
     assert bodies[0] == bodies[1]
     assert b'"commit"' in bodies[0]
+
+
+# -- Truncation is applied on the way out -----------------------------------
+
+
+def sent_body(uploader: Uploader, bodies: list) -> dict:
+    return json.loads(bodies[-1])
+
+
+def recorder():
+    bodies: list[bytes] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        bodies.append(request.content)
+        return httpx.Response(200, json="ok")
+
+    return handler, bodies
+
+
+FINDING = {
+    "results": [
+        {
+            "check_id": "python.lang.security.audit.eval-detected",
+            "path": "src/engine.py",
+            "extra": {
+                "lines": "eval(CUSTOMER_PROPRIETARY_BUSINESS_LOGIC)",
+                "message": "Detected use of eval().",
+            },
+        }
+    ]
+}
+
+
+def test_findings_are_truncated_at_the_upload_boundary():
+    """`privacy.truncate_findings` defaults to on and was enforced nowhere:
+    the scanner deliberately returns full source and nothing cut it before
+    it went to ATD. A privacy control that is on by default and applied
+    never is the worst shape one can take (`S2`)."""
+    handler, bodies = recorder()
+    uploader = uploader_for(handler)
+
+    uploader.upload_artifact("findings", "r.git", FINDING)
+    sent = json.loads(bodies[-1])["results"][0]
+
+    assert sent["extra"]["lines"] == "eval(CUSTOMER_PROPRIETARY_BUSIN"[:30]
+    assert len(sent["extra"]["lines"]) == 30
+
+
+def test_truncation_leaves_the_identifying_fields_alone():
+    handler, bodies = recorder()
+    uploader_for(handler).upload_artifact("findings", "r.git", FINDING)
+    sent = json.loads(bodies[-1])["results"][0]
+
+    assert sent["check_id"] == "python.lang.security.audit.eval-detected"
+    assert sent["path"] == "src/engine.py"
+    assert sent["extra"]["message"] == "Detected use of eval()."
+
+
+def test_truncation_does_not_mutate_the_callers_payload():
+    """The same object still has to serve the local HTML report."""
+    handler, _ = recorder()
+    payload = copy.deepcopy(FINDING)
+    uploader_for(handler).upload_artifact("findings", "r.git", payload)
+
+    assert payload == FINDING
+
+
+def test_only_findings_are_truncated():
+    """Git messages and dependency summaries are not customer source."""
+    handler, bodies = recorder()
+    payload = [{"commit": "a", "message": "x" * 100}]
+    uploader_for(handler).upload_artifact("git", "r.git", payload)
+
+    assert json.loads(bodies[-1]) == payload
+
+
+def test_truncation_can_be_turned_off():
+    handler, bodies = recorder()
+    uploader_for(handler, truncate=False).upload_artifact("findings", "r.git", FINDING)
+    sent = json.loads(bodies[-1])["results"][0]
+
+    assert sent["extra"]["lines"] == FINDING["results"][0]["extra"]["lines"]
+
+
+def test_for_config_carries_the_privacy_settings_across():
+    """The constructor that cannot silently lose one."""
+    from verinfast2 import ScanConfig
+
+    config = ScanConfig(
+        base_url="https://atd.example/api",
+        report_id="r",
+        should_upload=True,
+        privacy={"truncate_findings": True, "truncate_findings_length": 7},
+    )
+    uploader = Uploader.for_config(config)
+
+    assert uploader.truncate is True
+    assert uploader.truncate_length == 7
+    assert uploader.enabled is True
+
+
+def test_for_config_honours_should_upload_false():
+    from verinfast2 import ScanConfig
+
+    uploader = Uploader.for_config(ScanConfig(report_id="r", should_upload=False))
+
+    assert uploader.enabled is False
+
+
+# -- Reading a log file can fail --------------------------------------------
+
+
+def test_an_unreadable_log_file_is_a_failed_result_not_an_exception(tmp_path):
+    """`upload_log` promises never to raise. A permission error on one
+    diagnostic file must not abort a scan that otherwise succeeded."""
+    log = tmp_path / "agent.log"
+    log.write_bytes(b"x")
+    log.chmod(0o000)
+    try:
+        result = uploader_for(Counter(200)).upload_log("logs", log)
+    finally:
+        log.chmod(0o644)
+
+    if result.ok:  # running as root, where the chmod does not bite
+        pytest.skip("cannot make a file unreadable as this user")
+    assert "could not read" in result.error
+
+
+def test_a_directory_passed_as_a_log_file_does_not_raise(tmp_path):
+    result = uploader_for(Counter(200)).upload_log("logs", tmp_path)
+
+    assert not result.ok
+    assert result.error

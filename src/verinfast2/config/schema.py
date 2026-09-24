@@ -95,6 +95,15 @@ class ScanConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     targets: list[ScanTarget] = Field(default_factory=list)
+
+    #: Whether the document that built this config **named** a repository
+    #: list at all, as opposed to omitting the key.
+    #:
+    #: ATD emits `repos:` only when non-empty, because an explicit empty list
+    #: suppresses the scan-the-working-directory fallback and an absent key
+    #: does not. `targets` alone cannot tell the two apart, so the answer is
+    #: recorded here rather than inferred from an empty list.
+    targets_configured: bool = False
     cloud: list[CloudAccount] = Field(default_factory=list)
     code: CodeConfig = Field(default_factory=CodeConfig)
     privacy: PrivacyConfig = Field(default_factory=PrivacyConfig)
@@ -131,6 +140,11 @@ class ScanConfig(BaseModel):
 
     #: Wall-clock ceiling for any single subprocess (`L10`, `S10`).
     subprocess_timeout_seconds: float = 900.0
+
+    #: Ceiling for cloning one remote repository. Separate from the general
+    #: subprocess budget: a clone is network-bound and legitimately slow,
+    #: while a scanner that takes this long has hung.
+    clone_timeout_seconds: float = 1800.0
 
     #: Per-**file** ceiling for the code-statistics tool. Its own default is
     #: 180 seconds, which means a run that is going to produce nothing takes

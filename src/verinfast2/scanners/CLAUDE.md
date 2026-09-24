@@ -35,6 +35,16 @@
   stats keeps `overall` and `stats.<agg>.<prop>`; dependencies stays a flat
   array with `name` and `source` required. Changing one needs the matching
   change on the ATD side.
+- **`--end-of-options` before a ref, not just a trailing `--`.** The trailing
+  `--` separates revisions from paths; git has already parsed an option by
+  then, so a branch named `--upload-pack=...` reaches option parsing without
+  it. Branch names come from the served config and the repository (`S11`).
+- **`.git` can be a file.** In a linked worktree or a submodule it holds
+  `gitdir: ...`. Requiring a directory silently skipped both.
+- **Never join `target.name` to a path** — use `ctx.scratch_for`.
+- **A config flag has to gate something.** `per_file_detail` was read and
+  ignored, which is `D2` — the v1 defect this rewrite exists to stop
+  repeating — reintroduced in v2.
 - **Never pass a bare `YYYY-MM-DD` to `git --since`.** git's approxidate
   fills in the current time of day, so the window silently depends on when
   the scan ran. `since_argument` pins midnight, and there is a test.

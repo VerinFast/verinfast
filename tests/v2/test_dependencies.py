@@ -749,3 +749,88 @@ def test_the_scanner_is_wired_into_a_full_scan(tmp_path: Path):
 def test_every_manifest_in_the_table_resolves_to_a_parser():
     for filename in MANIFESTS:
         assert parser_for(filename) is not None
+
+
+# -- Findings from review ---------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "line,expected",
+    [
+        ("FROM --platform=linux/amd64 python:3.11", ("python", "3.11")),
+        ("FROM --platform=$BUILDPLATFORM node:20 AS build", ("node", "20")),
+        ("FROM python:3.11", ("python", "3.11")),
+    ],
+)
+def test_from_options_are_not_mistaken_for_the_image(line: str, expected):
+    """`FROM --platform=...` is valid Docker. Taking the first token made
+    the option itself the dependency name."""
+    entries = container.parse(line + "\n", "Dockerfile")
+
+    assert [(e.name, e.specifier) for e in entries] == [expected]
+
+
+def test_a_from_line_with_only_options_is_skipped():
+    assert container.parse("FROM --platform=linux/amd64\n", "Dockerfile") == []
+
+
+def test_a_real_answer_clears_a_run_of_connectivity_failures():
+    """A 404 means the package is not there — a working registry. Leaving
+    the failure count standing let a few transient errors plus some missing
+    packages abandon a registry that was fine."""
+    answers = [None, None, 404, None, None, 200]
+
+    def handler(request):
+        outcome = answers.pop(0)
+        if outcome is None:
+            raise httpx.ConnectError("refused", request=request)
+        if outcome == 200:
+            return httpx.Response(200, json={"license": "MIT"})
+        return httpx.Response(404)
+
+    client = client_for(handler, failure_budget=3)
+    for index in range(5):
+        client.npm(f"pkg{index}", "1.0.0")
+
+    # Without the reset, the two failures after the 404 would reach the
+    # budget and the final lookup would never be attempted.
+    assert client.npm("pkg-final", "1.0.0") == {"license": "MIT"}
+
+
+@pytest.mark.parametrize(
+    "declared",
+    [
+        "RegistrationsBaseUrl",
+        "RegistrationsBaseUrl/3.6.0",
+        ["RegistrationsBaseUrl/3.6.0", "RegistrationsBaseUrl"],
+        ["RegistrationsBaseUrl/3.4.0"],
+    ],
+)
+def test_nuget_registration_is_found_whatever_shape_the_type_takes(declared):
+    """The service index versions `@type` and sometimes lists it. Exact
+    equality against the bare name made every .NET lookup return nothing."""
+
+    def handler(request):
+        url = str(request.url)
+        if url.endswith("index.json"):
+            return httpx.Response(
+                200,
+                json={
+                    "resources": [
+                        {"@type": "SearchQueryService", "@id": "https://s/"},
+                        {"@type": declared, "@id": "https://reg/"},
+                    ]
+                },
+            )
+        if url.startswith("https://reg/"):
+            return httpx.Response(200, json={"catalogEntry": "https://cat/1"})
+        return httpx.Response(200, json={"licenseExpression": "MIT"})
+
+    assert client_for(handler).nuget("Newtonsoft.Json", "13.0.1") == {"license": "MIT"}
+
+
+def test_an_index_without_a_registration_resource_returns_nothing():
+    def handler(request):
+        return httpx.Response(200, json={"resources": [{"@type": "Other", "@id": "x"}]})
+
+    assert client_for(handler).nuget("Some.Package", "1.0.0") == {}

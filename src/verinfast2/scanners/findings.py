@@ -101,8 +101,7 @@ class FindingsScanner:
                 "were collected",
             )
 
-        output = ctx.work_dir / "findings" / target.name / "findings.json"
-        output.parent.mkdir(parents=True, exist_ok=True)
+        output = ctx.scratch_for(target.name, "findings") / "findings.json"
         # Scan `.`, not an absolute path: the engine puts the path it was
         # given into every finding, and an absolute one leaks the scanning
         # machine's layout into ATD (`S3`). `cwd` makes `.` the target.
