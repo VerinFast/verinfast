@@ -263,3 +263,27 @@ def test_cleanup_failure_is_logged_not_swallowed(monkeypatch, caplog):
 
     for path in leaked:  # the failure was simulated; don't actually leak
         real_rmtree(path, ignore_errors=True)
+
+
+def test_importing_the_package_does_not_import_an_http_stack():
+    """`verinfast2.transport.paths` is copied verbatim into ATD's test suite,
+    which is only possible because it depends on nothing. An eager
+    ``client`` import in ``transport/__init__`` would put httpx behind
+    ``from verinfast2 import ScanConfig`` and behind that vendored port.
+
+    ``Uploader`` resolves lazily instead; this pins that it stays that way.
+    """
+    p = _run(
+        "import sys, verinfast2;"
+        "from verinfast2.transport import upload_path;"
+        "print('httpx' in sys.modules)"
+    )
+    assert p.returncode == 0, p.stderr
+    assert p.stdout.strip() == "False"
+
+
+def test_the_uploader_is_still_reachable_from_the_transport_package():
+    """The laziness must not cost the import path callers actually use."""
+    p = _run("from verinfast2.transport import Uploader;" "print(Uploader.__name__)")
+    assert p.returncode == 0, p.stderr
+    assert p.stdout.strip() == "Uploader"
