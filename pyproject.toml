@@ -44,7 +44,7 @@ dependencies = [
     "psutil~=7.2.0",
     "pyyaml~=6.0.2",
     "tomli>=2.0.0; python_version < '3.11'",
-    "semgrep==1.136.0; python_version == '3.9'",
+    "semgrep==1.177.0; python_version == '3.9'",
     "semgrep==1.152.0; python_version != '3.9'",
     "windows-curses~=2.4.0; sys_platform == 'win32'",
 ]
