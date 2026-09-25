@@ -3,15 +3,18 @@ import json
 import os
 
 from azure.identity import DefaultAzureCredential
-from azure.monitor.query import MetricsQueryClient
 from azure.mgmt.storage import StorageManagementClient
 from azure.mgmt.resource import ResourceManagementClient
+
+from verinfast.cloud.azure.metrics import RegionalMetricsClient
+
+metric_namespace = "Microsoft.Storage/storageAccounts"
 
 
 def getBlocks(sub_id: str, path_to_output: str = "./", dry=False):
     if not dry:
         credential = DefaultAzureCredential()
-        client = MetricsQueryClient(credential)
+        client = RegionalMetricsClient(credential)
         resource_client = ResourceManagementClient(credential, subscription_id=sub_id)
 
         group_list = resource_client.resource_groups.list()
@@ -39,7 +42,11 @@ def getBlocks(sub_id: str, path_to_output: str = "./", dry=False):
                 )
 
                 o = client.query_resource(
-                    resource_uri=account.id, metric_names=["UsedCapacity"], timespan=d
+                    resource_id=account.id,
+                    region=account.location,
+                    metric_namespace=metric_namespace,
+                    metric_names=["UsedCapacity"],
+                    timespan=d,
                 )
 
                 bytes = o.metrics[0].timeseries[0].data[0].average
@@ -54,6 +61,7 @@ def getBlocks(sub_id: str, path_to_output: str = "./", dry=False):
                 for c in containers:
                     if c.public_access:
                         known_buckets[account.name]["public"] = True
+        client.close()
         my_buckets = list(known_buckets.values())
         upload = {
             "metadata": {"provider": "azure", "account": str(sub_id)},

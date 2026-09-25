@@ -2,8 +2,9 @@
 
 Ports ``src/verinfast/cloud/azure/``.
 
-Already SDK-based (``azure-mgmt-*``, ``azure-monitor-query``), so this is
-mostly a reshape onto the provider interface.
+Already SDK-based (``azure-mgmt-*``, ``azure-monitor-query`` for logs and
+``azure-monitor-querymetrics`` for metrics), so this is mostly a reshape onto
+the provider interface.
 
 Watch the upload source label: v1 reported Azure utilization uploads as
 coming from AWS (`D4`).
