@@ -2,12 +2,9 @@
 
 Ports ``src/verinfast/cloud/azure/``.
 
-Nothing here collects yet. Every artifact returns SKIPPED with a reason
-rather than raising: the orchestrator runs all three providers over whatever
-the config names, and one unported provider must not cost a scan the
-provider that does work (`F19`). A SKIPPED result also keeps the distinction
-`F18` is about -- this is "never ran", and it must not be filed as "found
-nothing".
+Already SDK-based (``azure-mgmt-*``, ``azure-monitor-query`` for logs and
+``azure-monitor-querymetrics`` for metrics), so this is mostly a reshape onto
+the provider interface.
 
 Sources when these are written: sign-in and audit logs for user activity; Load Balancer plus Application Gateway for balancers.
 
