@@ -29,8 +29,28 @@ interface, not ours — don't rename them.
 | `code.allow_package_manager_execution` | always on | **off** | runs arbitrary code from the scanned tree |
 | `code.git_start` | read, then dropped | **honoured** | v1 bug `D1` |
 
+## Three behaviours the loader gets deliberately right
+
+- **`modules.code.git.start` is honoured.** v1 read it into one attribute and
+  looked for it under another, so the configured window was silently ignored
+  and every scan walked all of history (`D1`). ATD sends the window anyway,
+  "for forward compatibility" — this is that compatibility arriving.
+- **`report.uuid` present turns on uuid addressing.** Its presence is the
+  signal, exactly as v1 inferred it.
+- **`dry: true` and `should_upload: false` each turn uploading off**, and the
+  scan still runs and still returns its artifacts.
+
+## Tolerant of ATD, strict about us
+
+An unknown top-level key is ignored, not rejected: a served config follows
+another team's deploy cadence, and a new key must not take agents down in the
+field. Keys we do recognise are validated strictly — `ScanConfig` sets
+`extra="forbid"`.
+
+`from_yaml` is `yaml.safe_load` only. A served config is remote input.
+
 ## Current state
 
-`schema.py` is implemented. Every loader raises `NotImplementedError`; the
-mapping is mechanical and `src/verinfast/config.py::handle_config_file` has
-the key names.
+Implemented, with `tests/v2/test_config_loaders.py` covering the served
+document end to end — including the round trip where a parsed config builds
+an `Uploader` that hits the paths ATD's own contract test asserts.
