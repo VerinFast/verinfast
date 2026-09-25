@@ -6,7 +6,9 @@ from typing import List
 from azure.identity import DefaultAzureCredential
 from azure.mgmt.compute import ComputeManagementClient
 from azure.mgmt.network import NetworkManagementClient
-from azure.monitor.query import MetricsQueryClient, MetricAggregationType
+from azure.monitor.querymetrics import MetricAggregationType
+
+from verinfast.cloud.azure.metrics import RegionalMetricsClient
 
 
 from verinfast.cloud.cloud_dataclass import (
@@ -15,6 +17,7 @@ from verinfast.cloud.cloud_dataclass import (
 )
 
 metric_name = "Percentage CPU"
+metric_namespace = "Microsoft.Compute/virtualMachines"
 d = datetime.timedelta(
     days=30, seconds=0, microseconds=0, milliseconds=0, minutes=0, hours=0, weeks=0
 )
@@ -28,14 +31,23 @@ aggregations = [
 
 
 def get_metrics_for_instance(
-    metrics_client: MetricsQueryClient, instance_id: str, instance_name: str
+    metrics_client: RegionalMetricsClient,
+    instance_id: str,
+    instance_name: str,
+    region: str,
 ) -> List[Datum]:
     print("Get Metrics for Instance")
     data = []
     try:
+        # `granularity`, not `interval`: the hourly window has always been named
+        # `granularity` on the client. Passing `interval` landed it in **kwargs
+        # alongside the parameter it was meant to set, so every call raised
+        # TypeError into the handler below and each VM reported no utilization.
         o = metrics_client.query_resource(
-            resource_uri=instance_id,
-            interval=datetime.timedelta(hours=1),
+            resource_id=instance_id,
+            region=region,
+            metric_namespace=metric_namespace,
+            granularity=datetime.timedelta(hours=1),
             aggregations=aggregations,
             metric_names=[metric_name],
             timespan=d,
@@ -60,9 +72,7 @@ def get_instances(sub_id: str, path_to_output: str = "./", dry=False, log=None):
         client = ComputeManagementClient(
             credential=DefaultAzureCredential(), subscription_id=sub_id
         )
-        metrics_client = MetricsQueryClient(
-            credential=DefaultAzureCredential(), subscription_id=sub_id
-        )
+        metrics_client = RegionalMetricsClient(credential=DefaultAzureCredential())
         networkClient = NetworkManagementClient(
             credential=DefaultAzureCredential(), subscription_id=sub_id
         )
@@ -120,10 +130,14 @@ def get_instances(sub_id: str, path_to_output: str = "./", dry=False, log=None):
                 continue
             my_instances.append(my_instance)
             m = get_metrics_for_instance(
-                metrics_client=metrics_client, instance_id=vm.id, instance_name=name
+                metrics_client=metrics_client,
+                instance_id=vm.id,
+                instance_name=name,
+                region=location,
             )
             d = {"id": vm.id, "metrics": [metric.dict for metric in m]}
             metrics.append(d)
+        metrics_client.close()
         upload = {
             "metadata": {"provider": "azure", "account": str(sub_id)},
             "data": my_instances,
