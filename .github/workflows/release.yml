@@ -85,6 +85,11 @@ jobs:
             echo "${{ vars.STR_PUB_KEY }}" > ~/.ssh/id_rsa.pub
             echo "Key set"
             ssh-keyscan -H ssh.dev.azure.com >> ~/.ssh/known_hosts
+            # Every SSH clone the suite actually performs is from github.com
+            # (tests/composer.yaml, tests/config.yaml, tests/str_conf.yaml).
+            # Without its host key here the clone depends on the runner image
+            # happening to trust github.com already.
+            ssh-keyscan -H github.com >> ~/.ssh/known_hosts
             echo "Restarting Agent"
             eval "$(ssh-agent)"
             eval "$(ssh-agent -s)"
