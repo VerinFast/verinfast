@@ -17,5 +17,16 @@
   UUID, which is the upload credential. v1 saved it to the working directory
   and never deleted it despite setting `delete_config_after` (`D6`, `S5`).
 - Dates are `datetime.date`, not f-string-built text. v1 emitted `2026-3-1`.
+- **A malformed value from ATD costs that setting, not the scan.** `_as_date`
+  returns `None` on junk and the default applies. A served config is another
+  team's deploy landing in the field, so failing the whole run on one bad key
+  is the wrong trade — but only for keys ATD owns. Our own `ScanConfig` stays
+  `extra="forbid"`.
+- **Cloud account ids are coerced to `str`.** An unquoted YAML id arrives as
+  an int and stops matching ATD's `(report, provider, account, remote_id)`
+  upsert key — the rows land, under the wrong account.
+- **`repos` absent and `repos: []` are not the same thing.** ATD only emits
+  the key when non-empty, because an explicit empty list suppresses the
+  scan-the-working-directory fallback. Don't normalise them together.
 - Changing a default here changes behaviour for every existing config file.
   Say so in the PR body.

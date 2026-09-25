@@ -11,6 +11,7 @@ handed to every scanner. Nothing is global.
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import shutil
 import tempfile
@@ -50,10 +51,51 @@ class ScanContext:
     log: logging.Logger
     progress: ProgressFn = _noop_progress
     _owns_work_dir: bool = field(default=False, repr=False)
+    #: Per-target file lists, memoised. See :meth:`files_in`.
+    _file_lists: dict[str, list[str]] = field(default_factory=dict, repr=False)
 
     @property
     def embedded(self) -> bool:
         return self.config.embedded
+
+    def files_in(self, target: str, walk: Callable[[], list[str]]) -> list[str]:
+        """The repo-relative file list for *target*, computed at most once.
+
+        ``sizes`` and ``stats`` both need every file under a target. Walking
+        a large monorepo twice is the same waste `N12` exists to remove — it
+        just moves the second traversal from inside one scanner to between
+        two. The list lives here because it is per-scan derived state, which
+        is what a context is for; ``walk`` is called only on a miss.
+
+        Paths are ``./``-prefixed, the form both artifacts must emit so ATD
+        merges their rows rather than creating two per file.
+        """
+        if target not in self._file_lists:
+            self._file_lists[target] = walk()
+        return self._file_lists[target]
+
+    def scratch_for(self, label: str, kind: str, key: str | None = None) -> Path:
+        """A scratch directory, guaranteed to stay inside :attr:`work_dir`.
+
+        Args:
+            label: the readable part of the directory name. Caller-controlled
+                — :class:`~verinfast2.models.ScanTarget` is public and
+                ``scan_path(name=...)`` takes what it is given — so joining
+                it to a path directly lets ``../../etc`` or an absolute path
+                escape the workspace. It is reduced to safe characters.
+            kind: which scratch space (``stats``, ``findings``, ``clones``).
+            key: what actually distinguishes this directory, digested into
+                the name. Defaults to *label*, but a caller with two targets
+                sharing a name must pass
+                :attr:`~verinfast2.models.ScanTarget.identity` — otherwise
+                the second silently reuses the first's directory.
+        """
+        safe = "".join(c if c.isalnum() or c in "-_." else "-" for c in label)
+        safe = safe.strip(".-")[:48] or "target"
+        digest = hashlib.sha256((key or label).encode("utf-8")).hexdigest()[:12]
+        path = self.work_dir / kind / f"{safe}-{digest}"
+        path.mkdir(parents=True, exist_ok=True)
+        return path
 
     def artifact_path(self, target: str, name: str) -> Path | None:
         """Where ``<target>.<name>.json`` goes, or None if not writing files.

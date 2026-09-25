@@ -6,7 +6,16 @@ the v2 suite can run and fail independently during the rewrite.
 | File | What |
 | ---- | ---- |
 | `test_upload_paths.py` | the ATD v3 wire contract, including the golden case ATD pins |
+| `test_atd_contract.py` | the whole route walk, replayed against a fake ATD |
+| `test_uploader.py` | what each status code means and what happens next |
+| `test_config_loaders.py` | reading the config ATD serves |
+| `test_payloads.py` | truncation — the privacy boundary |
+| `test_scanners.py` | git, sizes, stats, and the orchestration around them |
+| `test_dependencies.py` | the nine-ecosystem inventory |
+| `test_findings.py` | the Opengrep scanner, mostly via a stub engine |
 | `test_public_api.py` | the promises that make `verinfast2` importable |
+| `test_ruleset.py` | the vendored rules' integrity and licences |
+| `atd_fixtures.py` | payload shapes copied from ATD's own contract test |
 
 ## These are invariant tests, not coverage
 
@@ -21,6 +30,19 @@ once pytest has already imported everything.
 side, so a drift between the two repositories fails here rather than
 producing plausible-looking wrong URLs.
 
+## The contract is tested from both ends
+
+ATD vendors a literal port of our `transport/paths.py` into its
+`tests/e2e/upload_paths.py`, and uses it to prove its *server* accepts a
+simulated agent run. `atd_fixtures.py` is the same trade in reverse: ATD's
+payload shapes, copied here, so `test_atd_contract.py` can prove our *client*
+produces that run — same paths, same bodies, same multipart field name, with
+an `httpx.MockTransport` standing in for ATD.
+
+Neither side needs the other running. A drift on either side fails a test on
+that side. **Both copies are maintained by hand** — if one of these fails,
+find out which side moved before changing anything.
+
 ## Running
 
 ```sh
@@ -28,4 +50,7 @@ PYTHONPATH=src python -m pytest tests/v2 -q
 ```
 
 Offline, no cloud credentials, no package managers — and it must stay that
-way.
+way. `conftest.py` **enforces** it: an autouse fixture patches the socket
+layer so any test that opens a real connection fails with an explanation,
+rather than passing in CI and failing in an air-gapped install. Test an HTTP
+client with `httpx.MockTransport`, which never reaches the socket.
