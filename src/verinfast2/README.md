@@ -44,5 +44,6 @@ ports from and the defects to fix on the way.
 
 `models.py` → `config/schema.py` → `core/scanner.py` → a scanner.
 
-Design rationale lives in the wiki under `docs/v2/`; requirement ids like
-`L1` and `S7` in these docstrings resolve there.
+Design rationale lives in the VerinFast v2 wiki, kept locally in Waikiki and
+deliberately not in this repository; requirement ids like `L1` and `S7` in
+these docstrings resolve there.
