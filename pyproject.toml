@@ -16,13 +16,17 @@ authors = [
 description = "This tool safely and securely analyzes applications for benchmarking."
 readme = "README.md"
 requires-python = ">=3.11,<=3.14"
+# Source-available, not open source: use it, copy it, modify it — but do not
+# offer it to others as a hosted or managed service. Full text in LICENSE.
+license = "Elastic-2.0"
+license-files = ["LICENSE"]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: Free for non-commercial use",
+    "License :: Other/Proprietary License",
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "azure-identity~=1.25.1",
+    "azure-identity>=1.25.1,<1.27.0",
     "azure-mgmt-compute>=37.2,<38.5",
     "azure-mgmt-monitor~=7.0.0",
     "azure-mgmt-network>=30.2,<33.1",
