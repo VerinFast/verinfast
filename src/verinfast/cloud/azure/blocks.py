@@ -4,7 +4,7 @@ import os
 
 from azure.identity import DefaultAzureCredential
 from azure.mgmt.storage import StorageManagementClient
-from azure.mgmt.resource import ResourceManagementClient
+from azure.mgmt.resource.resources import ResourceManagementClient
 
 from verinfast.cloud.azure.metrics import RegionalMetricsClient
 
